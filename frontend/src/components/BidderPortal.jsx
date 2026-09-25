@@ -18,7 +18,12 @@ import {
   LogOut, 
   MapPin, 
   Download, 
-  Database 
+  Database,
+  Check,
+  RefreshCw,
+  Eye,
+  Sliders,
+  Layers
 } from './Icons';
 
 // ==========================================
@@ -32,6 +37,11 @@ const defaultBidderProfile = {
   companyName: "Solarix Green Energy Solutions Pvt Ltd",
   designation: "Procurement Manager",
   registeredSince: "2024-03-15",
+  gemSellerId: "GEM-VEND-2024-8841",
+  panNumber: "AAACS9981F",
+  gstinNumber: "07AAACS9981F1Z2",
+  udyamNumber: "UDYAM-DL-03-0049281",
+  entityType: "Micro Enterprise (MSME) + Class-I Local Supplier (68% MII)",
 };
 
 const defaultAvailableTenders = [
@@ -47,11 +57,17 @@ const defaultAvailableTenders = [
     emdExemption: "MSME/Startup Exempt",
     location: "Bhadla Solar Park, Rajasthan",
     mandatoryDocs: [
-      "CA Certified Turnover Certificate (3-Year Average)",
+      "CA Certified Turnover Certificate (3-Year Average >= ₹1.25 Cr)",
       "OEM Authorization Letter for Grid Inverters",
       "Previous Work Experience Certificate",
-      "EMD / Bid Security Declaration",
+      "EMD / Bid Security Declaration (Form-II)",
     ],
+    eligibilityMatch: {
+      isEligible: true,
+      msmeWaiver: "Applicable (EMD Waived to ₹0, Turnover Waived)",
+      miiMatch: "68% Content (Meets Min 50% Threshold)",
+      debarmentStatus: "CLEAN (No Blacklisting)",
+    },
     status: "OPEN",
     totalBidders: 12,
     daysLeft: 2,
@@ -64,7 +80,7 @@ const defaultAvailableTenders = [
     closingDate: "2026-10-05",
     estimatedValue: "₹2,85,00,000",
     category: "Smart City Infrastructure",
-    emdAmount: "₹5,70,00,000",
+    emdAmount: "₹5,70,000",
     emdExemption: "MSME/Startup Exempt",
     location: "Chandigarh, Punjab",
     mandatoryDocs: [
@@ -73,6 +89,12 @@ const defaultAvailableTenders = [
       "Installation Completion Certificates (Min 3 Projects)",
       "EMD / Bid Security Declaration",
     ],
+    eligibilityMatch: {
+      isEligible: true,
+      msmeWaiver: "Applicable (MSE Order 2012)",
+      miiMatch: "55% Content (Compliant)",
+      debarmentStatus: "CLEAN",
+    },
     status: "OPEN",
     totalBidders: 8,
     daysLeft: 9,
@@ -93,6 +115,12 @@ const defaultAvailableTenders = [
       "CA Certified Turnover Certificate",
       "Previous AMC Completion Certificates",
     ],
+    eligibilityMatch: {
+      isEligible: false,
+      msmeWaiver: "Tender Specific Waiver Restricted",
+      miiMatch: "N/A",
+      debarmentStatus: "CLEAN",
+    },
     status: "CLOSED",
     totalBidders: 6,
     daysLeft: 0,
@@ -104,26 +132,27 @@ const defaultMyBids = [
     id: "BID-8901",
     tenderId: "GEM/2026/B/849201",
     tenderTitle: "Supply, Installation & Commissioning of 500kW Solar Grid Inverters & Transformers",
-    organisation: "NTPC Limited",
+    organisation: "NTPC Limited - Renewable Energy Division",
     submittedAt: "2026-09-22 14:30 IST",
     status: "VERIFIED",
     complianceScore: 94,
     aiRecommendation: "QUALIFIED",
+    rectificationRequired: false,
     uploadedDocuments: [
-      { name: "CA Turnover Certificate FY2024-25", status: "VERIFIED", type: "Turnover Cert" },
-      { name: "OEM Authorization - Sungrow Power", status: "VERIFIED", type: "OEM Auth" },
-      { name: "Work Order - Tata Power Solar 150kW", status: "VERIFIED", type: "Experience" },
-      { name: "Bid Security Declaration (MSME)", status: "VERIFIED", type: "EMD" },
+      { name: "CA Turnover Certificate FY2024-25.pdf", status: "VERIFIED", type: "CA Turnover Cert", sha256: "0x89ab...c12d", confidence: "98.8%" },
+      { name: "OEM Authorization - Sungrow Power.pdf", status: "VERIFIED", type: "OEM Auth", sha256: "0x12ef...45aa", confidence: "99.2%" },
+      { name: "Work Order - Tata Power Solar 150kW.pdf", status: "VERIFIED", type: "Experience Cert", sha256: "0x98bc...77ff", confidence: "97.5%" },
+      { name: "Bid Security Declaration (MSME Form).pdf", status: "VERIFIED", type: "EMD Exemption", sha256: "0x44dd...11ee", confidence: "100%" },
     ],
     activityLog: [
-      { timestamp: "2026-09-22 14:30", event: "Bid package submitted with 4 documents", type: "SUBMIT" },
-      { timestamp: "2026-09-22 14:31", event: "SHA-256 hash computed: 0xa4f2b91c...d8e3", type: "HASH" },
-      { timestamp: "2026-09-22 14:32", event: "PaddleOCR spatial extraction started on CA Turnover Cert", type: "OCR" },
-      { timestamp: "2026-09-22 14:33", event: "GSTN Portal Adapter: ACTIVE_VERIFIED (Cache Miss → Live Query)", type: "PORTAL" },
-      { timestamp: "2026-09-22 14:34", event: "Udyam Registry Adapter: MSME Micro Verified, EMD Exemption Validated", type: "PORTAL" },
-      { timestamp: "2026-09-22 14:35", event: "PyMuPDF Forensics: CLEAN_PASS — No tamper indicators detected", type: "FORENSIC" },
-      { timestamp: "2026-09-22 14:35", event: "Compliance Score Calculated: 94/100 — AI Recommendation: QUALIFIED", type: "SCORE" },
-      { timestamp: "2026-09-22 14:35", event: "Score block appended to SHA-256 Audit Ledger (Block #102)", type: "LEDGER" },
+      { timestamp: "2026-09-22 14:30", event: "Bid package submitted with client-side SHA-256 fingerprint", type: "SUBMIT" },
+      { timestamp: "2026-09-22 14:31", event: "Smart Pre-Flight checks passed: 0 encryption locks, DPI > 300 verified", type: "PREFLIGHT" },
+      { timestamp: "2026-09-22 14:32", event: "PaddleOCR spatial parsing completed with 98.4% average accuracy", type: "OCR" },
+      { timestamp: "2026-09-22 14:33", event: "GSTN Portal Live Adapter: ACTIVE_VERIFIED (07AAACS9981F1Z2)", type: "PORTAL" },
+      { timestamp: "2026-09-22 14:34", event: "Udyam Registry: MSME Micro enterprise verified, EMD exemption granted", type: "PORTAL" },
+      { timestamp: "2026-09-22 14:35", event: "PyMuPDF Forensics: CLEAN_PASS — No software tampering or font anomaly", type: "FORENSIC" },
+      { timestamp: "2026-09-22 14:35", event: "Compliance Score Evaluated: 94/100 (QUALIFIED FOR L1 REVERSE AUCTION)", type: "SCORE" },
+      { timestamp: "2026-09-22 14:35", event: "Immutable block #102 appended to GeM Audit Ledger (SHA-256 Sealed)", type: "LEDGER" },
     ],
   },
   {
@@ -131,15 +160,20 @@ const defaultMyBids = [
     tenderId: "GEM/2026/B/851044",
     tenderTitle: "Procurement of 10,000 LED Street Light Luminaires with Smart Controls",
     organisation: "Chandigarh Smart City Ltd",
-    submittedAt: null,
-    status: "DRAFT",
-    complianceScore: null,
-    aiRecommendation: null,
+    submittedAt: "2026-09-25 09:15 IST",
+    status: "NEEDS_REVIEW",
+    complianceScore: 78,
+    aiRecommendation: "NEEDS_REVIEW",
+    rectificationRequired: true,
+    rectificationNotice: "BIS Certificate is valid but UDIN number on CA Certificate has a slight digit scan blur. Please re-upload high-DPI CA Certificate before 2026-10-05.",
     uploadedDocuments: [
-      { name: "BIS Certificate - Model SLX-200W", status: "UPLOADED", type: "BIS Cert" },
+      { name: "BIS Certificate - Model SLX-200W.pdf", status: "VERIFIED", type: "BIS Certificate", sha256: "0xaa44...88ff", confidence: "99.1%" },
+      { name: "CA Turnover Certificate Scan.pdf", status: "NEEDS_REVIEW", type: "CA Turnover Cert", sha256: "0xbb55...99ee", confidence: "82.4%" },
     ],
     activityLog: [
-      { timestamp: "2026-09-25 09:15", event: "Draft bid created, 1 of 4 documents uploaded", type: "SUBMIT" },
+      { timestamp: "2026-09-25 09:15", event: "Bid package submitted, 2 of 4 documents uploaded", type: "SUBMIT" },
+      { timestamp: "2026-09-25 09:16", event: "PaddleOCR flagged UDIN stamp digit variance (82% confidence)", type: "OCR" },
+      { timestamp: "2026-09-25 09:17", event: "Status set to NEEDS_REVIEW: Rectification request dispatched to bidder", type: "REVIEW" },
     ],
   },
 ];
@@ -386,7 +420,7 @@ function BidderKYC({ kycState, onVerifyKyc, onContinueToBids }) {
           });
         }
       }
-    }, 700);
+    }, 600);
   };
 
   const allUploaded = docs.filter(d => d.id === 'aadhaar' || d.id === 'pan').every(d => d.file !== null);
@@ -402,7 +436,7 @@ function BidderKYC({ kycState, onVerifyKyc, onContinueToBids }) {
           <div>
             <div className="flex items-center gap-2 mb-2">
               <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-[#635BFF] font-mono text-xs font-bold border border-indigo-100">
-                STAGE 1 / 3
+                STAGE 1 / 4
               </span>
               <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
                 isVerified 
@@ -414,10 +448,10 @@ function BidderKYC({ kycState, onVerifyKyc, onContinueToBids }) {
             </div>
             
             <h2 className="text-xl lg:text-2xl font-black text-[#0A2540] tracking-tight">
-              Bidder Identity & Master KYC Gate
+              Bidder Identity & Master Statutory KYC Gate
             </h2>
             <p className="text-xs text-slate-600 mt-1 max-w-2xl leading-relaxed">
-              In accordance with GeM Procurement Norms, every vendor must complete a one-time automated identity verification by uploading mandatory documents (<strong className="text-[#635BFF]">Aadhaar Card</strong> & <strong className="text-[#635BFF]">PAN Card</strong>). Once verified by AI, all live tenders will be unlocked.
+              In accordance with GeM Procurement Norms & Section 7.2 of PRAMAN specification, every vendor must complete a one-time automated identity verification by uploading mandatory documents (<strong className="text-[#635BFF]">Aadhaar Card</strong> & <strong className="text-[#635BFF]">PAN Card</strong>). Once verified by AI, all live tenders and pre-flight submissions will be unlocked.
             </p>
           </div>
 
@@ -437,9 +471,9 @@ function BidderKYC({ kycState, onVerifyKyc, onContinueToBids }) {
               <button
                 type="button"
                 onClick={onContinueToBids}
-                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm flex items-center justify-center gap-2 transition-all"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#635BFF] hover:bg-[#5349DF] text-white font-bold text-xs shadow-sm flex items-center justify-center gap-2 transition-all"
               >
-                Browse & Apply for Bids
+                Browse & Apply for Tenders
                 <ArrowRight className="w-4 h-4" />
               </button>
             )}
@@ -622,7 +656,149 @@ function BidderKYC({ kycState, onVerifyKyc, onContinueToBids }) {
 }
 
 // ==========================================
-// 4. SUB-COMPONENT: BIDDER TENDER BROWSER & UPLOAD
+// 4. SUB-COMPONENT: SMART PRE-FLIGHT VALIDATOR (SEC 7.2)
+// ==========================================
+
+function BidderSmartPreFlight() {
+  const [testFile, setTestFile] = useState(null);
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanResult, setScanResult] = useState(null);
+
+  const handleSimulatePreFlight = (fileName = 'CA_Turnover_Certificate_FY24.pdf') => {
+    setTestFile(fileName);
+    setIsScanning(true);
+    setScanResult(null);
+
+    setTimeout(() => {
+      setIsScanning(false);
+      setScanResult({
+        fileName: fileName,
+        fileSizeBytes: '2.4 MB (Under 15MB limit)',
+        mimeType: 'application/pdf (Valid PDF/A standard)',
+        sha256Hash: '0x8f3c7e1b9a22d41088bc012e55aa91bc44f0e21a8899cc334411eedd8822ff99',
+        encryptionStatus: 'UNENCRYPTED (No password protection lock)',
+        dpiClarity: '340 DPI (High readability - exceeds 200 DPI minimum)',
+        pageCount: 3,
+        readabilityScore: '99.2%',
+        checks: [
+          { name: 'Client-side Web Crypto SHA-256 Fingerprint', passed: true, note: 'Non-repudiation hash generated' },
+          { name: 'Password / DRM Protection Detection', passed: true, note: 'No decryption password required' },
+          { name: 'Blank / Corrupt PDF Page Check', passed: true, note: 'All 3 pages render valid text & vector tables' },
+          { name: 'Resolution & Spatial DPI Check', passed: true, note: '340 DPI clear scan, optimal for PaddleOCR' },
+          { name: 'ExifTool & Metadata Tamper Pre-Check', passed: true, note: 'No Adobe Photoshop or Canva traces' },
+        ]
+      });
+    }, 800);
+  };
+
+  return (
+    <div className="space-y-6">
+      
+      {/* Banner */}
+      <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm relative overflow-hidden">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-[#635BFF] font-mono text-xs font-bold border border-indigo-100">
+                SECTION 7.2 MODULE
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200">
+                CLIENT-SIDE SANITY ENGINE
+              </span>
+            </div>
+            <h2 className="text-xl lg:text-2xl font-black text-[#0A2540] tracking-tight">
+              Smart Upload Pre-Flight Document Validator
+            </h2>
+            <p className="text-xs text-slate-600 mt-1 max-w-2xl leading-relaxed">
+              Before submitting bids to government servers, run this client-side pre-flight test. It computes a client SHA-256 fingerprint, verifies zero password-locks, and ensures your certificate will not be rejected due to corruption or DPI blur.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => handleSimulatePreFlight('CA_Turnover_Certificate_FY24.pdf')}
+            className="px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-[#635BFF] text-xs font-semibold border border-slate-200 transition-all flex items-center gap-2 whitespace-nowrap"
+          >
+            <Sparkles className="w-4 h-4 text-[#635BFF]" />
+            Test Sample Certificate
+          </button>
+        </div>
+      </div>
+
+      {/* Upload Dropzone */}
+      <div 
+        onClick={() => handleSimulatePreFlight('OEM_Authorization_Sungrow.pdf')}
+        className="bg-white border-2 border-dashed border-indigo-200 hover:border-[#635BFF] rounded-2xl p-8 text-center cursor-pointer shadow-sm hover:shadow transition-all"
+      >
+        <UploadCloud className="w-10 h-10 text-[#635BFF] mx-auto mb-2" />
+        <h4 className="text-sm font-bold text-[#0A2540]">Drop any PDF certificate to run instant Pre-Flight diagnostics</h4>
+        <p className="text-xs text-slate-500 mt-1">
+          Validates SHA-256, DPI clarity, PDF encryption lock, and format compliance in browser memory.
+        </p>
+        <div className="mt-4">
+          <span className="px-3 py-1.5 rounded-xl bg-indigo-50 text-[#635BFF] text-xs font-bold border border-indigo-200">
+            ⚡ Click to Test OEM Authorization Letter (2.1 MB)
+          </span>
+        </div>
+      </div>
+
+      {/* Scanning status */}
+      {isScanning && (
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 text-center shadow-sm space-y-3">
+          <div className="w-8 h-8 rounded-full border-2 border-[#635BFF] border-t-transparent animate-spin mx-auto" />
+          <h4 className="text-sm font-bold text-[#0A2540]">Running Client-Side Web Crypto & PDF Sanitization...</h4>
+          <p className="text-xs text-slate-500 font-mono">Hashing bytes: window.crypto.subtle.digest('SHA-256')</p>
+        </div>
+      )}
+
+      {/* Scan Results */}
+      {scanResult && (
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm space-y-5 animate-in fade-in duration-200">
+          
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-3">
+            <div>
+              <span className="text-[11px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-semibold">
+                ✓ ALL PRE-FLIGHT CHECKS PASSED
+              </span>
+              <h3 className="text-base font-bold text-[#0A2540] mt-1">{scanResult.fileName}</h3>
+              <p className="text-xs text-slate-500 font-mono mt-0.5">SHA-256: {scanResult.sha256Hash}</p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <span className="text-[10px] text-slate-400 uppercase font-bold block">Clarity Score</span>
+                <span className="text-base font-black text-emerald-700 font-mono">{scanResult.readabilityScore}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Diagnostic Checks Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {scanResult.checks.map((check, i) => (
+              <div key={i} className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl flex items-start gap-2.5">
+                <CheckCircle className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h4 className="text-xs font-bold text-[#0A2540]">{check.name}</h4>
+                  <p className="text-[11px] text-slate-500 mt-0.5">{check.note}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl flex items-center justify-between text-xs text-indigo-950 font-medium">
+            <span>Certificate is 100% compliant and ready for GeM tender submission without rejection risk.</span>
+            <span className="text-[#635BFF] font-bold font-mono">Pre-Flight Pass ID #PF-9912</span>
+          </div>
+
+        </div>
+      )}
+
+    </div>
+  );
+}
+
+// ==========================================
+// 5. SUB-COMPONENT: BIDDER TENDER BROWSER & UPLOAD
 // ==========================================
 
 function BidderTenderBrowser({ onBidSubmitted }) {
@@ -686,8 +862,8 @@ function BidderTenderBrowser({ onBidSubmitted }) {
     setIsSubmitting(true);
     setSubmissionProgress(25);
 
-    setTimeout(() => setSubmissionProgress(60), 400);
-    setTimeout(() => setSubmissionProgress(90), 800);
+    setTimeout(() => setSubmissionProgress(60), 350);
+    setTimeout(() => setSubmissionProgress(90), 700);
 
     setTimeout(() => {
       setIsSubmitting(false);
@@ -700,18 +876,21 @@ function BidderTenderBrowser({ onBidSubmitted }) {
         status: 'VERIFIED',
         complianceScore: 94,
         aiRecommendation: 'QUALIFIED',
+        rectificationRequired: false,
         uploadedDocuments: Object.values(tenderDocs).map(d => ({
           name: d.fileName || d.name,
           status: 'VERIFIED',
-          type: d.name
+          type: d.name,
+          sha256: '0x' + Math.random().toString(16).substring(2, 10) + '...verified',
+          confidence: '98.5%'
         })),
         activityLog: [
-          { timestamp: 'Just now', event: 'Bid package submitted with all mandatory documents', type: 'SUBMIT' },
-          { timestamp: 'Just now', event: 'SHA-256 hash computed & anchored: 0x7c3a...d91e', type: 'HASH' },
+          { timestamp: 'Just now', event: 'Bid package submitted with client-side SHA-256 fingerprint', type: 'SUBMIT' },
+          { timestamp: 'Just now', event: 'Pre-flight checks passed: Valid PDF/A, 0 password locks', type: 'PREFLIGHT' },
           { timestamp: 'Just now', event: 'PaddleOCR spatial parsing completed with 98.4% confidence', type: 'OCR' },
           { timestamp: 'Just now', event: 'PyMuPDF tamper forensic analysis: PASS (0 font or metadata anomalies)', type: 'FORENSIC' },
-          { timestamp: 'Just now', event: 'Compliance Score Calculated: 94/100 (QUALIFIED)', type: 'SCORE' },
-          { timestamp: 'Just now', event: 'Block appended to GeM Audit Ledger', type: 'LEDGER' }
+          { timestamp: 'Just now', event: 'Compliance Score Evaluated: 94/100 (QUALIFIED)', type: 'SCORE' },
+          { timestamp: 'Just now', event: 'Block appended to GeM Audit Ledger (SHA-256 Anchored)', type: 'LEDGER' }
         ]
       };
 
@@ -719,7 +898,7 @@ function BidderTenderBrowser({ onBidSubmitted }) {
       if (onBidSubmitted) {
         onBidSubmitted(newBid);
       }
-    }, 1200);
+    }, 1100);
   };
 
   const isAllUploaded = activeTenderModal && 
@@ -816,9 +995,27 @@ function BidderTenderBrowser({ onBidSubmitted }) {
                     </span>
                   </div>
 
+                  {/* Real-time statutory eligibility calculator banner */}
+                  <div className="p-3 bg-indigo-50/70 border border-indigo-100 rounded-xl text-xs space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-[#0A2540] flex items-center gap-1.5">
+                        <ShieldCheck className="w-4 h-4 text-[#635BFF]" />
+                        Statutory Eligibility Assessment for Your Firm:
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">
+                        ELIGIBLE TO BID
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px] text-slate-600 pt-1">
+                      <div>• EMD Waiver: <strong className="text-emerald-700">₹0 (MSME Micro Exempt)</strong></div>
+                      <div>• MII Local Content: <strong className="text-slate-800">68% &gt; 50% Req</strong></div>
+                      <div>• Debarment Check: <strong className="text-emerald-700">Clean Pass</strong></div>
+                    </div>
+                  </div>
+
                   <div className="pt-2">
                     <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-                      Required Documents for this Bid:
+                      Mandatory Documents Checklist:
                     </p>
                     <div className="flex flex-wrap gap-1.5">
                       {tender.mandatoryDocs.map((doc, idx) => (
@@ -842,7 +1039,7 @@ function BidderTenderBrowser({ onBidSubmitted }) {
                       className="px-5 py-2.5 rounded-xl bg-[#635BFF] hover:bg-[#5349DF] text-white font-bold text-xs shadow-sm flex items-center gap-1.5 transition-all"
                     >
                       <UploadCloud className="w-4 h-4" />
-                      Upload Bid Documents & Apply
+                      Upload Documents & Apply
                     </button>
                   ) : (
                     <button
@@ -872,7 +1069,7 @@ function BidderTenderBrowser({ onBidSubmitted }) {
                   {activeTenderModal.id}
                 </span>
                 <h3 className="text-lg font-bold text-[#0A2540] mt-1">
-                  Upload Tender Documents for Verification
+                  Upload Tender Documents for Pre-Flight & Verification
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
                   {activeTenderModal.title} • {activeTenderModal.organisation}
@@ -1007,13 +1204,28 @@ function BidderTenderBrowser({ onBidSubmitted }) {
 }
 
 // ==========================================
-// 5. SUB-COMPONENT: BIDDER ACTIVITY CENTRE
+// 6. SUB-COMPONENT: BIDDER ACTIVITY & RECTIFICATION CENTRE
 // ==========================================
 
-function BidderActivityCentre({ bids = [] }) {
+function BidderActivityCentre({ bids = [], onReuploadDocument }) {
   const [selectedBidId, setSelectedBidId] = useState(bids[0]?.id || null);
+  const [isReuploading, setIsReuploading] = useState(false);
 
   const selectedBid = bids.find(b => b.id === selectedBidId) || bids[0];
+
+  const handleSimulateRectification = () => {
+    setIsReuploading(true);
+    setTimeout(() => {
+      setIsReuploading(false);
+      alert('Rectified high-DPI document uploaded. PaddleOCR re-scanned and status updated to VERIFIED (Compliance score increased to 92/100)!');
+      if (selectedBid) {
+        selectedBid.status = 'VERIFIED';
+        selectedBid.rectificationRequired = false;
+        selectedBid.complianceScore = 92;
+        selectedBid.aiRecommendation = 'QUALIFIED';
+      }
+    }, 800);
+  };
 
   return (
     <div className="space-y-6">
@@ -1043,7 +1255,7 @@ function BidderActivityCentre({ bids = [] }) {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => alert('Downloading official GeM AI Compliance Certificate (PDF)...')}
+              onClick={() => alert('Downloading official GeM AI Compliance Certificate (PDF) stamped with SHA-256 proof...')}
               className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold border border-slate-200 transition-all flex items-center gap-2"
             >
               <Download className="w-4 h-4 text-[#635BFF]" />
@@ -1110,6 +1322,33 @@ function BidderActivityCentre({ bids = [] }) {
         {selectedBid ? (
           <div className="lg:col-span-2 space-y-6">
             
+            {/* Rectification Alert Box if Needs Review */}
+            {selectedBid.rectificationRequired && (
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 shadow-sm space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+                    <AlertTriangle className="w-4 h-4 text-amber-700" />
+                    Action Required: Compliance Rectification Window Open
+                  </span>
+                  <span className="text-[10px] font-mono text-amber-800 font-bold">Closing: 2026-10-05</span>
+                </div>
+                <p className="text-xs text-amber-800 leading-relaxed">
+                  {selectedBid.rectificationNotice || 'One or more certificates require high-DPI re-upload to confirm UDIN/dates.'}
+                </p>
+                <div className="pt-2 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={handleSimulateRectification}
+                    disabled={isReuploading}
+                    className="px-4 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs transition-colors flex items-center gap-1.5"
+                  >
+                    <UploadCloud className="w-3.5 h-3.5" />
+                    {isReuploading ? 'Scanning Rectified File...' : 'Upload Rectified CA Certificate'}
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
                 <div>
@@ -1158,7 +1397,7 @@ function BidderActivityCentre({ bids = [] }) {
                         <p className="text-[10px] text-slate-500 font-mono truncate">{doc.name}</p>
                         <div className="flex items-center gap-2 mt-1">
                           <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono">
-                            PaddleOCR 98%+
+                            OCR {doc.confidence || '98%+'}
                           </span>
                           <span className="text-[10px] px-1.5 py-0.2 rounded bg-indigo-50 text-[#635BFF] border border-indigo-100 font-mono">
                             Clean Pass
@@ -1236,7 +1475,7 @@ function BidderActivityCentre({ bids = [] }) {
 }
 
 // ==========================================
-// 6. MAIN EXPORT: COMPLETE BIDDER PORTAL
+// 7. MAIN EXPORT: COMPLETE BIDDER PORTAL
 // ==========================================
 
 export function BidderPortal() {
@@ -1246,6 +1485,7 @@ export function BidderPortal() {
     email: defaultBidderProfile.email,
     company: defaultBidderProfile.companyName,
     designation: defaultBidderProfile.designation,
+    entityType: defaultBidderProfile.entityType,
   });
 
   const [kycState, setKycState] = useState({
@@ -1254,6 +1494,7 @@ export function BidderPortal() {
     documents: null,
   });
 
+  // Active sub-navigation tab: 'kyc' | 'tenders' | 'preflight' | 'activity'
   const [activeTab, setActiveTab] = useState('kyc');
   const [bids, setBids] = useState(defaultMyBids);
 
@@ -1282,20 +1523,20 @@ export function BidderPortal() {
     <div className="space-y-6">
       
       {/* Bidder Profile Top Bar */}
-      <div className="bg-white border border-slate-200/80 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
+      <div className="bg-white border border-slate-200/80 rounded-2xl p-5 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
         <div className="flex items-center gap-3 w-full md:w-auto">
-          <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-[#635BFF] to-[#00D4B2] flex items-center justify-center text-white font-bold text-base shadow-sm">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-[#635BFF] to-[#00D4B2] flex items-center justify-center text-white font-bold text-lg shadow-sm">
             {currentUser.name.charAt(0)}
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-[#0A2540]">{currentUser.company}</h3>
-              <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-indigo-50 text-[#635BFF] border border-indigo-100">
+              <h3 className="text-base font-bold text-[#0A2540]">{currentUser.company}</h3>
+              <span className="px-2.5 py-0.5 rounded text-[10px] font-mono bg-indigo-50 text-[#635BFF] border border-indigo-100 font-bold">
                 {currentUser.id}
               </span>
             </div>
-            <p className="text-xs text-slate-500">
-              {currentUser.name} • {currentUser.designation} • {currentUser.email}
+            <p className="text-xs text-slate-500 mt-0.5">
+              {currentUser.name} • {currentUser.designation} • <span className="text-emerald-700 font-medium">{currentUser.entityType || defaultBidderProfile.entityType}</span>
             </p>
           </div>
         </div>
@@ -1320,7 +1561,7 @@ export function BidderPortal() {
             type="button"
             onClick={handleLogout}
             title="Log out of Bidder Portal"
-            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 border border-slate-200 transition-all flex items-center gap-1.5 text-xs"
+            className="p-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 border border-slate-200 transition-all flex items-center gap-1.5 text-xs font-semibold"
           >
             <LogOut className="w-4 h-4" />
             <span className="hidden sm:inline">Logout</span>
@@ -1328,15 +1569,16 @@ export function BidderPortal() {
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-3 overflow-x-auto">
+      {/* STRIPE-STYLE SUB-NAVIGATION NAVBAR */}
+      <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-slate-200/80 shadow-xs overflow-x-auto">
         
+        {/* Tab 1: Master KYC */}
         <button
           onClick={() => setActiveTab('kyc')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
             activeTab === 'kyc'
               ? 'bg-[#635BFF] text-white shadow-xs'
-              : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
           }`}
         >
           <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
@@ -1344,10 +1586,11 @@ export function BidderPortal() {
           }`}>
             1
           </span>
-          One-Time KYC (Aadhaar & PAN)
+          One-Time Master KYC (Aadhaar & PAN)
           {kycState.isVerified && <CheckCircle className="w-3.5 h-3.5 text-emerald-300 ml-1" />}
         </button>
 
+        {/* Tab 2: Available Tenders */}
         <button
           onClick={() => {
             if (!kycState.isVerified) {
@@ -1360,8 +1603,8 @@ export function BidderPortal() {
             activeTab === 'tenders'
               ? 'bg-[#635BFF] text-white shadow-xs'
               : kycState.isVerified
-                ? 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
-                : 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
+                ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                : 'text-slate-400 cursor-not-allowed opacity-60'
           }`}
         >
           <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
@@ -1369,32 +1612,53 @@ export function BidderPortal() {
           }`}>
             2
           </span>
-          Browse Tenders & Submit Bids
+          Browse Tenders & Eligibility Calculator
           {!kycState.isVerified && <Lock className="w-3.5 h-3.5 text-amber-500 ml-1" />}
         </button>
 
+        {/* Tab 3: Smart Pre-Flight Validator (Section 7.2) */}
+        <button
+          onClick={() => setActiveTab('preflight')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
+            activeTab === 'preflight'
+              ? 'bg-[#635BFF] text-white shadow-xs'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+          }`}
+        >
+          <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+            activeTab === 'preflight' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
+          }`}>
+            3
+          </span>
+          Smart Upload Pre-Flight Validator
+          <span className="px-1.5 py-0.2 rounded bg-indigo-50 text-[#635BFF] text-[9px] font-mono border border-indigo-100 ml-1">
+            SEC 7.2
+          </span>
+        </button>
+
+        {/* Tab 4: Activity & Rectification Centre */}
         <button
           onClick={() => setActiveTab('activity')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
             activeTab === 'activity'
               ? 'bg-[#635BFF] text-white shadow-xs'
-              : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
           }`}
         >
           <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
             activeTab === 'activity' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
           }`}>
-            3
+            4
           </span>
-          Activity Centre & Verification
-          <span className="px-1.5 py-0.2 rounded-full bg-indigo-50 text-[#635BFF] text-[10px] font-mono ml-1">
+          My Submissions & Activity Centre
+          <span className="px-1.5 py-0.2 rounded-full bg-indigo-50 text-[#635BFF] text-[10px] font-mono ml-1 font-bold">
             {bids.length}
           </span>
         </button>
 
       </div>
 
-      {/* Panels */}
+      {/* View Panels */}
       {activeTab === 'kyc' && (
         <BidderKYC 
           kycState={kycState} 
@@ -1407,6 +1671,10 @@ export function BidderPortal() {
         <BidderTenderBrowser 
           onBidSubmitted={handleBidSubmitted}
         />
+      )}
+
+      {activeTab === 'preflight' && (
+        <BidderSmartPreFlight />
       )}
 
       {activeTab === 'activity' && (
