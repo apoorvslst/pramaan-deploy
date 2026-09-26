@@ -20,10 +20,12 @@ from pydantic import BaseModel, Field
 
 from schemas.document import DocType, FieldWithBox, DocumentExtractionResponse
 from schemas.forensics import ForensicCheckResult
+from schemas.signature import DetectedSignature
 from services.doc_classifier import classify_document
 from services.ocr_engine import extract_document_fields
 from services.forensic_scanner import analyze_metadata
 from services.qr_verifier import verify_qr_codes
+from services.signature_engine import detect_signatures_in_pdf
 
 router = APIRouter()
 
@@ -35,6 +37,7 @@ class UnifiedVerificationResponse(BaseModel):
     extractedFields: Dict[str, str] = Field(default_factory=dict)
     fieldsWithBoxes: Dict[str, FieldWithBox] = Field(default_factory=dict)
     visualMarkers: Dict[str, List[float]] = Field(default_factory=dict)
+    detectedSignatures: List[DetectedSignature] = Field(default_factory=list)
     forensicCheck: ForensicCheckResult
     overallStatus: str = Field(
         description="Overall verdict: 'VERIFIED', 'FLAGGED_TAMPERED', 'FLAGGED_FORGERY', 'EXTRACTED'"
@@ -116,8 +119,18 @@ async def verify_document(
         # ── Step 4: Extract Key-Value Claims & Bounding Boxes ──
         ocr_result = await extract_document_fields(temp_path, doc_type=target_type)
 
-        # ── Step 5: Determine Overall Status ──
-        warnings = list(ocr_result.warnings) + metadata_result.flags
+        # ── Step 5: Detect and Crop Signatures + Compute Embeddings ──
+        sig_result = detect_signatures_in_pdf(temp_path, max_pages=3)
+        for i, sig in enumerate(sig_result.signatures):
+            ocr_result.visualMarkers[f"signatureBox_{i+1}"] = [
+                sig.boundingBox.x,
+                sig.boundingBox.y,
+                sig.boundingBox.x + sig.boundingBox.width,
+                sig.boundingBox.y + sig.boundingBox.height,
+            ]
+
+        # ── Step 6: Determine Overall Status ──
+        warnings = list(ocr_result.warnings) + metadata_result.flags + sig_result.warnings
 
         if qr_result.isForgeryDetected:
             overall_status = "FLAGGED_FORGERY"
@@ -136,6 +149,7 @@ async def verify_document(
             extractedFields=ocr_result.extractedFields,
             fieldsWithBoxes=ocr_result.fieldsWithBoxes,
             visualMarkers=ocr_result.visualMarkers,
+            detectedSignatures=sig_result.signatures,
             forensicCheck=forensic_check,
             overallStatus=overall_status,
             confidence=ocr_result.confidence,

@@ -23,6 +23,7 @@ from routers import (
     cartel_routes,
     assistant_routes,
     pipeline_routes,
+    signature_routes,
 )
 
 
@@ -147,6 +148,13 @@ app.include_router(
     pipeline_routes.router,
     prefix="/api/v1/pipeline",
     tags=["Unified Verification Pipeline"],
+)
+
+# Signature Intelligence & Collusion Verification
+app.include_router(
+    signature_routes.router,
+    prefix="/api/v1/signature",
+    tags=["Signature Intelligence & Verification"],
 )
 
 
