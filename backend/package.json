@@ -6,7 +6,12 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "seed": "node scripts/seed.js",
+    "seed:chaos": "node scripts/seed-chaos.js",
+    "demo": "node scripts/demo-chaos.js",
+    "chaos:on": "CHAOS_ENABLED=true node --watch server.js",
+    "test:health": "curl -s http://localhost:5000/api/system/health | node -e \"process.stdin.on('data',d=>console.log(JSON.stringify(JSON.parse(d),null,2)))\""
   },
   "keywords": [
     "praman",
