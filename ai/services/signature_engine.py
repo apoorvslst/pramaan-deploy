@@ -40,23 +40,19 @@ from utils.pdf_utils import normalize_bbox_to_percent
 
 
 # ──────────────────────────────────────────────
-#  Statutory Text Anchors for Signatures
+#  Core Primary Statutory Signatories Only
+#  (Focused solely on Authorized Signatories/Directors and Chartered Accountants)
 # ──────────────────────────────────────────────
 
 SIGNATURE_TEXT_ANCHORS = [
     r"authorized\s+signatory",
     r"authorised\s+signatory",
     r"signature\s+of\s+(?:the\s+)?bidder",
-    r"signature\s+of\s+(?:the\s+)?authorized",
-    r"seal\s+(?:&|and)\s+sign(?:ature)?",
     r"chartered\s+accountant",
     r"managing\s+director",
     r"director",
-    r"proprietor",
     r"partner",
-    r"notary\s+public",
-    r"signature",
-    r"signed\s+by",
+    r"proprietor",
 ]
 
 
