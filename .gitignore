@@ -12,6 +12,20 @@ dist
 dist-ssr
 *.local
 
+# Environment variables
+.env
+.env.*
+*.env
+
+# Uploads directory (keep folder structure, ignore uploaded files)
+backend/uploads/*
+!backend/uploads/.gitkeep
+uploads/*
+!uploads/.gitkeep
+
+# Legacy server directory
+server/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
