@@ -214,7 +214,7 @@ async def extract_rules_with_llm(text: str) -> Optional[dict]:
     """
     # Truncate text to fit context window (keep first ~6000 chars)
     truncated_text = text[:6000]
-    prompt = EXTRACTION_PROMPT.format(text=truncated_text)
+    prompt = EXTRACTION_PROMPT.replace("{text}", truncated_text)
 
     # Try Groq first
     client = _get_groq_client()

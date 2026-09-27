@@ -71,11 +71,17 @@ class ForensicCheckResult(BaseModel):
     Maps directly to backend VerificationEvidence.js → forensicCheck sub-document.
     """
     hasMetadataTampering: bool = Field(default=False)
-    softwareDetected: Optional[str] = Field(None, description="Comma-separated flagged tool names")
+    softwareDetected: Optional[List[str]] = Field(default=None, description="Flagged editing tools")
+    creationDate: Optional[str] = Field(None, description="PDF creation date")
+    modificationDate: Optional[str] = Field(None, description="PDF modification date")
+    producer: Optional[str] = Field(None, description="PDF Producer field")
+    creator: Optional[str] = Field(None, description="PDF Creator field")
     qrDecodedPayload: Optional[str] = Field(None, description="Raw decoded QR string")
-    qrMatchesClaim: bool = Field(default=True)
+    qrMatchesClaim: Optional[bool] = Field(default=True)
+    isTampered: bool = Field(default=False, description="True if any tampering indicator is detected")
+    tamperConfidence: float = Field(default=0.0, ge=0, le=1, description="Overall tamper confidence score")
     fontInconsistenciesDetected: bool = Field(default=False)
-    tamperConfidenceScore: float = Field(default=0.0, ge=0, le=1)
+    flags: List[str] = Field(default_factory=list, description="Human-readable forensic flags")
 
 
 class ForensicAnalysisError(BaseModel):

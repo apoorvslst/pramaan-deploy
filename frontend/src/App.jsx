@@ -65,20 +65,20 @@ export function App() {
     setLedger(prev => [...prev, newBlock]);
   };
 
-  // If not logged in, render the Stripe-styled Auth Page
+  // If not logged in, render the Clean Auth Page
   if (!currentUser) {
     return <AuthPage onLoginSuccess={handleLoginSuccess} />;
   }
 
   // Strict Role Isolation:
-  // - If role === 'OFFICER', render ONLY Officer Dashboard
-  // - If role === 'BIDDER', render ONLY Bidder Portal
-  const isOfficer = currentUser.role === 'OFFICER';
+  // - If role === 'OFFICER' or 'CAG_AUDITOR', render Officer Dashboard
+  // - If role === 'BIDDER', render Bidder Portal
+  const isOfficer = currentUser.role === 'OFFICER' || currentUser.role === 'CAG_AUDITOR';
 
   return (
-    <div className="min-h-screen bg-[#F6F9FC] text-[#0A2540] flex flex-col font-sans selection:bg-[#635BFF] selection:text-white">
+    <div className="min-h-screen bg-[#F8FAFD] text-[#111827] flex flex-col font-sans selection:bg-[#0062FF] selection:text-white">
       
-      {/* Header Bar with strict authenticated identity and logout */}
+      {/* Ahrefs-Inspired Clean Header Bar */}
       <Header
         currentRole={currentUser.role}
         currentUser={currentUser}
@@ -86,7 +86,7 @@ export function App() {
       />
 
       {/* Main Workspace: Strictly Officer or Bidder */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-5">
         {isOfficer ? (
           <OfficerDashboard
             activeTender={tender}
@@ -100,19 +100,20 @@ export function App() {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-slate-200 py-6 px-4 lg:px-8 mt-12 text-xs text-slate-500">
+      {/* Lightweight Ahrefs-Inspired Footer */}
+      <footer className="bg-white border-t border-slate-200/80 py-5 px-4 lg:px-8 mt-12 text-xs text-slate-500">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-[#0A2540]">PRAMAN Architecture Prototype</span>
-            <span>•</span>
-            <span>SIH PS 26100 GeM Procurement Compliance</span>
+            <span className="font-semibold text-slate-900">PRAMAN Compliance Platform</span>
+            <span className="text-slate-300">•</span>
+            <span>SIH PS 26100 GeM Public Procurement Architecture</span>
           </div>
-          <div className="flex items-center gap-4 font-mono text-[11px] text-slate-500">
-            <span>PaddleOCR Spatial Vision</span>
-            <span>PyMuPDF Forensics</span>
-            <span>NetworkX Graph Engine</span>
-            <span>SHA-256 Hash Chain</span>
+          <div className="flex items-center gap-3 font-mono text-[11px] text-slate-500">
+            <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#0062FF]"></span>PyMuPDF Forensics</span>
+            <span className="text-slate-300">•</span>
+            <span>NetworkX Cartel Graph</span>
+            <span className="text-slate-300">•</span>
+            <span>ChromaDB RAG & Signatures</span>
           </div>
         </div>
       </footer>

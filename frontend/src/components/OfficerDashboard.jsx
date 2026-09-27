@@ -236,16 +236,16 @@ export function OfficerDashboard({
   return (
     <div className="space-y-6">
 
-      {/* STRIPE-INSPIRED LIGHT OFFICER HERO BANNER */}
+      {/* AHREFS-INSPIRED LIGHT OFFICER HERO BANNER */}
       <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-indigo-50/50 to-blue-50/30 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-blue-50/50 to-blue-50/30 rounded-full blur-3xl pointer-events-none" />
 
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
           
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="px-3 py-1 rounded-full bg-indigo-50 text-[#635BFF] font-mono text-xs font-bold border border-indigo-100 flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#635BFF]" />
+              <span className="px-3 py-1 rounded-full bg-blue-50 text-[#0062FF] font-mono text-xs font-bold border border-blue-100 flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#0062FF]" />
                 GeM Procurement Officer Console
               </span>
               <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 font-mono text-xs font-semibold border border-emerald-200 flex items-center gap-1.5">
@@ -257,14 +257,14 @@ export function OfficerDashboard({
               </span>
             </div>
 
-            <h1 className="text-2xl lg:text-3xl font-black text-[#0A2540] tracking-tight">
+            <h1 className="text-2xl lg:text-3xl font-black text-[#111827] tracking-tight">
               Procurement & Statutory Compliance Workspace
             </h1>
 
             <p className="text-xs text-slate-600 flex flex-wrap items-center gap-2">
               <span className="font-semibold text-slate-700">Dr. Vikramaditya Malhotra (Chief Procurement Officer, NTPC)</span>
               <span>•</span>
-              <span className="text-[#635BFF] font-semibold">{activeTender.title}</span>
+              <span className="text-[#0062FF] font-semibold">{activeTender.title}</span>
             </p>
           </div>
 
@@ -276,7 +276,7 @@ export function OfficerDashboard({
                 setSubTab('ingestion');
                 setShowCreateModal(true);
               }}
-              className="px-5 py-2.5 rounded-xl bg-[#635BFF] hover:bg-[#5349DF] text-white font-bold text-xs shadow-sm hover:shadow active:scale-98 flex items-center gap-2 transition-all"
+              className="px-5 py-2.5 rounded-xl bg-[#0062FF] hover:bg-[#0050D4] text-white font-bold text-xs shadow-sm hover:shadow active:scale-98 flex items-center gap-2 transition-all"
             >
               <Plus className="w-4 h-4" />
               Create Tender (Ingest NIT)
@@ -287,11 +287,11 @@ export function OfficerDashboard({
               onClick={() => setIsChatOpen(!isChatOpen)}
               className={`px-4 py-2.5 rounded-xl text-xs font-semibold border transition-all flex items-center gap-2 ${
                 isChatOpen 
-                  ? 'bg-indigo-50 text-[#635BFF] border-indigo-200 shadow-xs'
+                  ? 'bg-blue-50 text-[#0062FF] border-blue-200 shadow-xs'
                   : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-2xs'
               }`}
             >
-              <Bot className="w-4 h-4 text-[#635BFF]" />
+              <Bot className="w-4 h-4 text-[#0062FF]" />
               AI Officer Co-Pilot
             </button>
           </div>
@@ -301,8 +301,8 @@ export function OfficerDashboard({
         {/* Live Tender Metadata Summary & Rule Gates */}
         <div className="mt-5 pt-5 border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs">
           <div className="flex flex-wrap items-center gap-4 text-slate-600">
-            <span>Tender: <strong className="text-[#0A2540] font-mono">{activeTender.id}</strong></span>
-            <span>Est. Value: <strong className="text-[#635BFF] font-semibold">{activeTender.estimatedValue}</strong></span>
+            <span>Tender: <strong className="text-[#111827] font-mono">{activeTender.id}</strong></span>
+            <span>Est. Value: <strong className="text-[#0062FF] font-semibold">{activeTender.estimatedValue}</strong></span>
             <span>EMD: <strong className="text-amber-700 font-semibold">{activeTender.emdAmount}</strong></span>
             <span>Closing: <strong className="text-slate-700 font-mono">{activeTender.closingDate}</strong></span>
           </div>
@@ -325,7 +325,7 @@ export function OfficerDashboard({
           onClick={() => setSubTab('evaluation')}
           className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
             subTab === 'evaluation'
-              ? 'bg-[#635BFF] text-white shadow-xs'
+              ? 'bg-[#0062FF] text-white shadow-xs'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
           }`}
         >
@@ -342,14 +342,14 @@ export function OfficerDashboard({
           onClick={() => setSubTab('evidence')}
           className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
             subTab === 'evidence'
-              ? 'bg-[#635BFF] text-white shadow-xs'
+              ? 'bg-[#0062FF] text-white shadow-xs'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
           }`}
         >
           <FileText className="w-4 h-4" />
           <span>2. 3-Pane Evidence Workspace</span>
           <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
-            subTab === 'evidence' ? 'bg-white/20 text-white' : 'bg-indigo-50 text-[#635BFF]'
+            subTab === 'evidence' ? 'bg-white/20 text-white' : 'bg-blue-50 text-[#0062FF]'
           }`}>
             Interactive OCR
           </span>
@@ -359,7 +359,7 @@ export function OfficerDashboard({
           onClick={() => setSubTab('comparison')}
           className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
             subTab === 'comparison'
-              ? 'bg-[#635BFF] text-white shadow-xs'
+              ? 'bg-[#0062FF] text-white shadow-xs'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
           }`}
         >
@@ -376,7 +376,7 @@ export function OfficerDashboard({
           onClick={() => setSubTab('collusion')}
           className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
             subTab === 'collusion'
-              ? 'bg-[#635BFF] text-white shadow-xs'
+              ? 'bg-[#0062FF] text-white shadow-xs'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
           }`}
         >
@@ -391,7 +391,7 @@ export function OfficerDashboard({
           onClick={() => setSubTab('ingestion')}
           className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
             subTab === 'ingestion'
-              ? 'bg-[#635BFF] text-white shadow-xs'
+              ? 'bg-[#0062FF] text-white shadow-xs'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
           }`}
         >
@@ -408,7 +408,7 @@ export function OfficerDashboard({
           onClick={() => setSubTab('adapters')}
           className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
             subTab === 'adapters'
-              ? 'bg-[#635BFF] text-white shadow-xs'
+              ? 'bg-[#0062FF] text-white shadow-xs'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
           }`}
         >
@@ -423,7 +423,7 @@ export function OfficerDashboard({
           onClick={() => setSubTab('ledger')}
           className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
             subTab === 'ledger'
-              ? 'bg-[#635BFF] text-white shadow-xs'
+              ? 'bg-[#0062FF] text-white shadow-xs'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
           }`}
         >
@@ -444,9 +444,9 @@ export function OfficerDashboard({
         <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between text-slate-500 mb-2">
             <span className="text-xs font-semibold uppercase tracking-wider">Total Bidders</span>
-            <Users className="w-4 h-4 text-indigo-500" />
+            <Users className="w-4 h-4 text-blue-500" />
           </div>
-          <div className="text-2xl font-black text-[#0A2540]">{bidders.length}</div>
+          <div className="text-2xl font-black text-[#111827]">{bidders.length}</div>
           <p className="text-[11px] text-slate-500 mt-1">Submitted bid packages for active tender</p>
         </div>
 
@@ -502,7 +502,7 @@ export function OfficerDashboard({
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search by company, GSTIN, or Bid ID..."
-                className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#635BFF] shadow-2xs"
+                className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#0062FF] shadow-2xs"
               />
             </div>
 
@@ -514,7 +514,7 @@ export function OfficerDashboard({
                   onClick={() => setTableFilter(f)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
                     tableFilter === f
-                      ? 'bg-[#635BFF] text-white shadow-2xs'
+                      ? 'bg-[#0062FF] text-white shadow-2xs'
                       : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
                   }`}
                 >
@@ -552,9 +552,9 @@ export function OfficerDashboard({
                       </td>
 
                       <td className="p-4">
-                        <div className="font-bold text-[#0A2540] text-sm">{bidder.companyName}</div>
+                        <div className="font-bold text-[#111827] text-sm">{bidder.companyName}</div>
                         <div className="text-[11px] text-slate-500 font-mono flex items-center gap-2 mt-0.5">
-                          <span className="text-[#635BFF] font-semibold">{bidder.id}</span>
+                          <span className="text-[#0062FF] font-semibold">{bidder.id}</span>
                           <span>•</span>
                           <span>GSTIN: {bidder.gstin}</span>
                         </div>
@@ -572,7 +572,7 @@ export function OfficerDashboard({
                           className="flex items-center gap-2 group text-left cursor-pointer"
                           title="Click to view mathematical scoring formula breakdown"
                         >
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs group-hover:ring-2 ring-[#635BFF]/30 transition-all ${
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs group-hover:ring-2 ring-[#0062FF]/30 transition-all ${
                             bidder.complianceScore >= 85 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
                             bidder.complianceScore >= 50 ? 'bg-amber-50 text-amber-700 border border-amber-200' :
                             'bg-rose-50 text-rose-700 border border-rose-200'
@@ -580,7 +580,7 @@ export function OfficerDashboard({
                             {bidder.complianceScore}
                           </div>
                           <div>
-                            <span className="text-[11px] text-[#635BFF] font-mono group-hover:underline block font-semibold">
+                            <span className="text-[11px] text-[#0062FF] font-mono group-hover:underline block font-semibold">
                               View Formula
                             </span>
                             <span className="text-[10px] text-slate-400 font-mono">
@@ -639,7 +639,7 @@ export function OfficerDashboard({
                               setSelectedBidderForDoc(bidder);
                               setSubTab('evidence');
                             }}
-                            className="px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-[#635BFF] text-xs font-semibold border border-indigo-100 transition-colors inline-flex items-center gap-1"
+                            className="px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#0062FF] text-xs font-semibold border border-blue-100 transition-colors inline-flex items-center gap-1"
                             title="Open 3-Pane Evidence Verification"
                           >
                             <Eye className="w-3.5 h-3.5" />
@@ -679,15 +679,15 @@ export function OfficerDashboard({
           <div className="bg-white border border-slate-200/80 rounded-2xl p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-sm">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-[#635BFF] font-mono text-xs font-bold border border-indigo-100">
+                <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-[#0062FF] font-mono text-xs font-bold border border-blue-100">
                   SECTION 7.8 SPECIFICATION
                 </span>
                 <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-mono text-xs font-semibold border border-emerald-200">
                   HUMAN-IN-THE-LOOP COGNITIVE AUDIT
                 </span>
               </div>
-              <h3 className="text-base font-bold text-[#0A2540] flex items-center gap-2">
-                <FileText className="w-5 h-5 text-[#635BFF]" />
+              <h3 className="text-base font-bold text-[#111827] flex items-center gap-2">
+                <FileText className="w-5 h-5 text-[#0062FF]" />
                 3-Pane Evidence Verification Workspace
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -705,7 +705,7 @@ export function OfficerDashboard({
                     const found = bidders.find(b => b.id === e.target.value);
                     if (found) setSelectedBidderForDoc(found);
                   }}
-                  className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-[#635BFF] font-mono shadow-2xs font-bold"
+                  className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-[#0062FF] font-mono shadow-2xs font-bold"
                 >
                   {bidders.map(b => (
                     <option key={b.id} value={b.id}>
@@ -721,7 +721,7 @@ export function OfficerDashboard({
                 <select
                   value={selectedDocType}
                   onChange={(e) => setSelectedDocType(e.target.value)}
-                  className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-[#635BFF] font-mono shadow-2xs"
+                  className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-[#0062FF] font-mono shadow-2xs"
                 >
                   <option value="CA Turnover Certificate">CA Turnover Certificate (UDIN)</option>
                   <option value="GST Certificate">GST REG-06 Certificate</option>
@@ -750,7 +750,7 @@ export function OfficerDashboard({
                 onClick={() => setShowBoundingBoxes(!showBoundingBoxes)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
                   showBoundingBoxes
-                    ? 'bg-indigo-50 text-[#635BFF] border-indigo-200 font-bold'
+                    ? 'bg-blue-50 text-[#0062FF] border-blue-200 font-bold'
                     : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                 }`}
               >
@@ -764,7 +764,7 @@ export function OfficerDashboard({
                   setIsScanningForensics(true);
                   setTimeout(() => setIsScanningForensics(false), 600);
                 }}
-                className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#635BFF] text-xs font-semibold border border-slate-200 flex items-center gap-1.5 transition-colors"
+                className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#0062FF] text-xs font-semibold border border-slate-200 flex items-center gap-1.5 transition-colors"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isScanningForensics ? 'animate-spin' : ''}`} />
                 Re-Scan
@@ -783,7 +783,7 @@ export function OfficerDashboard({
                     <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
                       Pane 1: Original Document PDF
                     </span>
-                    <span className="text-[10px] font-mono text-[#635BFF] bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
+                    <span className="text-[10px] font-mono text-[#0062FF] bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
                       Page 1 of 2
                     </span>
                   </div>
@@ -821,7 +821,7 @@ export function OfficerDashboard({
 
                     <div className="p-2.5 bg-white rounded-lg border border-slate-200 shadow-2xs">
                       <span className="text-slate-400 block text-[10px]">Legal Entity Name:</span>
-                      <div className="text-[#0A2540] font-bold">{selectedBidderForDoc?.companyName}</div>
+                      <div className="text-[#111827] font-bold">{selectedBidderForDoc?.companyName}</div>
                     </div>
 
                     {/* Bounding box highlighted token */}
@@ -829,13 +829,13 @@ export function OfficerDashboard({
                       showBoundingBoxes
                         ? forensicHeatmapMode
                           ? 'bg-rose-100/70 border-rose-500 shadow-sm animate-pulse'
-                          : 'bg-indigo-50/70 border-indigo-300 ring-2 ring-indigo-200/50'
+                          : 'bg-blue-50/70 border-indigo-300 ring-2 ring-blue-200/50'
                         : 'bg-white border-slate-200'
                     }`}>
-                      <span className="text-[#635BFF] font-bold text-[10px] block">Extracted Identifier (GSTIN):</span>
+                      <span className="text-[#0062FF] font-bold text-[10px] block">Extracted Identifier (GSTIN):</span>
                       <div className="text-indigo-950 font-bold font-mono">{selectedBidderForDoc?.gstin}</div>
                       {showBoundingBoxes && (
-                        <span className="absolute right-2 top-2 text-[9px] font-mono text-[#635BFF] bg-white px-1.5 py-0.5 rounded border border-indigo-200">
+                        <span className="absolute right-2 top-2 text-[9px] font-mono text-[#0062FF] bg-white px-1.5 py-0.5 rounded border border-blue-200">
                           bbox [120, 340, 480, 420]
                         </span>
                       )}
@@ -884,7 +884,7 @@ export function OfficerDashboard({
                 <div className="bg-slate-50/70 border border-slate-200 rounded-xl p-4 font-mono text-xs space-y-2.5 text-slate-700">
                   <div className="flex items-center justify-between pb-1.5 border-b border-slate-200 text-[11px]">
                     <span className="text-slate-500">Extraction Model:</span>
-                    <span className="text-[#635BFF] font-semibold">PaddleOCR-v4 + LayoutLM-v3</span>
+                    <span className="text-[#0062FF] font-semibold">PaddleOCR-v4 + LayoutLM-v3</span>
                   </div>
 
                   <div className="space-y-1.5 text-[11px]">
@@ -894,7 +894,7 @@ export function OfficerDashboard({
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-400">gstin_string:</span>
-                      <span className="text-[#635BFF] font-bold">"{selectedBidderForDoc?.gstin}"</span>
+                      <span className="text-[#0062FF] font-bold">"{selectedBidderForDoc?.gstin}"</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-400">pan_number:</span>
@@ -916,7 +916,7 @@ export function OfficerDashboard({
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-400">calculated_score:</span>
-                      <span className="font-bold text-[#0A2540]">{selectedBidderForDoc?.complianceScore} / 100</span>
+                      <span className="font-bold text-[#111827]">{selectedBidderForDoc?.complianceScore} / 100</span>
                     </div>
                   </div>
 
@@ -950,7 +950,7 @@ export function OfficerDashboard({
                 <div className="bg-slate-50/70 border border-slate-200 rounded-xl p-4 font-mono text-xs space-y-2.5">
                   <div className="flex items-center justify-between pb-1.5 border-b border-slate-200 text-[11px]">
                     <span className="text-slate-500">Adapter Gateway:</span>
-                    <span className="text-[#635BFF] font-semibold">NIC / GSTN Portal Fabric</span>
+                    <span className="text-[#0062FF] font-semibold">NIC / GSTN Portal Fabric</span>
                   </div>
 
                   <div className="space-y-1.5 text-[11px]">
@@ -970,7 +970,7 @@ export function OfficerDashboard({
 
                     <div className="flex justify-between items-center">
                       <span className="text-slate-500">Udyam Verification:</span>
-                      <span className="text-indigo-700 font-semibold">
+                      <span className="text-blue-700 font-semibold">
                         {selectedBidderForDoc?.portalMatch.udyam}
                       </span>
                     </div>
@@ -1015,7 +1015,7 @@ export function OfficerDashboard({
                 value={decisionNotes}
                 onChange={(e) => setDecisionNotes(e.target.value)}
                 placeholder="Enter mandatory legal rationale or override reason to seal into SHA-256 ledger..."
-                className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#635BFF]"
+                className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#0062FF]"
               />
             </div>
 
@@ -1064,8 +1064,8 @@ export function OfficerDashboard({
           
           <div className="bg-white border border-slate-200/80 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
             <div>
-              <h3 className="text-base font-bold text-[#0A2540] flex items-center gap-2">
-                <Layers className="w-5 h-5 text-[#635BFF]" />
+              <h3 className="text-base font-bold text-[#111827] flex items-center gap-2">
+                <Layers className="w-5 h-5 text-[#0062FF]" />
                 Side-by-Side Head-to-Head Statutory Comparison Matrix
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -1081,7 +1081,7 @@ export function OfficerDashboard({
                   onClick={() => toggleBidderComparison(b.id)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-mono font-semibold transition-all ${
                     comparedBidderIds.includes(b.id)
-                      ? 'bg-[#635BFF] text-white font-bold shadow-xs'
+                      ? 'bg-[#0062FF] text-white font-bold shadow-xs'
                       : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
                   }`}
                 >
@@ -1105,7 +1105,7 @@ export function OfficerDashboard({
                       .map(b => (
                         <th key={b.id} className="p-4 border-l border-slate-200 min-w-[260px]">
                           <div className="flex items-center justify-between mb-1">
-                            <span className="font-mono text-[#635BFF] font-bold text-sm">{b.id}</span>
+                            <span className="font-mono text-[#0062FF] font-bold text-sm">{b.id}</span>
                             <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${
                               b.aiRecommendation === 'QUALIFIED' 
                                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
@@ -1116,7 +1116,7 @@ export function OfficerDashboard({
                               {b.aiRecommendation}
                             </span>
                           </div>
-                          <div className="font-bold text-[#0A2540] text-xs truncate">{b.companyName}</div>
+                          <div className="font-bold text-[#111827] text-xs truncate">{b.companyName}</div>
                           <div className="text-[11px] text-slate-500 font-mono">{b.gstin}</div>
                         </th>
                       ))}
@@ -1127,7 +1127,7 @@ export function OfficerDashboard({
                   
                   {/* Row: Score */}
                   <tr className="hover:bg-slate-50/50">
-                    <td className="p-4 font-bold text-[#0A2540] bg-slate-50/40 sticky left-0">
+                    <td className="p-4 font-bold text-[#111827] bg-slate-50/40 sticky left-0">
                       AI Compliance Score
                     </td>
                     {bidders.filter(b => comparedBidderIds.includes(b.id)).map(b => (
@@ -1159,7 +1159,7 @@ export function OfficerDashboard({
                     {bidders.filter(b => comparedBidderIds.includes(b.id)).map(b => (
                       <td key={b.id} className="p-4 border-l border-slate-100">
                         <div className="font-medium text-slate-800">{b.type}</div>
-                        <div className="text-[11px] text-[#635BFF] font-mono mt-0.5">{b.udyam}</div>
+                        <div className="text-[11px] text-[#0062FF] font-mono mt-0.5">{b.udyam}</div>
                       </td>
                     ))}
                   </tr>
@@ -1229,7 +1229,7 @@ export function OfficerDashboard({
                             setSelectedBidderForDoc(b);
                             setSubTab('evidence');
                           }}
-                          className="w-full py-2 px-3 rounded-xl bg-[#635BFF] hover:bg-[#5349DF] text-white font-bold text-xs shadow-xs flex items-center justify-center gap-1.5 transition-colors"
+                          className="w-full py-2 px-3 rounded-xl bg-[#0062FF] hover:bg-[#0050D4] text-white font-bold text-xs shadow-xs flex items-center justify-center gap-1.5 transition-colors"
                         >
                           <Eye className="w-3.5 h-3.5" />
                           Launch 3-Pane Evidence
@@ -1262,7 +1262,7 @@ export function OfficerDashboard({
                   BIPARTITE GRAPH PROJECTION
                 </span>
               </div>
-              <h3 className="text-lg font-bold text-[#0A2540] flex items-center gap-2">
+              <h3 className="text-lg font-bold text-[#111827] flex items-center gap-2">
                 <Network className="w-5 h-5 text-amber-500" />
                 Cartel, Syndicate & Collusive Bidding Detection Network (NetworkX)
               </h3>
@@ -1289,12 +1289,12 @@ export function OfficerDashboard({
           {/* Interactive Visual Network Canvas */}
           <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4 text-xs">
-              <span className="font-bold text-[#0A2540] uppercase tracking-wider flex items-center gap-2">
-                <Activity className="w-4 h-4 text-[#635BFF]" />
+              <span className="font-bold text-[#111827] uppercase tracking-wider flex items-center gap-2">
+                <Activity className="w-4 h-4 text-[#0062FF]" />
                 Interactive Entity Relationship Canvas
               </span>
               <div className="flex items-center gap-4 text-[11px] font-mono">
-                <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-[#635BFF]"></span> Bidder Node</span>
+                <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-[#0062FF]"></span> Bidder Node</span>
                 <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-amber-500"></span> Shared DIN Token</span>
                 <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-rose-500 animate-pulse"></span> Collusion Cluster</span>
               </div>
@@ -1364,7 +1364,7 @@ export function OfficerDashboard({
                   onClick={() => setSelectedGraphNode({ name: 'Vayu Dynamics Ltd', type: 'Bidder', status: 'ISOLATED_CLEAN', risk: 'Low (0.08)' })}
                   className="p-4 bg-white border-2 border-slate-300 rounded-2xl text-center shadow-xs cursor-pointer hover:scale-105 transition-transform"
                 >
-                  <span className="text-[10px] font-mono text-[#635BFF] font-bold block">BID-8902</span>
+                  <span className="text-[10px] font-mono text-[#0062FF] font-bold block">BID-8902</span>
                   <span className="text-xs font-bold text-slate-800">Vayu Dynamics Ltd</span>
                   <span className="text-[10px] text-slate-500 block mt-1">Independent Entity</span>
                 </div>
@@ -1375,7 +1375,7 @@ export function OfficerDashboard({
               {selectedGraphNode && (
                 <div className="w-full max-w-xl mt-4 p-4 bg-white border border-slate-200 rounded-2xl shadow-sm flex items-center justify-between text-xs animate-in fade-in duration-200">
                   <div>
-                    <span className="font-bold text-[#0A2540]">{selectedGraphNode.name}</span>
+                    <span className="font-bold text-[#111827]">{selectedGraphNode.name}</span>
                     <div className="text-slate-500 font-mono text-[11px] mt-0.5">
                       Status: <strong className={selectedGraphNode.status.includes('FLAGGED') ? 'text-rose-700' : 'text-emerald-700'}>{selectedGraphNode.status}</strong> • Risk Score: {selectedGraphNode.risk}
                     </div>
@@ -1404,7 +1404,7 @@ export function OfficerDashboard({
               {bidders.filter(b => b.collusionAlert).map(b => (
                 <div key={b.id} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
                   <div>
-                    <div className="font-bold text-[#0A2540] text-sm">{b.companyName}</div>
+                    <div className="font-bold text-[#111827] text-sm">{b.companyName}</div>
                     <div className="text-xs text-slate-500 font-mono mt-0.5">
                       {b.id} • GSTIN: {b.gstin} • Director DIN shared with competing bidder (GreenVolt Power)
                     </div>
@@ -1433,15 +1433,15 @@ export function OfficerDashboard({
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-[#635BFF] font-mono text-xs font-bold border border-indigo-100">
+                  <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-[#0062FF] font-mono text-xs font-bold border border-blue-100">
                     SECTION 7.1 SPECIFICATION
                   </span>
                   <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-mono text-xs font-semibold border border-emerald-200">
                     AUTONOMOUS NLP RULE PARSER
                   </span>
                 </div>
-                <h3 className="text-base font-bold text-[#0A2540] flex items-center gap-2">
-                  <Sliders className="w-5 h-5 text-[#635BFF]" />
+                <h3 className="text-base font-bold text-[#111827] flex items-center gap-2">
+                  <Sliders className="w-5 h-5 text-[#0062FF]" />
                   Tender Ingestion & Mandatory Rule Checklist Studio
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
@@ -1455,7 +1455,7 @@ export function OfficerDashboard({
                   setCreateStep(1);
                   setShowCreateModal(true);
                 }}
-                className="px-4 py-2 rounded-xl bg-[#635BFF] hover:bg-[#5349DF] text-white font-bold text-xs shadow-xs flex items-center gap-2 transition-colors"
+                className="px-4 py-2 rounded-xl bg-[#0062FF] hover:bg-[#0050D4] text-white font-bold text-xs shadow-xs flex items-center gap-2 transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 Launch NIT Ingestion Wizard
@@ -1467,13 +1467,13 @@ export function OfficerDashboard({
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
                   <span className="text-slate-400 block text-[10px] uppercase font-bold">Estimated Tender Value</span>
-                  <span className="text-lg font-black text-[#0A2540]">{activeTender.estimatedValue}</span>
+                  <span className="text-lg font-black text-[#111827]">{activeTender.estimatedValue}</span>
                   <span className="text-[11px] text-slate-500 block mt-0.5">EMD: {activeTender.emdAmount}</span>
                 </div>
 
                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
                   <span className="text-slate-400 block text-[10px] uppercase font-bold">Minimum Turnover Threshold</span>
-                  <span className="text-lg font-black text-[#635BFF]">30% of contract (₹1.25 Cr)</span>
+                  <span className="text-lg font-black text-[#0062FF]">30% of contract (₹1.25 Cr)</span>
                   <span className="text-[11px] text-slate-500 block mt-0.5">Last 3 Financial Years</span>
                 </div>
 
@@ -1488,10 +1488,10 @@ export function OfficerDashboard({
               <div className="p-5 bg-white border border-slate-200 rounded-xl space-y-4">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-800">
                   <span className="flex items-center gap-2">
-                    <Scale className="w-4 h-4 text-[#635BFF]" />
+                    <Scale className="w-4 h-4 text-[#0062FF]" />
                     Configured Technical Scoring Weightages ($\sum w_i = 100$):
                   </span>
-                  <span className="font-mono text-[#635BFF] bg-indigo-50 px-2.5 py-0.5 rounded border border-indigo-100">
+                  <span className="font-mono text-[#0062FF] bg-blue-50 px-2.5 py-0.5 rounded border border-blue-100">
                     Normalized: 100%
                   </span>
                 </div>
@@ -1500,40 +1500,40 @@ export function OfficerDashboard({
                   <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
                     <div className="flex justify-between font-bold text-slate-700 mb-1">
                       <span>Turnover Weight ($w_1$)</span>
-                      <span className="text-[#635BFF]">30%</span>
+                      <span className="text-[#0062FF]">30%</span>
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                      <div className="bg-[#635BFF] h-1.5 rounded-full" style={{ width: '30%' }}></div>
+                      <div className="bg-[#0062FF] h-1.5 rounded-full" style={{ width: '30%' }}></div>
                     </div>
                   </div>
 
                   <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
                     <div className="flex justify-between font-bold text-slate-700 mb-1">
                       <span>Experience Weight ($w_2$)</span>
-                      <span className="text-[#635BFF]">30%</span>
+                      <span className="text-[#0062FF]">30%</span>
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                      <div className="bg-[#635BFF] h-1.5 rounded-full" style={{ width: '30%' }}></div>
+                      <div className="bg-[#0062FF] h-1.5 rounded-full" style={{ width: '30%' }}></div>
                     </div>
                   </div>
 
                   <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
                     <div className="flex justify-between font-bold text-slate-700 mb-1">
                       <span>Make in India ($w_3$)</span>
-                      <span className="text-[#635BFF]">20%</span>
+                      <span className="text-[#0062FF]">20%</span>
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                      <div className="bg-[#635BFF] h-1.5 rounded-full" style={{ width: '20%' }}></div>
+                      <div className="bg-[#0062FF] h-1.5 rounded-full" style={{ width: '20%' }}></div>
                     </div>
                   </div>
 
                   <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
                     <div className="flex justify-between font-bold text-slate-700 mb-1">
                       <span>Certificates ($w_4$)</span>
-                      <span className="text-[#635BFF]">20%</span>
+                      <span className="text-[#0062FF]">20%</span>
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                      <div className="bg-[#635BFF] h-1.5 rounded-full" style={{ width: '20%' }}></div>
+                      <div className="bg-[#0062FF] h-1.5 rounded-full" style={{ width: '20%' }}></div>
                     </div>
                   </div>
                 </div>
@@ -1566,14 +1566,14 @@ export function OfficerDashboard({
           <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-1.5">
-                <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-[#635BFF] font-mono text-xs font-bold border border-indigo-100">
+                <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-[#0062FF] font-mono text-xs font-bold border border-blue-100">
                   SECTION 7.5 SPECIFICATION
                 </span>
                 <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-mono text-xs font-semibold border border-emerald-200">
                   5/5 ADAPTERS ONLINE
                 </span>
               </div>
-              <h3 className="text-base font-bold text-[#0A2540]">
+              <h3 className="text-base font-bold text-[#111827]">
                 Government Portal Adapter Fabric & Real-time Resilience Gateway
               </h3>
               <p className="text-xs text-slate-500 mt-0.5 max-w-2xl leading-relaxed">
@@ -1588,7 +1588,7 @@ export function OfficerDashboard({
               }}
               className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold border border-slate-200 flex items-center gap-2 transition-colors"
             >
-              <RefreshCw className="w-4 h-4 text-[#635BFF]" />
+              <RefreshCw className="w-4 h-4 text-[#0062FF]" />
               Health Ping All Gateways
             </button>
           </div>
@@ -1597,7 +1597,7 @@ export function OfficerDashboard({
             {adapterHealth.map((adapter, i) => (
               <div key={i} className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-[#0A2540] text-sm">{adapter.name}</span>
+                  <span className="font-bold text-[#111827] text-sm">{adapter.name}</span>
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                     {adapter.status}
                   </span>
@@ -1628,7 +1628,7 @@ export function OfficerDashboard({
           {/* Fallback & Resilience Note */}
           <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-600 flex items-center justify-between">
             <span className="flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-[#635BFF]" />
+              <ShieldCheck className="w-4 h-4 text-[#0062FF]" />
               <strong>Circuit Breaker Status:</strong> Closed (Normal). If any portal has high latency, system gracefully serves verified 24h Redis snapshot without stalling evaluation.
             </span>
             <span className="font-mono font-bold text-slate-500">Zero Downtime Guarantee</span>
@@ -1645,15 +1645,15 @@ export function OfficerDashboard({
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
             <div>
               <div className="flex items-center gap-2 mb-1.5">
-                <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-[#635BFF] font-mono text-xs font-bold border border-indigo-100">
+                <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-[#0062FF] font-mono text-xs font-bold border border-blue-100">
                   SECTION 7.9 SPECIFICATION
                 </span>
                 <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-mono text-xs font-semibold border border-emerald-200">
                   APPEND-ONLY IMMUTABLE LEDGER
                 </span>
               </div>
-              <h3 className="text-base font-bold text-[#0A2540] flex items-center gap-2">
-                <Database className="w-5 h-5 text-[#635BFF]" />
+              <h3 className="text-base font-bold text-[#111827] flex items-center gap-2">
+                <Database className="w-5 h-5 text-[#0062FF]" />
                 Cryptographic Append-Only Audit Ledger (SHA-256 Hash Chain)
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -1666,7 +1666,7 @@ export function OfficerDashboard({
                 type="button"
                 onClick={handleVerifyLedgerChain}
                 disabled={isVerifyingChain}
-                className="px-4 py-2 rounded-xl bg-[#635BFF] hover:bg-[#5349DF] text-white text-xs font-semibold shadow-xs flex items-center gap-2 transition-colors disabled:opacity-50"
+                className="px-4 py-2 rounded-xl bg-[#0062FF] hover:bg-[#0050D4] text-white text-xs font-semibold shadow-xs flex items-center gap-2 transition-colors disabled:opacity-50"
               >
                 <ShieldCheck className="w-4 h-4" />
                 {isVerifyingChain ? 'Computing Hashes...' : 'Verify Chain Mathematical Integrity'}
@@ -1676,7 +1676,7 @@ export function OfficerDashboard({
                 onClick={() => alert('Generating CAG-Compliant Audit Certificate PDF stamped with Merkle Root hash...')}
                 className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold border border-slate-200 flex items-center gap-2 transition-colors"
               >
-                <Download className="w-4 h-4 text-[#635BFF]" />
+                <Download className="w-4 h-4 text-[#0062FF]" />
                 Export CAG Certificate (PDF)
               </button>
             </div>
@@ -1700,10 +1700,10 @@ export function OfficerDashboard({
 
           <div className="space-y-3 font-mono text-xs">
             {auditLedger.map((block, i) => (
-              <div key={i} className="p-4 rounded-xl bg-slate-50 border border-slate-200 hover:border-indigo-200 transition-colors">
+              <div key={i} className="p-4 rounded-xl bg-slate-50 border border-slate-200 hover:border-blue-200 transition-colors">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-200/60 mb-2">
                   <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded bg-indigo-50 text-[#635BFF] font-bold text-[11px] border border-indigo-100">
+                    <span className="px-2 py-0.5 rounded bg-blue-50 text-[#0062FF] font-bold text-[11px] border border-blue-100">
                       Block #{block.blockIndex}
                     </span>
                     <span className="font-bold text-slate-800">{block.actionType}</span>
@@ -1741,10 +1741,10 @@ export function OfficerDashboard({
             
             <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div>
-                <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-[#635BFF] font-mono text-[10px] font-bold border border-indigo-100">
+                <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-[#0062FF] font-mono text-[10px] font-bold border border-blue-100">
                   SECTION 7.6 MATHEMATICAL FORMULATION
                 </span>
-                <h3 className="text-base font-black text-[#0A2540] mt-1">
+                <h3 className="text-base font-black text-[#111827] mt-1">
                   Explainable Compliance Score Calculation: {scoreBreakdownBidder.companyName}
                 </h3>
               </div>
@@ -1759,7 +1759,7 @@ export function OfficerDashboard({
               {/* Formula Card */}
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl font-mono text-center">
                 <span className="text-slate-400 block text-[10px] uppercase font-bold mb-1">Mathematical Engine Equation</span>
-                <div className="text-base font-bold text-[#0A2540]">
+                <div className="text-base font-bold text-[#111827]">
                   Score_final = I_gating × ∑ (w_i · C_i)
                 </div>
                 <p className="text-[11px] text-slate-500 mt-1 font-sans">
@@ -1785,7 +1785,7 @@ export function OfficerDashboard({
                     <span className="font-bold text-slate-700">1. Financial Turnover Compliance (w_1 = 30%)</span>
                     <span className="text-[10px] text-slate-500 block">Exemption applied: {scoreBreakdownBidder.exemptionStatus}</span>
                   </div>
-                  <span className="font-mono font-bold text-[#635BFF]">28.2 / 30 pts</span>
+                  <span className="font-mono font-bold text-[#0062FF]">28.2 / 30 pts</span>
                 </div>
 
                 <div className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
@@ -1793,7 +1793,7 @@ export function OfficerDashboard({
                     <span className="font-bold text-slate-700">2. Past Technical Experience (w_2 = 30%)</span>
                     <span className="text-[10px] text-slate-500 block">3 Completed projects verified</span>
                   </div>
-                  <span className="font-mono font-bold text-[#635BFF]">27.8 / 30 pts</span>
+                  <span className="font-mono font-bold text-[#0062FF]">27.8 / 30 pts</span>
                 </div>
 
                 <div className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
@@ -1801,7 +1801,7 @@ export function OfficerDashboard({
                     <span className="font-bold text-slate-700">3. Make in India Local Content (w_3 = 20%)</span>
                     <span className="text-[10px] text-slate-500 block">{scoreBreakdownBidder.type}</span>
                   </div>
-                  <span className="font-mono font-bold text-[#635BFF]">19.5 / 20 pts</span>
+                  <span className="font-mono font-bold text-[#0062FF]">19.5 / 20 pts</span>
                 </div>
 
                 <div className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
@@ -1809,14 +1809,14 @@ export function OfficerDashboard({
                     <span className="font-bold text-slate-700">4. Statutory Registry Verification (w_4 = 20%)</span>
                     <span className="text-[10px] text-slate-500 block">GSTN, MCA21, Udyam, Debarment</span>
                   </div>
-                  <span className="font-mono font-bold text-[#635BFF]">18.5 / 20 pts</span>
+                  <span className="font-mono font-bold text-[#0062FF]">18.5 / 20 pts</span>
                 </div>
               </div>
 
               {/* Final Sum */}
-              <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl flex items-center justify-between font-bold">
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between font-bold">
                 <span className="text-indigo-950">Aggregated Total Compliance Score:</span>
-                <span className="text-lg font-mono text-[#635BFF]">{scoreBreakdownBidder.complianceScore} / 100</span>
+                <span className="text-lg font-mono text-[#0062FF]">{scoreBreakdownBidder.complianceScore} / 100</span>
               </div>
 
             </div>
@@ -1846,7 +1846,7 @@ export function OfficerDashboard({
                 <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 font-mono text-[10px] font-bold border border-amber-200">
                   GeM CLAUSE 4.2 SHORTFALL NOTICE
                 </span>
-                <h3 className="text-base font-black text-[#0A2540] mt-1">
+                <h3 className="text-base font-black text-[#111827] mt-1">
                   Issue Shortfall Notice to {shortfallBidder.companyName}
                 </h3>
               </div>
@@ -1876,7 +1876,7 @@ export function OfficerDashboard({
                       rows={3}
                       value={shortfallNoticeText}
                       onChange={(e) => setShortfallNoticeText(e.target.value)}
-                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-[#635BFF]"
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-[#0062FF]"
                     />
                   </div>
 
@@ -1932,10 +1932,10 @@ export function OfficerDashboard({
             
             <div className="p-6 border-b border-slate-100 flex items-start justify-between bg-slate-50/50">
               <div>
-                <span className="px-3 py-1 rounded-full bg-indigo-50 text-[#635BFF] font-mono text-xs font-semibold border border-indigo-100">
+                <span className="px-3 py-1 rounded-full bg-blue-50 text-[#0062FF] font-mono text-xs font-semibold border border-blue-100">
                   Tender Ingestion & Rule Checklist Studio (Sec 7.1)
                 </span>
-                <h3 className="text-lg font-black text-[#0A2540] mt-2">
+                <h3 className="text-lg font-black text-[#111827] mt-2">
                   Create New Bid / Ingest NIT Specification Document
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
@@ -1955,24 +1955,24 @@ export function OfficerDashboard({
             <div className="p-6 overflow-y-auto space-y-5 flex-1">
               
               <div className="flex items-center justify-between text-xs font-semibold">
-                <span className={createStep >= 1 ? 'text-[#635BFF]' : 'text-slate-400'}>1. Upload NIT PDF</span>
+                <span className={createStep >= 1 ? 'text-[#0062FF]' : 'text-slate-400'}>1. Upload NIT PDF</span>
                 <span className="text-slate-300">→</span>
-                <span className={createStep >= 2 ? 'text-[#635BFF]' : 'text-slate-400'}>2. AI NLP Extraction</span>
+                <span className={createStep >= 2 ? 'text-[#0062FF]' : 'text-slate-400'}>2. AI NLP Extraction</span>
                 <span className="text-slate-300">→</span>
-                <span className={createStep >= 3 ? 'text-[#635BFF]' : 'text-slate-400'}>3. Checklist & Gate Rules</span>
+                <span className={createStep >= 3 ? 'text-[#0062FF]' : 'text-slate-400'}>3. Checklist & Gate Rules</span>
               </div>
 
               {createStep === 1 && (
                 <div className="space-y-4">
                   <div 
                     onClick={handleSimulateParsing}
-                    className="border-2 border-dashed border-indigo-200 hover:border-[#635BFF] rounded-2xl p-8 text-center cursor-pointer bg-slate-50/50 hover:bg-indigo-50/30 transition-all"
+                    className="border-2 border-dashed border-blue-200 hover:border-[#0062FF] rounded-2xl p-8 text-center cursor-pointer bg-slate-50/50 hover:bg-blue-50/30 transition-all"
                   >
-                    <UploadCloud className="w-10 h-10 text-[#635BFF] mx-auto mb-2" />
-                    <h4 className="text-sm font-bold text-[#0A2540]">Click or drag NIT / RFP document here</h4>
+                    <UploadCloud className="w-10 h-10 text-[#0062FF] mx-auto mb-2" />
+                    <h4 className="text-sm font-bold text-[#111827]">Click or drag NIT / RFP document here</h4>
                     <p className="text-xs text-slate-500 mt-1">Accepted: PDF up to 50MB (GeM Standard NIT / CPPP RFP)</p>
                     <div className="mt-4">
-                      <span className="px-3.5 py-1.5 rounded-xl bg-indigo-50 text-[#635BFF] text-xs font-bold border border-indigo-200">
+                      <span className="px-3.5 py-1.5 rounded-xl bg-blue-50 text-[#0062FF] text-xs font-bold border border-blue-200">
                         ⚡ Click to Auto-Load Sample 100MW Solar NIT Document
                       </span>
                     </div>
@@ -1982,28 +1982,28 @@ export function OfficerDashboard({
                     <div className="font-bold text-slate-700">Preset Detected NIT Parameters:</div>
                     <div className="text-slate-600">Title: <span className="text-slate-900 font-semibold">{newTenderData.title}</span></div>
                     <div className="text-slate-600">Authority: <span className="text-slate-900 font-semibold">{newTenderData.organisation}</span></div>
-                    <div className="text-slate-600">Est. Value: <span className="text-[#635BFF] font-mono font-bold">{newTenderData.estimatedValue}</span></div>
+                    <div className="text-slate-600">Est. Value: <span className="text-[#0062FF] font-mono font-bold">{newTenderData.estimatedValue}</span></div>
                   </div>
                 </div>
               )}
 
               {createStep === 2 && (
                 <div className="py-8 space-y-4 text-center">
-                  <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-[#635BFF] flex items-center justify-center mx-auto animate-spin">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-50 text-[#0062FF] flex items-center justify-center mx-auto animate-spin">
                     <Sparkles className="w-6 h-6" />
                   </div>
-                  <h4 className="text-sm font-bold text-[#0A2540]">PyMuPDF & AI Extraction In Progress...</h4>
+                  <h4 className="text-sm font-bold text-[#111827]">PyMuPDF & AI Extraction In Progress...</h4>
                   <p className="text-xs text-slate-500 max-w-sm mx-auto">
                     Scanning contract clauses, financial turnover equations, Make-in-India percentages, and statutory certificates manifest.
                   </p>
 
                   <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200">
                     <div 
-                      className="bg-[#635BFF] h-2 rounded-full transition-all duration-300"
+                      className="bg-[#0062FF] h-2 rounded-full transition-all duration-300"
                       style={{ width: `${parsingProgress}%` }}
                     />
                   </div>
-                  <span className="text-xs font-mono text-[#635BFF] font-bold">{parsingProgress}% completed</span>
+                  <span className="text-xs font-mono text-[#0062FF] font-bold">{parsingProgress}% completed</span>
                 </div>
               )}
 
@@ -2025,7 +2025,7 @@ export function OfficerDashboard({
                         type="text"
                         value={newTenderData.title}
                         onChange={(e) => setNewTenderData({ ...newTenderData, title: e.target.value })}
-                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-[#635BFF]"
+                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-[#0062FF]"
                       />
                     </div>
 
@@ -2058,7 +2058,7 @@ export function OfficerDashboard({
                     <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
                       <div className="flex items-center justify-between text-xs font-bold text-slate-800">
                         <span>Technical Scoring Weightages (Normalized $\sum w_i = 100$):</span>
-                        <span className="font-mono text-[#635BFF]">100% Total</span>
+                        <span className="font-mono text-[#0062FF]">100% Total</span>
                       </div>
                       <div className="grid grid-cols-2 gap-2 text-xs text-slate-600">
                         <div>Turnover: {newTenderData.turnoverWeightage}%</div>
@@ -2076,7 +2076,7 @@ export function OfficerDashboard({
                           type="checkbox" 
                           checked={newTenderData.allowMsmeExemption}
                           onChange={(e) => setNewTenderData({ ...newTenderData, allowMsmeExemption: e.target.checked })}
-                          className="rounded text-[#635BFF] focus:ring-0" 
+                          className="rounded text-[#0062FF] focus:ring-0" 
                         />
                       </label>
                       <label className="flex items-center justify-between text-xs text-slate-700 cursor-pointer">
@@ -2085,7 +2085,7 @@ export function OfficerDashboard({
                           type="checkbox" 
                           checked={newTenderData.allowStartupExemption}
                           onChange={(e) => setNewTenderData({ ...newTenderData, allowStartupExemption: e.target.checked })}
-                          className="rounded text-[#635BFF] focus:ring-0" 
+                          className="rounded text-[#0062FF] focus:ring-0" 
                         />
                       </label>
                     </div>
@@ -2097,7 +2097,7 @@ export function OfficerDashboard({
                       <div className="space-y-1.5">
                         {newTenderData.mandatoryDocs.map((doc, idx) => (
                           <div key={idx} className="flex items-center gap-2 p-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-700">
-                            <Check className="w-3.5 h-3.5 text-[#635BFF]" />
+                            <Check className="w-3.5 h-3.5 text-[#0062FF]" />
                             <span>{doc}</span>
                           </div>
                         ))}
@@ -2122,7 +2122,7 @@ export function OfficerDashboard({
                 <button
                   type="button"
                   onClick={handlePublishNewTender}
-                  className="px-6 py-2.5 rounded-xl bg-[#635BFF] hover:bg-[#5349DF] text-white font-bold text-xs shadow-sm flex items-center gap-2"
+                  className="px-6 py-2.5 rounded-xl bg-[#0062FF] hover:bg-[#0050D4] text-white font-bold text-xs shadow-sm flex items-center gap-2"
                 >
                   <ShieldCheck className="w-4 h-4" />
                   Sign with DSC & Publish Tender
@@ -2131,7 +2131,7 @@ export function OfficerDashboard({
                 <button
                   type="button"
                   onClick={handleSimulateParsing}
-                  className="px-6 py-2.5 rounded-xl bg-[#635BFF] hover:bg-[#5349DF] text-white font-bold text-xs shadow-sm flex items-center gap-2"
+                  className="px-6 py-2.5 rounded-xl bg-[#0062FF] hover:bg-[#0050D4] text-white font-bold text-xs shadow-sm flex items-center gap-2"
                 >
                   Parse NIT & Continue
                   <ArrowRight className="w-4 h-4" />
@@ -2153,7 +2153,7 @@ export function OfficerDashboard({
             <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-amber-50/50">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-amber-600" />
-                <h3 className="text-base font-bold text-[#0A2540]">
+                <h3 className="text-base font-bold text-[#111827]">
                   Cartel Ring Analysis: {collusionBidder.companyName}
                 </h3>
               </div>
@@ -2179,8 +2179,8 @@ export function OfficerDashboard({
               {/* Visual Nodes Simulation */}
               <div className="bg-slate-50 border border-slate-200 rounded-2xl p-8 flex flex-col items-center justify-center space-y-6">
                 <div className="flex items-center gap-8 flex-wrap justify-center">
-                  <div className="p-4 bg-white border-2 border-[#635BFF] rounded-2xl text-center shadow-xs">
-                    <span className="text-[10px] font-mono text-[#635BFF] font-bold block">{collusionBidder.id}</span>
+                  <div className="p-4 bg-white border-2 border-[#0062FF] rounded-2xl text-center shadow-xs">
+                    <span className="text-[10px] font-mono text-[#0062FF] font-bold block">{collusionBidder.id}</span>
                     <span className="text-xs font-bold text-slate-800">{collusionBidder.companyName}</span>
                   </div>
 
@@ -2221,11 +2221,11 @@ export function OfficerDashboard({
           
           <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-indigo-50 text-[#635BFF] flex items-center justify-center font-bold">
+              <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#0062FF] flex items-center justify-center font-bold">
                 <Bot className="w-4 h-4" />
               </div>
               <div>
-                <h4 className="text-xs font-bold text-[#0A2540]">PRAMAN AI Officer Co-Pilot</h4>
+                <h4 className="text-xs font-bold text-[#111827]">PRAMAN AI Officer Co-Pilot</h4>
                 <p className="text-[10px] text-emerald-700 font-mono">Air-Gapped Sovereign RAG (Llama-3)</p>
               </div>
             </div>
@@ -2242,7 +2242,7 @@ export function OfficerDashboard({
               <div key={i} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`p-3 rounded-2xl max-w-[85%] leading-relaxed ${
                   msg.sender === 'user'
-                    ? 'bg-[#635BFF] text-white rounded-br-none shadow-2xs'
+                    ? 'bg-[#0062FF] text-white rounded-br-none shadow-2xs'
                     : 'bg-white border border-slate-200 text-slate-800 rounded-bl-none font-mono text-[11px] shadow-2xs'
                 }`}>
                   {msg.text}
@@ -2255,19 +2255,19 @@ export function OfficerDashboard({
           <div className="p-2 bg-white border-t border-slate-100 flex items-center gap-1.5 overflow-x-auto text-[10px]">
             <button
               onClick={() => handleSendChat('Is Solarix eligible for MSME waiver?')}
-              className="px-2 py-1 rounded bg-slate-100 text-[#635BFF] border border-slate-200 whitespace-nowrap hover:bg-slate-200 font-medium"
+              className="px-2 py-1 rounded bg-slate-100 text-[#0062FF] border border-slate-200 whitespace-nowrap hover:bg-slate-200 font-medium"
             >
               MSME Waiver Check?
             </button>
             <button
               onClick={() => handleSendChat('Why was Apex flagged for collusion?')}
-              className="px-2 py-1 rounded bg-slate-100 text-[#635BFF] border border-slate-200 whitespace-nowrap hover:bg-slate-200 font-medium"
+              className="px-2 py-1 rounded bg-slate-100 text-[#0062FF] border border-slate-200 whitespace-nowrap hover:bg-slate-200 font-medium"
             >
               Apex Collusion Ring?
             </button>
             <button
               onClick={() => handleSendChat('Show Photoshop tampering on GreenVolt')}
-              className="px-2 py-1 rounded bg-slate-100 text-[#635BFF] border border-slate-200 whitespace-nowrap hover:bg-slate-200 font-medium"
+              className="px-2 py-1 rounded bg-slate-100 text-[#0062FF] border border-slate-200 whitespace-nowrap hover:bg-slate-200 font-medium"
             >
               GreenVolt Forgery?
             </button>
@@ -2281,12 +2281,12 @@ export function OfficerDashboard({
               onChange={(e) => setInputQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSendChat()}
               placeholder="Ask about NIT rules, documents, or bids..."
-              className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#635BFF]"
+              className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#0062FF]"
             />
             <button
               type="button"
               onClick={() => handleSendChat()}
-              className="p-2 rounded-xl bg-[#635BFF] hover:bg-[#5349DF] text-white font-bold"
+              className="p-2 rounded-xl bg-[#0062FF] hover:bg-[#0050D4] text-white font-bold"
             >
               <Send className="w-4 h-4" />
             </button>

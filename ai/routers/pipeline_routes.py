@@ -85,6 +85,15 @@ async def verify_document(
             claimed_identifier=claimedId or "",
         )
 
+        # Build human-readable forensic flags from metadata result
+        metadata_flags = []
+        if metadata_result.flaggedTools:
+            metadata_flags.append(f"Editing software detected: {', '.join(metadata_result.flaggedTools)}")
+        if metadata_result.dateMismatch:
+            metadata_flags.append("PDF creation and modification dates do not match")
+        if metadata_result.fontAnomalies:
+            metadata_flags.extend(metadata_result.fontAnomalies)
+
         # Build consolidated ForensicCheckResult matching backend schema
         forensic_check = ForensicCheckResult(
             hasMetadataTampering=metadata_result.isTampered,
@@ -97,10 +106,10 @@ async def verify_document(
             qrMatchesClaim=qr_result.matchesClaim,
             isTampered=metadata_result.isTampered or qr_result.isForgeryDetected,
             tamperConfidence=max(
-                metadata_result.tamperConfidence,
+                metadata_result.tamperConfidenceScore,
                 0.99 if qr_result.isForgeryDetected else 0.0,
             ),
-            flags=metadata_result.flags + (
+            flags=metadata_flags + (
                 ["CRITICAL: QR code payload contradicts claimed document identifier!"]
                 if qr_result.isForgeryDetected
                 else []
@@ -130,7 +139,7 @@ async def verify_document(
             ]
 
         # ── Step 6: Determine Overall Status ──
-        warnings = list(ocr_result.warnings) + metadata_result.flags + sig_result.warnings
+        warnings = list(ocr_result.warnings) + metadata_flags + sig_result.warnings
 
         if qr_result.isForgeryDetected:
             overall_status = "FLAGGED_FORGERY"

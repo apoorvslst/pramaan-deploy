@@ -12,49 +12,54 @@
         theme: {
           extend: {
             colors: {
-              stripe: {
-                bg: '#F6F9FC',
-                card: '#FFFFFF',
-                text: '#0A2540',
-                muted: '#425466',
-                border: '#E3E8EE',
-                indigo: '#635BFF',
-                hover: '#5349DF',
-                cyan: '#00D4B2',
-                purple: '#7A73FF',
+              ahrefs: {
+                blue: '#0062FF',
+                hover: '#0050D4',
+                light: '#EAF2FF',
+                dark: '#002E7A',
+                orange: '#FF551F',
+                bg: '#FFFFFF',
+                surface: '#F8FAFD',
+                border: '#E2E8F0',
+                text: '#111827',
+                muted: '#64748B',
+                subtle: '#94A3B8',
               },
               gem: {
-                blue: '#0F2C59',
+                blue: '#0B2545',
                 gold: '#E5A93C',
                 light: '#F8FAFC',
-                dark: '#0B132B'
+                dark: '#091528'
               },
               praman: {
                 emerald: '#059669',
                 rose: '#E11D48',
                 amber: '#D97706',
-                cyan: '#0891B2',
+                cyan: '#0284C7',
+                blue: '#0062FF',
                 slate: '#0F172A'
               }
             },
             fontFamily: {
-              sans: ['Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'sans-serif'],
-              mono: ['Fira Code', 'Courier New', 'monospace']
+              sans: ['Inter', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'sans-serif'],
+              mono: ['JetBrains Mono', 'Fira Code', 'Consolas', 'monospace']
             },
             boxShadow: {
-              'stripe': '0 2px 4px rgba(0,0,0,0.04), 0 8px 16px rgba(0,0,0,0.06)',
-              'stripe-hover': '0 4px 8px rgba(0,0,0,0.06), 0 12px 24px rgba(0,0,0,0.09)'
+              'ahrefs': '0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05)',
+              'ahrefs-card': '0 2px 8px 0 rgba(0, 46, 122, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.03)',
+              'ahrefs-hover': '0 4px 16px 0 rgba(0, 98, 255, 0.08), 0 2px 4px 0 rgba(0, 0, 0, 0.04)',
+              'ahrefs-float': '0 12px 32px -4px rgba(0, 98, 255, 0.12), 0 4px 8px -2px rgba(0, 0, 0, 0.04)'
             }
           }
         }
       }
     </script>
-    <!-- Google Fonts -->
+    <!-- Google Fonts: Inter & Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   </head>
-  <body class="bg-[#F6F9FC] text-[#0A2540] font-sans antialiased min-h-screen selection:bg-[#635BFF] selection:text-white">
+  <body class="bg-[#F8FAFD] text-[#111827] font-sans antialiased min-h-screen selection:bg-[#0062FF] selection:text-white">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

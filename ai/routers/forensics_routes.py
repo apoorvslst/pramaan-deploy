@@ -117,15 +117,21 @@ async def full_forensic_scan_endpoint(
         # Combine into ForensicCheckResult (matches backend schema)
         return ForensicCheckResult(
             hasMetadataTampering=meta_result.isTampered,
-            softwareDetected=", ".join(meta_result.flaggedTools) if meta_result.flaggedTools else None,
+            softwareDetected=meta_result.flaggedTools if meta_result.flaggedTools else None,
+            creationDate=meta_result.creationDate,
+            modificationDate=meta_result.modificationDate,
+            producer=meta_result.producer,
+            creator=meta_result.creator,
             qrDecodedPayload=(
                 qr_result.qrPayloads[0].payload if qr_result and qr_result.qrPayloads else None
             ),
             qrMatchesClaim=(
                 qr_result.matchesClaim if qr_result and qr_result.matchesClaim is not None else True
             ),
+            isTampered=meta_result.isTampered or (qr_result.isForgeryDetected if qr_result else False),
+            tamperConfidence=meta_result.tamperConfidenceScore,
             fontInconsistenciesDetected=len(meta_result.fontAnomalies) > 0,
-            tamperConfidenceScore=meta_result.tamperConfidenceScore,
+            flags=meta_result.flags if hasattr(meta_result, 'flags') else [],
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Forensic scan failed: {str(e)}")

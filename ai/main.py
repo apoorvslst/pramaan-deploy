@@ -39,15 +39,15 @@ async def lifespan(app: FastAPI):
     os.makedirs(settings.TEMP_DIR, exist_ok=True)
     os.makedirs(settings.CHROMA_PERSIST_DIRECTORY, exist_ok=True)
     print("=" * 60)
-    print("  🚀 PRAMAN AI Microservice Starting...")
-    print(f"  📡 Environment: {settings.ENVIRONMENT}")
-    print(f"  🤖 Primary LLM: Groq ({settings.GROQ_MODEL})")
-    print(f"  🔮 Fallback LLM: Gemini ({settings.GEMINI_MODEL})")
-    print(f"  📂 Uploads: {os.path.abspath(settings.UPLOAD_DIR)}")
+    print("  [INIT] PRAMAN AI Microservice Starting...")
+    print(f"  [ENV] Environment: {settings.ENVIRONMENT}")
+    print(f"  [LLM] Primary LLM: Groq ({settings.GROQ_MODEL})")
+    print(f"  [LLM] Fallback LLM: Gemini ({settings.GEMINI_MODEL})")
+    print(f"  [DIR] Uploads: {os.path.abspath(settings.UPLOAD_DIR)}")
     print("=" * 60)
     yield
     # Shutdown
-    print("  🛑 PRAMAN AI Microservice shutting down...")
+    print("  [SHUTDOWN] PRAMAN AI Microservice shutting down...")
 
 
 # ──────────────────────────────────────────────

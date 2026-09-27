@@ -19,12 +19,12 @@ class Settings(BaseSettings):
 
     # --- LLM: Groq ---
     GROQ_API_KEY: str = Field(default="", description="Groq Cloud API key")
-    GROQ_MODEL: str = Field(default="llama-3.3-70b-versatile")
-    FALLBACK_GROQ_MODEL: str = Field(default="llama-3.1-8b-instant")
+    GROQ_MODEL: str = Field(default="openai/gpt-oss-120b")
+    FALLBACK_GROQ_MODEL: str = Field(default="qwen/qwen3.8-27b")
 
     # --- LLM: Gemini ---
     GEMINI_API_KEY: str = Field(default="", description="Google Gemini API key")
-    GEMINI_MODEL: str = Field(default="gemini-1.5-flash")
+    GEMINI_MODEL: str = Field(default="gemini-2.5-flash")
 
     # --- LLM: Ollama (Local Fallback) ---
     OLLAMA_BASE_URL: str = Field(default="http://localhost:11434")

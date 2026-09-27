@@ -53,7 +53,7 @@ async def handle_extract_signatures(
 
     temp_path = None
     try:
-        temp_path = save_upload_to_temp(file)
+        temp_path = await save_upload_to_temp(file)
         result = detect_signatures_in_pdf(temp_path, max_pages=maxPages)
         return result
     except Exception as e:

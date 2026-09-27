@@ -221,16 +221,16 @@ function BidderLogin({ onLogin }) {
   return (
     <div className="min-h-[70vh] flex items-center justify-center py-10 px-4">
       <div className="w-full max-w-md bg-white border border-slate-200/80 rounded-3xl p-8 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-indigo-50 to-cyan-50 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-full blur-2xl pointer-events-none" />
 
         <div className="flex flex-col items-center text-center mb-8 relative z-10">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#635BFF] to-[#00D4B2] flex items-center justify-center text-white shadow-sm mb-3">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#0062FF] to-[#00D4B2] flex items-center justify-center text-white shadow-sm mb-3">
             <Building className="w-7 h-7" />
           </div>
-          <span className="px-3 py-1 rounded-full bg-indigo-50 text-[#635BFF] font-mono text-xs font-semibold border border-indigo-100 mb-2">
+          <span className="px-3 py-1 rounded-full bg-blue-50 text-[#0062FF] font-mono text-xs font-semibold border border-blue-100 mb-2">
             GeM Seller & Bidder Portal
           </span>
-          <h2 className="text-2xl font-black text-[#0A2540] tracking-tight">Bidder Authentication</h2>
+          <h2 className="text-2xl font-black text-[#111827] tracking-tight">Bidder Authentication</h2>
           <p className="text-xs text-slate-500 mt-1 max-w-xs">
             Sign in with your GeM Seller credentials to complete one-time identity verification and submit bids.
           </p>
@@ -250,7 +250,7 @@ function BidderLogin({ onLogin }) {
                 value={gemId}
                 onChange={(e) => setGemId(e.target.value)}
                 placeholder="e.g. GEM-VEND-2024-8841"
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-[#635BFF] font-mono"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-[#0062FF] font-mono"
                 required
               />
             </div>
@@ -269,7 +269,7 @@ function BidderLogin({ onLogin }) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••••"
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-[#635BFF] font-mono"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-[#0062FF] font-mono"
                 required
               />
             </div>
@@ -277,10 +277,10 @@ function BidderLogin({ onLogin }) {
 
           <div className="flex items-center justify-between text-xs text-slate-500 pt-1">
             <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" defaultChecked className="rounded text-[#635BFF] focus:ring-0" />
+              <input type="checkbox" defaultChecked className="rounded text-[#0062FF] focus:ring-0" />
               <span>Remember DSC token</span>
             </label>
-            <span className="text-[#635BFF] font-semibold hover:underline cursor-pointer">
+            <span className="text-[#0062FF] font-semibold hover:underline cursor-pointer">
               Forgot DSC PIN?
             </span>
           </div>
@@ -288,7 +288,7 @@ function BidderLogin({ onLogin }) {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3 px-4 rounded-xl bg-[#635BFF] hover:bg-[#5349DF] text-white font-bold text-sm shadow-sm hover:shadow active:scale-98 flex items-center justify-center gap-2 transition-all mt-6 disabled:opacity-50"
+            className="w-full py-3 px-4 rounded-xl bg-[#0062FF] hover:bg-[#0050D4] text-white font-bold text-sm shadow-sm hover:shadow active:scale-98 flex items-center justify-center gap-2 transition-all mt-6 disabled:opacity-50"
           >
             {isLoading ? (
               <span className="inline-flex items-center gap-2">
@@ -309,7 +309,7 @@ function BidderLogin({ onLogin }) {
           <button
             type="button"
             onClick={handleQuickDemo}
-            className="w-full py-2 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 text-[#635BFF] text-xs font-semibold border border-slate-200 flex items-center justify-center gap-2 transition-all"
+            className="w-full py-2 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 text-[#0062FF] text-xs font-semibold border border-slate-200 flex items-center justify-center gap-2 transition-all"
           >
             <CheckCircle className="w-4 h-4 text-emerald-600" />
             1-Click Demo Login as Solarix Green Pvt Ltd
@@ -430,12 +430,12 @@ function BidderKYC({ kycState, onVerifyKyc, onContinueToBids }) {
       
       {/* Banner */}
       <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-indigo-50/60 to-cyan-50/40 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-blue-50/60 to-cyan-50/40 rounded-full blur-3xl pointer-events-none" />
         
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-[#635BFF] font-mono text-xs font-bold border border-indigo-100">
+              <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-[#0062FF] font-mono text-xs font-bold border border-blue-100">
                 STAGE 1 / 4
               </span>
               <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
@@ -447,11 +447,11 @@ function BidderKYC({ kycState, onVerifyKyc, onContinueToBids }) {
               </span>
             </div>
             
-            <h2 className="text-xl lg:text-2xl font-black text-[#0A2540] tracking-tight">
+            <h2 className="text-xl lg:text-2xl font-black text-[#111827] tracking-tight">
               Bidder Identity & Master Statutory KYC Gate
             </h2>
             <p className="text-xs text-slate-600 mt-1 max-w-2xl leading-relaxed">
-              In accordance with GeM Procurement Norms & Section 7.2 of PRAMAN specification, every vendor must complete a one-time automated identity verification by uploading mandatory documents (<strong className="text-[#635BFF]">Aadhaar Card</strong> & <strong className="text-[#635BFF]">PAN Card</strong>). Once verified by AI, all live tenders and pre-flight submissions will be unlocked.
+              In accordance with GeM Procurement Norms & Section 7.2 of PRAMAN specification, every vendor must complete a one-time automated identity verification by uploading mandatory documents (<strong className="text-[#0062FF]">Aadhaar Card</strong> & <strong className="text-[#0062FF]">PAN Card</strong>). Once verified by AI, all live tenders and pre-flight submissions will be unlocked.
             </p>
           </div>
 
@@ -460,9 +460,9 @@ function BidderKYC({ kycState, onVerifyKyc, onContinueToBids }) {
               <button
                 type="button"
                 onClick={handleAutoFillAll}
-                className="w-full sm:w-auto px-4 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-[#635BFF] text-xs font-semibold border border-slate-200 transition-all flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-4 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-[#0062FF] text-xs font-semibold border border-slate-200 transition-all flex items-center justify-center gap-2"
               >
-                <Sparkles className="w-4 h-4 text-[#635BFF]" />
+                <Sparkles className="w-4 h-4 text-[#0062FF]" />
                 Auto-attach Sample Docs
               </button>
             )}
@@ -471,7 +471,7 @@ function BidderKYC({ kycState, onVerifyKyc, onContinueToBids }) {
               <button
                 type="button"
                 onClick={onContinueToBids}
-                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#635BFF] hover:bg-[#5349DF] text-white font-bold text-xs shadow-sm flex items-center justify-center gap-2 transition-all"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#0062FF] hover:bg-[#0050D4] text-white font-bold text-xs shadow-sm flex items-center justify-center gap-2 transition-all"
               >
                 Browse & Apply for Tenders
                 <ArrowRight className="w-4 h-4" />
@@ -485,24 +485,24 @@ function BidderKYC({ kycState, onVerifyKyc, onContinueToBids }) {
       {verifying && (
         <div className="bg-white border-2 border-indigo-400 rounded-2xl p-6 shadow-md relative">
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 text-[#635BFF] flex items-center justify-center animate-spin">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0062FF] flex items-center justify-center animate-spin">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-[#0A2540]">AI Engine Processing Documents</h4>
-              <p className="text-xs text-[#635BFF] font-mono">Stage {verificationStep + 1} of {steps.length}</p>
+              <h4 className="text-sm font-bold text-[#111827]">AI Engine Processing Documents</h4>
+              <p className="text-xs text-[#0062FF] font-mono">Stage {verificationStep + 1} of {steps.length}</p>
             </div>
           </div>
           
           <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden mb-4 border border-slate-200">
             <div 
-              className="bg-[#635BFF] h-2.5 rounded-full transition-all duration-500"
+              className="bg-[#0062FF] h-2.5 rounded-full transition-all duration-500"
               style={{ width: `${((verificationStep + 1) / steps.length) * 100}%` }}
             />
           </div>
 
           <p className="text-xs text-slate-700 font-mono flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#635BFF] animate-ping" />
+            <span className="w-2 h-2 rounded-full bg-[#0062FF] animate-ping" />
             {steps[verificationStep]}
           </p>
         </div>
@@ -531,7 +531,7 @@ function BidderKYC({ kycState, onVerifyKyc, onContinueToBids }) {
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                     isDocVerified 
                       ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' 
-                      : 'bg-indigo-50 text-[#635BFF] border border-indigo-100'
+                      : 'bg-blue-50 text-[#0062FF] border border-blue-100'
                   }`}>
                     {doc.id === 'aadhaar' && <User className="w-5 h-5" />}
                     {doc.id === 'pan' && <CreditCard className="w-5 h-5" />}
@@ -540,7 +540,7 @@ function BidderKYC({ kycState, onVerifyKyc, onContinueToBids }) {
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-bold text-[#0A2540]">{doc.name}</h3>
+                      <h3 className="text-sm font-bold text-[#111827]">{doc.name}</h3>
                       {isMandatory && (
                         <span className="text-[10px] px-2 py-0.5 rounded bg-rose-50 text-rose-700 font-semibold border border-rose-200">
                           MANDATORY
@@ -558,7 +558,7 @@ function BidderKYC({ kycState, onVerifyKyc, onContinueToBids }) {
                       Verified
                     </span>
                   ) : isDocUploaded ? (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-indigo-50 text-[#635BFF] font-semibold text-xs border border-indigo-200">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 text-[#0062FF] font-semibold text-xs border border-blue-200">
                       Ready for Check
                     </span>
                   ) : (
@@ -574,7 +574,7 @@ function BidderKYC({ kycState, onVerifyKyc, onContinueToBids }) {
               {doc.file ? (
                 <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between">
                   <div className="flex items-center gap-2.5 overflow-hidden">
-                    <FileText className="w-5 h-5 text-[#635BFF] flex-shrink-0" />
+                    <FileText className="w-5 h-5 text-[#0062FF] flex-shrink-0" />
                     <div className="truncate">
                       <p className="text-xs font-mono font-medium text-slate-800 truncate">{doc.file}</p>
                       <p className="text-[10px] text-slate-500 font-mono">
@@ -586,7 +586,7 @@ function BidderKYC({ kycState, onVerifyKyc, onContinueToBids }) {
                     <button
                       type="button"
                       onClick={() => handleSimulateUpload(doc.id)}
-                      className="text-xs text-[#635BFF] font-semibold hover:underline ml-2"
+                      className="text-xs text-[#0062FF] font-semibold hover:underline ml-2"
                     >
                       Replace
                     </button>
@@ -595,7 +595,7 @@ function BidderKYC({ kycState, onVerifyKyc, onContinueToBids }) {
               ) : (
                 <div 
                   onClick={() => handleSimulateUpload(doc.id)}
-                  className="border-2 border-dashed border-slate-200 hover:border-[#635BFF] rounded-xl p-4 text-center cursor-pointer transition-colors bg-slate-50/50 hover:bg-indigo-50/30"
+                  className="border-2 border-dashed border-slate-200 hover:border-[#0062FF] rounded-xl p-4 text-center cursor-pointer transition-colors bg-slate-50/50 hover:bg-blue-50/30"
                 >
                   <UploadCloud className="w-6 h-6 text-slate-400 mx-auto mb-1.5" />
                   <p className="text-xs font-semibold text-slate-700">Click to upload or drag & drop</p>
@@ -610,11 +610,11 @@ function BidderKYC({ kycState, onVerifyKyc, onContinueToBids }) {
       {/* Action footer */}
       <div className="bg-white border border-slate-200/80 rounded-2xl p-5 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-indigo-50 text-[#635BFF] flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0062FF] flex items-center justify-center">
             <Lock className="w-5 h-5" />
           </div>
           <div>
-            <h4 className="text-sm font-bold text-[#0A2540]">Automated Cross-Verification Engine</h4>
+            <h4 className="text-sm font-bold text-[#111827]">Automated Cross-Verification Engine</h4>
             <p className="text-xs text-slate-500">
               {allUploaded 
                 ? 'Mandatory Aadhaar & PAN attached. Ready to run AI compliance check.' 
@@ -628,7 +628,7 @@ function BidderKYC({ kycState, onVerifyKyc, onContinueToBids }) {
             type="button"
             disabled={!allUploaded || verifying}
             onClick={handleStartVerification}
-            className="w-full md:w-auto px-6 py-3 rounded-xl bg-[#635BFF] hover:bg-[#5349DF] text-white font-bold text-xs shadow-sm flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full md:w-auto px-6 py-3 rounded-xl bg-[#0062FF] hover:bg-[#0050D4] text-white font-bold text-xs shadow-sm flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Sparkles className="w-4 h-4" />
             {verifying ? 'AI Verification in Progress...' : 'Verify Aadhaar & PAN via AI'}
@@ -642,7 +642,7 @@ function BidderKYC({ kycState, onVerifyKyc, onContinueToBids }) {
             <button
               type="button"
               onClick={onContinueToBids}
-              className="px-5 py-2.5 rounded-xl bg-[#635BFF] hover:bg-[#5349DF] text-white font-bold text-xs shadow-sm transition-all flex items-center gap-1.5"
+              className="px-5 py-2.5 rounded-xl bg-[#0062FF] hover:bg-[#0050D4] text-white font-bold text-xs shadow-sm transition-all flex items-center gap-1.5"
             >
               Continue to Available Bids
               <ArrowRight className="w-4 h-4" />
@@ -699,14 +699,14 @@ function BidderSmartPreFlight() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-[#635BFF] font-mono text-xs font-bold border border-indigo-100">
+              <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-[#0062FF] font-mono text-xs font-bold border border-blue-100">
                 SECTION 7.2 MODULE
               </span>
               <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200">
                 CLIENT-SIDE SANITY ENGINE
               </span>
             </div>
-            <h2 className="text-xl lg:text-2xl font-black text-[#0A2540] tracking-tight">
+            <h2 className="text-xl lg:text-2xl font-black text-[#111827] tracking-tight">
               Smart Upload Pre-Flight Document Validator
             </h2>
             <p className="text-xs text-slate-600 mt-1 max-w-2xl leading-relaxed">
@@ -717,9 +717,9 @@ function BidderSmartPreFlight() {
           <button
             type="button"
             onClick={() => handleSimulatePreFlight('CA_Turnover_Certificate_FY24.pdf')}
-            className="px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-[#635BFF] text-xs font-semibold border border-slate-200 transition-all flex items-center gap-2 whitespace-nowrap"
+            className="px-4 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-[#0062FF] text-xs font-semibold border border-slate-200 transition-all flex items-center gap-2 whitespace-nowrap"
           >
-            <Sparkles className="w-4 h-4 text-[#635BFF]" />
+            <Sparkles className="w-4 h-4 text-[#0062FF]" />
             Test Sample Certificate
           </button>
         </div>
@@ -728,15 +728,15 @@ function BidderSmartPreFlight() {
       {/* Upload Dropzone */}
       <div 
         onClick={() => handleSimulatePreFlight('OEM_Authorization_Sungrow.pdf')}
-        className="bg-white border-2 border-dashed border-indigo-200 hover:border-[#635BFF] rounded-2xl p-8 text-center cursor-pointer shadow-sm hover:shadow transition-all"
+        className="bg-white border-2 border-dashed border-blue-200 hover:border-[#0062FF] rounded-2xl p-8 text-center cursor-pointer shadow-sm hover:shadow transition-all"
       >
-        <UploadCloud className="w-10 h-10 text-[#635BFF] mx-auto mb-2" />
-        <h4 className="text-sm font-bold text-[#0A2540]">Drop any PDF certificate to run instant Pre-Flight diagnostics</h4>
+        <UploadCloud className="w-10 h-10 text-[#0062FF] mx-auto mb-2" />
+        <h4 className="text-sm font-bold text-[#111827]">Drop any PDF certificate to run instant Pre-Flight diagnostics</h4>
         <p className="text-xs text-slate-500 mt-1">
           Validates SHA-256, DPI clarity, PDF encryption lock, and format compliance in browser memory.
         </p>
         <div className="mt-4">
-          <span className="px-3 py-1.5 rounded-xl bg-indigo-50 text-[#635BFF] text-xs font-bold border border-indigo-200">
+          <span className="px-3 py-1.5 rounded-xl bg-blue-50 text-[#0062FF] text-xs font-bold border border-blue-200">
             ⚡ Click to Test OEM Authorization Letter (2.1 MB)
           </span>
         </div>
@@ -745,8 +745,8 @@ function BidderSmartPreFlight() {
       {/* Scanning status */}
       {isScanning && (
         <div className="bg-white border border-slate-200 rounded-2xl p-6 text-center shadow-sm space-y-3">
-          <div className="w-8 h-8 rounded-full border-2 border-[#635BFF] border-t-transparent animate-spin mx-auto" />
-          <h4 className="text-sm font-bold text-[#0A2540]">Running Client-Side Web Crypto & PDF Sanitization...</h4>
+          <div className="w-8 h-8 rounded-full border-2 border-[#0062FF] border-t-transparent animate-spin mx-auto" />
+          <h4 className="text-sm font-bold text-[#111827]">Running Client-Side Web Crypto & PDF Sanitization...</h4>
           <p className="text-xs text-slate-500 font-mono">Hashing bytes: window.crypto.subtle.digest('SHA-256')</p>
         </div>
       )}
@@ -760,7 +760,7 @@ function BidderSmartPreFlight() {
               <span className="text-[11px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-semibold">
                 ✓ ALL PRE-FLIGHT CHECKS PASSED
               </span>
-              <h3 className="text-base font-bold text-[#0A2540] mt-1">{scanResult.fileName}</h3>
+              <h3 className="text-base font-bold text-[#111827] mt-1">{scanResult.fileName}</h3>
               <p className="text-xs text-slate-500 font-mono mt-0.5">SHA-256: {scanResult.sha256Hash}</p>
             </div>
 
@@ -778,16 +778,16 @@ function BidderSmartPreFlight() {
               <div key={i} className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl flex items-start gap-2.5">
                 <CheckCircle className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="text-xs font-bold text-[#0A2540]">{check.name}</h4>
+                  <h4 className="text-xs font-bold text-[#111827]">{check.name}</h4>
                   <p className="text-[11px] text-slate-500 mt-0.5">{check.note}</p>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl flex items-center justify-between text-xs text-indigo-950 font-medium">
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between text-xs text-indigo-950 font-medium">
             <span>Certificate is 100% compliant and ready for GeM tender submission without rejection risk.</span>
-            <span className="text-[#635BFF] font-bold font-mono">Pre-Flight Pass ID #PF-9912</span>
+            <span className="text-[#0062FF] font-bold font-mono">Pre-Flight Pass ID #PF-9912</span>
           </div>
 
         </div>
@@ -920,7 +920,7 @@ function BidderTenderBrowser({ onBidSubmitted }) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search tenders by ID, title, or authority..."
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#635BFF]"
+              className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#0062FF]"
             />
           </div>
 
@@ -932,7 +932,7 @@ function BidderTenderBrowser({ onBidSubmitted }) {
                 onClick={() => setSelectedCategory(cat)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
                   selectedCategory === cat
-                    ? 'bg-[#635BFF] text-white shadow-xs'
+                    ? 'bg-[#0062FF] text-white shadow-xs'
                     : 'bg-slate-50 text-slate-600 hover:text-slate-900 border border-slate-200'
                 }`}
               >
@@ -958,7 +958,7 @@ function BidderTenderBrowser({ onBidSubmitted }) {
                 
                 <div className="space-y-2 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="px-2.5 py-0.5 rounded-md bg-indigo-50 text-[#635BFF] font-mono text-xs font-bold border border-indigo-100">
+                    <span className="px-2.5 py-0.5 rounded-md bg-blue-50 text-[#0062FF] font-mono text-xs font-bold border border-blue-100">
                       {tender.id}
                     </span>
                     <span className={`px-2.5 py-0.5 rounded-md text-xs font-semibold border ${
@@ -974,7 +974,7 @@ function BidderTenderBrowser({ onBidSubmitted }) {
                     </span>
                   </div>
 
-                  <h3 className="text-base lg:text-lg font-bold text-[#0A2540] tracking-tight">
+                  <h3 className="text-base lg:text-lg font-bold text-[#111827] tracking-tight">
                     {tender.title}
                   </h3>
 
@@ -987,7 +987,7 @@ function BidderTenderBrowser({ onBidSubmitted }) {
                       <MapPin className="w-3.5 h-3.5 text-slate-400" />
                       {tender.location}
                     </span>
-                    <span className="font-semibold text-[#635BFF]">
+                    <span className="font-semibold text-[#0062FF]">
                       Est. Value: {tender.estimatedValue}
                     </span>
                     <span className="font-semibold text-amber-700">
@@ -996,10 +996,10 @@ function BidderTenderBrowser({ onBidSubmitted }) {
                   </div>
 
                   {/* Real-time statutory eligibility calculator banner */}
-                  <div className="p-3 bg-indigo-50/70 border border-indigo-100 rounded-xl text-xs space-y-1">
+                  <div className="p-3 bg-blue-50/70 border border-blue-100 rounded-xl text-xs space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-[#0A2540] flex items-center gap-1.5">
-                        <ShieldCheck className="w-4 h-4 text-[#635BFF]" />
+                      <span className="font-bold text-[#111827] flex items-center gap-1.5">
+                        <ShieldCheck className="w-4 h-4 text-[#0062FF]" />
                         Statutory Eligibility Assessment for Your Firm:
                       </span>
                       <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">
@@ -1036,7 +1036,7 @@ function BidderTenderBrowser({ onBidSubmitted }) {
                     <button
                       type="button"
                       onClick={() => handleOpenBidModal(tender)}
-                      className="px-5 py-2.5 rounded-xl bg-[#635BFF] hover:bg-[#5349DF] text-white font-bold text-xs shadow-sm flex items-center gap-1.5 transition-all"
+                      className="px-5 py-2.5 rounded-xl bg-[#0062FF] hover:bg-[#0050D4] text-white font-bold text-xs shadow-sm flex items-center gap-1.5 transition-all"
                     >
                       <UploadCloud className="w-4 h-4" />
                       Upload Documents & Apply
@@ -1065,10 +1065,10 @@ function BidderTenderBrowser({ onBidSubmitted }) {
             
             <div className="p-6 border-b border-slate-100 flex items-start justify-between bg-slate-50/50">
               <div>
-                <span className="px-2.5 py-0.5 rounded-md bg-indigo-50 text-[#635BFF] font-mono text-xs font-bold border border-indigo-100">
+                <span className="px-2.5 py-0.5 rounded-md bg-blue-50 text-[#0062FF] font-mono text-xs font-bold border border-blue-100">
                   {activeTenderModal.id}
                 </span>
-                <h3 className="text-lg font-bold text-[#0A2540] mt-1">
+                <h3 className="text-lg font-bold text-[#111827] mt-1">
                   Upload Tender Documents for Pre-Flight & Verification
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
@@ -1097,7 +1097,7 @@ function BidderTenderBrowser({ onBidSubmitted }) {
                 <button
                   type="button"
                   onClick={handleAutoFillAllBidDocs}
-                  className="text-xs px-2.5 py-1 rounded-lg bg-white text-[#635BFF] border border-indigo-200 hover:bg-indigo-50 font-semibold"
+                  className="text-xs px-2.5 py-1 rounded-lg bg-white text-[#0062FF] border border-blue-200 hover:bg-blue-50 font-semibold"
                 >
                   ⚡ Auto-Attach Demo Docs
                 </button>
@@ -1117,17 +1117,17 @@ function BidderTenderBrowser({ onBidSubmitted }) {
                       key={idx}
                       className={`border rounded-xl p-3.5 transition-all ${
                         hasFile 
-                          ? 'border-indigo-300 bg-indigo-50/20' 
+                          ? 'border-indigo-300 bg-blue-50/20' 
                           : 'border-slate-200 bg-white'
                       }`}
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3 overflow-hidden">
-                          <FileText className={`w-5 h-5 flex-shrink-0 ${hasFile ? 'text-[#635BFF]' : 'text-slate-400'}`} />
+                          <FileText className={`w-5 h-5 flex-shrink-0 ${hasFile ? 'text-[#0062FF]' : 'text-slate-400'}`} />
                           <div className="truncate">
                             <p className="text-xs font-bold text-slate-800 truncate">{docName}</p>
                             {hasFile ? (
-                              <p className="text-[11px] font-mono text-[#635BFF] truncate">{currentDoc.fileName}</p>
+                              <p className="text-[11px] font-mono text-[#0062FF] truncate">{currentDoc.fileName}</p>
                             ) : (
                               <p className="text-[11px] text-slate-400">Required format: PDF (Max 15MB)</p>
                             )}
@@ -1156,9 +1156,9 @@ function BidderTenderBrowser({ onBidSubmitted }) {
               </div>
 
               {isSubmitting && (
-                <div className="bg-slate-50 border border-indigo-200 rounded-xl p-4 space-y-2">
+                <div className="bg-slate-50 border border-blue-200 rounded-xl p-4 space-y-2">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-[#635BFF] font-mono font-semibold flex items-center gap-2">
+                    <span className="text-[#0062FF] font-mono font-semibold flex items-center gap-2">
                       <Sparkles className="w-3.5 h-3.5 animate-spin" />
                       Computing Hashes & Running PaddleOCR + Forensics Check...
                     </span>
@@ -1166,7 +1166,7 @@ function BidderTenderBrowser({ onBidSubmitted }) {
                   </div>
                   <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
                     <div 
-                      className="bg-[#635BFF] h-2 rounded-full transition-all duration-300"
+                      className="bg-[#0062FF] h-2 rounded-full transition-all duration-300"
                       style={{ width: `${submissionProgress}%` }}
                     />
                   </div>
@@ -1188,7 +1188,7 @@ function BidderTenderBrowser({ onBidSubmitted }) {
                 type="button"
                 disabled={!isAllUploaded || isSubmitting}
                 onClick={handleSubmitBid}
-                className="px-6 py-2.5 rounded-xl bg-[#635BFF] hover:bg-[#5349DF] text-white font-bold text-xs shadow-sm flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-6 py-2.5 rounded-xl bg-[#0062FF] hover:bg-[#0050D4] text-white font-bold text-xs shadow-sm flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <Sparkles className="w-4 h-4" />
                 {isSubmitting ? 'Verifying Bid Documents...' : 'Submit Bid & Run AI Verification'}
@@ -1240,11 +1240,11 @@ function BidderActivityCentre({ bids = [], onReuploadDocument }) {
               <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-mono text-xs font-bold border border-emerald-200">
                 ACTIVITY & COMPLIANCE CENTRE
               </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-[#635BFF] text-xs font-semibold border border-indigo-100">
+              <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-[#0062FF] text-xs font-semibold border border-blue-100">
                 LIVE AUDIT TRAIL
               </span>
             </div>
-            <h2 className="text-xl lg:text-2xl font-black text-[#0A2540] tracking-tight">
+            <h2 className="text-xl lg:text-2xl font-black text-[#111827] tracking-tight">
               Bid Verification & Evaluation Status
             </h2>
             <p className="text-xs text-slate-600 mt-1 max-w-xl">
@@ -1258,7 +1258,7 @@ function BidderActivityCentre({ bids = [], onReuploadDocument }) {
               onClick={() => alert('Downloading official GeM AI Compliance Certificate (PDF) stamped with SHA-256 proof...')}
               className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold border border-slate-200 transition-all flex items-center gap-2"
             >
-              <Download className="w-4 h-4 text-[#635BFF]" />
+              <Download className="w-4 h-4 text-[#0062FF]" />
               Download Verification Slip
             </button>
           </div>
@@ -1284,12 +1284,12 @@ function BidderActivityCentre({ bids = [], onReuploadDocument }) {
                 onClick={() => setSelectedBidId(bid.id)}
                 className={`p-4 rounded-2xl border cursor-pointer transition-all shadow-2xs ${
                   isSelected 
-                    ? 'bg-indigo-50/40 border-[#635BFF] shadow-sm' 
+                    ? 'bg-blue-50/40 border-[#0062FF] shadow-sm' 
                     : 'bg-white border-slate-200 hover:border-slate-300'
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-mono text-xs font-bold text-[#635BFF]">
+                  <span className="font-mono text-xs font-bold text-[#0062FF]">
                     {bid.id}
                   </span>
                   <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border ${
@@ -1353,14 +1353,14 @@ function BidderActivityCentre({ bids = [], onReuploadDocument }) {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-mono font-bold text-[#635BFF] px-2 py-0.5 rounded bg-indigo-50 border border-indigo-100">
+                    <span className="text-xs font-mono font-bold text-[#0062FF] px-2 py-0.5 rounded bg-blue-50 border border-blue-100">
                       {selectedBid.tenderId}
                     </span>
                     <span className="text-xs text-slate-500">
                       Submitted: {selectedBid.submittedAt || 'Draft State'}
                     </span>
                   </div>
-                  <h3 className="text-base font-bold text-[#0A2540]">
+                  <h3 className="text-base font-bold text-[#111827]">
                     {selectedBid.tenderTitle}
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5">{selectedBid.organisation}</p>
@@ -1384,7 +1384,7 @@ function BidderActivityCentre({ bids = [], onReuploadDocument }) {
               {/* Verified Documents Breakdown */}
               <div className="mt-5">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-1.5">
-                  <FileText className="w-4 h-4 text-[#635BFF]" />
+                  <FileText className="w-4 h-4 text-[#0062FF]" />
                   Verified Document Manifest & AI Forensic Status
                 </h4>
 
@@ -1399,7 +1399,7 @@ function BidderActivityCentre({ bids = [], onReuploadDocument }) {
                           <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono">
                             OCR {doc.confidence || '98%+'}
                           </span>
-                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-indigo-50 text-[#635BFF] border border-indigo-100 font-mono">
+                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-50 text-[#0062FF] border border-blue-100 font-mono">
                             Clean Pass
                           </span>
                         </div>
@@ -1413,7 +1413,7 @@ function BidderActivityCentre({ bids = [], onReuploadDocument }) {
                       <p className="text-xs font-bold text-slate-800">Aadhaar & PAN Master KYC</p>
                       <p className="text-[10px] text-slate-500 font-mono">Linked to Vendor Profile</p>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-indigo-50 text-[#635BFF] border border-indigo-100 font-mono">
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-50 text-[#0062FF] border border-blue-100 font-mono">
                           UIDAI & NSDL Synced
                         </span>
                       </div>
@@ -1425,12 +1425,12 @@ function BidderActivityCentre({ bids = [], onReuploadDocument }) {
               {/* Forensic & Compliance Guarantees */}
               <div className="mt-5 p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
                 <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-[#635BFF]" />
+                  <ShieldCheck className="w-4 h-4 text-[#0062FF]" />
                   <span className="text-slate-700 font-medium">PyMuPDF Metadata Forensics:</span>
                   <span className="text-emerald-700 font-mono font-semibold">0 Font Anomalies / No Splice</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Database className="w-4 h-4 text-[#635BFF]" />
+                  <Database className="w-4 h-4 text-[#0062FF]" />
                   <span className="text-slate-700 font-medium">Audit Proof Hash:</span>
                   <span className="font-mono text-slate-500">0x81b4...e39a</span>
                 </div>
@@ -1441,14 +1441,14 @@ function BidderActivityCentre({ bids = [], onReuploadDocument }) {
             {/* Live Activity Log */}
             <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm">
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4 flex items-center gap-2">
-                <Clock className="w-4 h-4 text-[#635BFF]" />
+                <Clock className="w-4 h-4 text-[#0062FF]" />
                 Live Verification Timeline & Activity Centre
               </h4>
 
               <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
                 {selectedBid.activityLog.map((log, index) => (
                   <div key={index} className="relative group">
-                    <div className="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-[#635BFF] border-2 border-white group-hover:scale-125 transition-transform" />
+                    <div className="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-[#0062FF] border-2 border-white group-hover:scale-125 transition-transform" />
                     <div className="flex items-baseline justify-between gap-2">
                       <p className="text-xs font-semibold text-slate-800">{log.event}</p>
                       <span className="text-[10px] font-mono text-slate-400 flex-shrink-0">{log.timestamp}</span>
@@ -1525,13 +1525,13 @@ export function BidderPortal() {
       {/* Bidder Profile Top Bar */}
       <div className="bg-white border border-slate-200/80 rounded-2xl p-5 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
         <div className="flex items-center gap-3 w-full md:w-auto">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-[#635BFF] to-[#00D4B2] flex items-center justify-center text-white font-bold text-lg shadow-sm">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-[#0062FF] to-[#00D4B2] flex items-center justify-center text-white font-bold text-lg shadow-sm">
             {currentUser.name.charAt(0)}
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-base font-bold text-[#0A2540]">{currentUser.company}</h3>
-              <span className="px-2.5 py-0.5 rounded text-[10px] font-mono bg-indigo-50 text-[#635BFF] border border-indigo-100 font-bold">
+              <h3 className="text-base font-bold text-[#111827]">{currentUser.company}</h3>
+              <span className="px-2.5 py-0.5 rounded text-[10px] font-mono bg-blue-50 text-[#0062FF] border border-blue-100 font-bold">
                 {currentUser.id}
               </span>
             </div>
@@ -1569,7 +1569,7 @@ export function BidderPortal() {
         </div>
       </div>
 
-      {/* STRIPE-STYLE SUB-NAVIGATION NAVBAR */}
+      {/* AHREFS-STYLE SUB-NAVIGATION NAVBAR */}
       <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-slate-200/80 shadow-xs overflow-x-auto">
         
         {/* Tab 1: Master KYC */}
@@ -1577,7 +1577,7 @@ export function BidderPortal() {
           onClick={() => setActiveTab('kyc')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
             activeTab === 'kyc'
-              ? 'bg-[#635BFF] text-white shadow-xs'
+              ? 'bg-[#0062FF] text-white shadow-xs'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
           }`}
         >
@@ -1601,7 +1601,7 @@ export function BidderPortal() {
           }}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
             activeTab === 'tenders'
-              ? 'bg-[#635BFF] text-white shadow-xs'
+              ? 'bg-[#0062FF] text-white shadow-xs'
               : kycState.isVerified
                 ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                 : 'text-slate-400 cursor-not-allowed opacity-60'
@@ -1621,7 +1621,7 @@ export function BidderPortal() {
           onClick={() => setActiveTab('preflight')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
             activeTab === 'preflight'
-              ? 'bg-[#635BFF] text-white shadow-xs'
+              ? 'bg-[#0062FF] text-white shadow-xs'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
           }`}
         >
@@ -1631,7 +1631,7 @@ export function BidderPortal() {
             3
           </span>
           Smart Upload Pre-Flight Validator
-          <span className="px-1.5 py-0.2 rounded bg-indigo-50 text-[#635BFF] text-[9px] font-mono border border-indigo-100 ml-1">
+          <span className="px-1.5 py-0.2 rounded bg-blue-50 text-[#0062FF] text-[9px] font-mono border border-blue-100 ml-1">
             SEC 7.2
           </span>
         </button>
@@ -1641,7 +1641,7 @@ export function BidderPortal() {
           onClick={() => setActiveTab('activity')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap ${
             activeTab === 'activity'
-              ? 'bg-[#635BFF] text-white shadow-xs'
+              ? 'bg-[#0062FF] text-white shadow-xs'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
           }`}
         >
@@ -1651,7 +1651,7 @@ export function BidderPortal() {
             4
           </span>
           My Submissions & Activity Centre
-          <span className="px-1.5 py-0.2 rounded-full bg-indigo-50 text-[#635BFF] text-[10px] font-mono ml-1 font-bold">
+          <span className="px-1.5 py-0.2 rounded-full bg-blue-50 text-[#0062FF] text-[10px] font-mono ml-1 font-bold">
             {bids.length}
           </span>
         </button>
