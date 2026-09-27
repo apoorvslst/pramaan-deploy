@@ -109,7 +109,7 @@ export function App() {
             <span>SIH PS 26100 GeM Public Procurement Architecture</span>
           </div>
           <div className="flex items-center gap-3 font-mono text-[11px] text-slate-500">
-            <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#0062FF]"></span>PyMuPDF Forensics</span>
+            <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded bg-[#0062FF]"></span>PyMuPDF Forensics</span>
             <span className="text-slate-300">•</span>
             <span>NetworkX Cartel Graph</span>
             <span className="text-slate-300">•</span>

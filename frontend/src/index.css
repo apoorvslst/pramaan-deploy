@@ -5,7 +5,7 @@
 
 html, body {
   background-color: #F8FAFD;
-  color: #111827;
+  color: #0F172A;
   font-family: var(--font-sans);
   margin: 0;
   padding: 0;
@@ -25,50 +25,83 @@ html, body {
   background-color: #F8FAFD;
 }
 
-/* Ahrefs Electric Blue selection */
+/* Electric Blue selection */
 ::selection {
   background-color: #0062FF;
   color: #ffffff;
 }
 
-/* Ahrefs-style subtle scrollbar */
+/* Subtle scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
   background: #F1F5F9;
 }
 ::-webkit-scrollbar-thumb {
   background: #CBD5E1;
-  border-radius: 9999px;
+  border-radius: 2px;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #94A3B8;
 }
 
-/* Ahrefs Crisp Card Utility */
+/* Crisp Rectangular Card Utility (No bubble shapes, clean 1px border) */
 .ahrefs-card {
   background: #FFFFFF;
   border: 1px solid #E2E8F0;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 4px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .ahrefs-card:hover {
   border-color: #CBD5E1;
-  box-shadow: 0 4px 12px 0 rgba(0, 98, 255, 0.06);
+  box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.05);
 }
 
-/* Clean pill badge */
-.ahrefs-pill {
+/* Crisp Rectangular Badge / Tag */
+.ahrefs-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.375rem;
-  padding: 0.25rem 0.625rem;
-  border-radius: 9999px;
+  gap: 0.25rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1rem;
+}
+
+/* Crisp Rectangular Button */
+.ahrefs-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: 4px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.ahrefs-btn-primary {
+  background-color: #0062FF;
+  color: #FFFFFF;
+  border: 1px solid #0050D4;
+}
+.ahrefs-btn-primary:hover {
+  background-color: #0050D4;
+}
+
+.ahrefs-btn-secondary {
+  background-color: #FFFFFF;
+  color: #334155;
+  border: 1px solid #CBD5E1;
+}
+.ahrefs-btn-secondary:hover {
+  background-color: #F8FAFC;
+  border-color: #94A3B8;
 }
