@@ -1,8 +1,10 @@
+import fs from 'fs';
 import { BidSubmission } from '../models/BidSubmission.js';
 import { VerificationEvidence } from '../models/VerificationEvidence.js';
 import { AuditLedgerService } from './auditLedger.js';
 import { ComplianceEngine } from './complianceEngine.js';
 import { queryAdapter } from './adapters/index.js';
+import { aiClient } from './aiClient.js';
 
 export class VerificationPipeline {
   /**
@@ -56,30 +58,64 @@ export class VerificationPipeline {
         });
       }
 
+      // STAGE 1 & 2: Call AI Microservice (or fallback to simulated logic)
+      let aiResult = null;
+      let resolvedPath = doc.storagePath && fs.existsSync(doc.storagePath) ? doc.storagePath : null;
+      if (!resolvedPath && doc.originalFileName) {
+        const potentialUploadPath = `uploads/${doc.originalFileName}`;
+        if (fs.existsSync(potentialUploadPath)) {
+          resolvedPath = potentialUploadPath;
+        }
+      }
+
+      if (resolvedPath) {
+        try {
+          const claimedId = bidder.gstin || bidder.udyamRegistrationNumber || bidder.pan || '';
+          aiResult = await aiClient.verifyDocument(resolvedPath, doc.docType, claimedId);
+        } catch (err) {
+          console.warn(`\x1b[33m[VerificationPipeline]\x1b[0m AI microservice not reachable or error: ${err.message}. Using built-in heuristics.`);
+        }
+      }
+
       // STAGE 1: Forensic Metadata & Digital Tampering Inspection
-      const fileNameLower = (doc.originalFileName || '').toLowerCase();
-      const storagePathLower = (doc.storagePath || '').toLowerCase();
+      let forensicReport;
+      if (aiResult?.forensicCheck) {
+        forensicReport = {
+          hasMetadataTampering: aiResult.forensicCheck.hasMetadataTampering || aiResult.forensicCheck.isTampered,
+          softwareDetected: aiResult.forensicCheck.softwareDetected?.join(', ') || null,
+          qrDecodedPayload: aiResult.forensicCheck.qrDecodedPayload || (bidder.gstin || bidder.pan),
+          qrMatchesClaim: aiResult.forensicCheck.qrMatchesClaim !== false,
+          fontInconsistenciesDetected: (aiResult.forensicCheck.flags || []).some(f => f.toLowerCase().includes('font')),
+          tamperConfidenceScore: aiResult.forensicCheck.tamperConfidence || 0.05,
+          signaturesDetected: aiResult.detectedSignatures?.length || 0,
+        };
+      } else {
+        const fileNameLower = (doc.originalFileName || '').toLowerCase();
+        const storagePathLower = (doc.storagePath || '').toLowerCase();
 
-      const hasTamperFlag = fileNameLower.includes('tamper') || 
-                            fileNameLower.includes('photoshop') || 
-                            fileNameLower.includes('canva') ||
-                            storagePathLower.includes('tamper');
+        const hasTamperFlag = fileNameLower.includes('tamper') || 
+                              fileNameLower.includes('photoshop') || 
+                              fileNameLower.includes('canva') ||
+                              storagePathLower.includes('tamper');
 
-      const forensicReport = {
-        hasMetadataTampering: hasTamperFlag,
-        softwareDetected: hasTamperFlag ? 'Adobe Photoshop CC 2024 (XMP Footprint)' : null,
-        qrDecodedPayload: hasTamperFlag ? 'MISMATCH_INVALID_PAYLOAD' : (bidder.gstin || bidder.pan),
-        qrMatchesClaim: !hasTamperFlag,
-        fontInconsistenciesDetected: hasTamperFlag,
-        tamperConfidenceScore: hasTamperFlag ? 0.98 : 0.02
-      };
+        forensicReport = {
+          hasMetadataTampering: hasTamperFlag,
+          softwareDetected: hasTamperFlag ? 'Adobe Photoshop CC 2024 (XMP Footprint)' : null,
+          qrDecodedPayload: hasTamperFlag ? 'MISMATCH_INVALID_PAYLOAD' : (bidder.gstin || bidder.pan),
+          qrMatchesClaim: !hasTamperFlag,
+          fontInconsistenciesDetected: hasTamperFlag,
+          tamperConfidenceScore: hasTamperFlag ? 0.98 : 0.02
+        };
+      }
+
+      const hasTamperFlag = forensicReport.hasMetadataTampering || !forensicReport.qrMatchesClaim;
 
       if (hasTamperFlag && io) {
         io.to(tenderRoom).emit('FORENSIC_ALERT', {
           submissionId: submission._id,
           docType: doc.docType,
           severity: 'CRITICAL',
-          message: `Digital tampering detected in ${doc.originalFileName}. Traces: ${forensicReport.softwareDetected}`
+          message: `Digital tampering detected in ${doc.originalFileName}. Traces: ${forensicReport.softwareDetected || 'QR Mismatch'}`
         });
 
         await AuditLedgerService.recordEvent({
@@ -95,7 +131,7 @@ export class VerificationPipeline {
         });
       }
 
-      // STAGE 2: OCR Key-Value Extraction Simulation (Pane 2 & Pane 1)
+      // STAGE 2: OCR Key-Value Extraction (Pane 2 & Pane 1)
       let extractedFields = {};
       let visualMarkers = {
         pageNumber: 1,
@@ -103,7 +139,15 @@ export class VerificationPipeline {
         imageSnippetUrl: `/uploads/${doc.originalFileName}`
       };
 
-      if (doc.docType === 'GST_CERTIFICATE') {
+      if (aiResult?.extractedFields && Object.keys(aiResult.extractedFields).length > 0) {
+        extractedFields = aiResult.extractedFields;
+        if (aiResult.visualMarkers) {
+          visualMarkers.namedMarkers = aiResult.visualMarkers;
+        }
+        if (aiResult.detectedSignatures?.length > 0) {
+          visualMarkers.signatures = aiResult.detectedSignatures;
+        }
+      } else if (doc.docType === 'GST_CERTIFICATE') {
         extractedFields = {
           gstin: bidder.gstin || '07AAAAA0000A1Z5',
           legalName: bidder.legalBusinessName,

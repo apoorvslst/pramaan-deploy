@@ -16,6 +16,7 @@ import auditRoutes from './routes/auditRoutes.js';
 import verificationRoutes from './routes/verificationRoutes.js';
 import forensicsRoutes from './routes/forensicsRoutes.js';
 import systemRoutes from './routes/systemRoutes.js';
+import aiRoutes from './routes/aiRoutes.js';
 
 // ─── Chaos Engineering & Resilience Middleware ───
 import {
@@ -142,6 +143,7 @@ app.get('/', (req, res) => {
       audit: '/api/audit',
       forensics: '/api/forensics',
       system: '/api/system',
+      ai: '/api/ai',
     },
   });
 });
@@ -182,6 +184,7 @@ app.use('/api/audit', auditRoutes);
 app.use('/api/verify', verificationRoutes);
 app.use('/api/forensics', forensicsRoutes);
 app.use('/api/system', systemRoutes);
+app.use('/api/ai', aiRoutes);
 
 // ═══════════════════════════════════════════════════════════════
 // ERROR HANDLING

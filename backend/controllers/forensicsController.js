@@ -4,6 +4,7 @@ import { Tender } from '../models/Tender.js';
 import { CollusionDetector } from '../services/collusionDetector.js';
 import { AnomalyDetector } from '../services/anomalyDetector.js';
 import { AuditLedgerService } from '../services/auditLedger.js';
+import { aiClient } from '../services/aiClient.js';
 
 /**
  * @desc    Run full cartel & collusion graph analysis across all bidders on a tender
@@ -34,6 +35,28 @@ export const runCollusionAnalysis = async (req, res) => {
     }
 
     const report = CollusionDetector.analyze(bidders, submissions);
+
+    // Enrich with Python AI Microservice NetworkX & Cytoscape Graph
+    try {
+      const formattedBidders = bidders.map(b => ({
+        id: b._id.toString(),
+        legalBusinessName: b.legalBusinessName,
+        gstin: b.gstin || '',
+        pan: b.pan || '',
+        primaryPhone: b.primaryPhone || '',
+        primaryEmail: b.primaryEmail || '',
+        registeredAddress: b.registeredAddress || {},
+        directors: (b.directors || []).map(d => ({ name: d.name || '', din: d.din || '', pan: d.pan || '' })),
+        bankAccountDetails: b.bankAccountDetails || {},
+        fileMetadataAuthor: b.fileMetadataAuthor || '',
+      }));
+      const aiCartel = await aiClient.detectCartel(formattedBidders, tenderId);
+      if (aiCartel?.cytoscapeGraph) {
+        report.cytoscapeGraph = aiCartel.cytoscapeGraph;
+      }
+    } catch (aiErr) {
+      // Graceful fallback: NetworkX call skipped if AI microservice offline
+    }
 
     // Record collusion analysis in audit ledger
     await AuditLedgerService.recordEvent({
