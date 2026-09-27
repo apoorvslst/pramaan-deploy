@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   ShieldCheck, 
   UploadCloud, 
@@ -377,12 +377,13 @@ function BidderKYC({ kycState, onVerifyKyc, onContinueToBids }) {
     'One-Time KYC verified! Appending identity verification block to ledger.'
   ];
 
-  const handleSimulateUpload = (docId) => {
+  const handleRealFileUpload = (docId, file) => {
     setDocs(prev => prev.map(d => {
       if (d.id === docId) {
         return {
           ...d,
-          file: `${d.name}_Scanned_Document.pdf`,
+          file: file.name,
+          fileObj: file,
           status: 'UPLOADED'
         };
       }
@@ -583,24 +584,45 @@ function BidderKYC({ kycState, onVerifyKyc, onContinueToBids }) {
                     </div>
                   </div>
                   {!isVerified && (
-                    <button
-                      type="button"
-                      onClick={() => handleSimulateUpload(doc.id)}
-                      className="text-xs text-[#0062FF] font-semibold hover:underline ml-2"
+                    <label
+                      htmlFor={`kyc-replace-${doc.id}`}
+                      className="text-xs text-[#635BFF] font-semibold hover:underline ml-2 cursor-pointer"
                     >
                       Replace
-                    </button>
+                      <input
+                        type="file"
+                        accept=".pdf,.png,.jpg,.jpeg"
+                        id={`kyc-replace-${doc.id}`}
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files[0];
+                          if (f) handleRealFileUpload(doc.id, f);
+                          e.target.value = '';
+                        }}
+                      />
+                    </label>
                   )}
                 </div>
               ) : (
-                <div 
-                  onClick={() => handleSimulateUpload(doc.id)}
-                  className="border-2 border-dashed border-slate-200 hover:border-[#0062FF] rounded p-4 text-center cursor-pointer transition-colors bg-slate-50/50 hover:bg-blue-50/30"
+                <label 
+                  htmlFor={`kyc-upload-${doc.id}`}
+                  className="border-2 border-dashed border-slate-200 hover:border-[#635BFF] rounded-xl p-4 text-center cursor-pointer transition-colors bg-slate-50/50 hover:bg-indigo-50/30 block"
                 >
+                  <input
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    id={`kyc-upload-${doc.id}`}
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files[0];
+                      if (f) handleRealFileUpload(doc.id, f);
+                      e.target.value = '';
+                    }}
+                  />
                   <UploadCloud className="w-6 h-6 text-slate-400 mx-auto mb-1.5" />
                   <p className="text-xs font-semibold text-slate-700">Click to upload or drag & drop</p>
                   <p className="text-[11px] text-slate-400 mt-0.5">PDF, PNG, JPG (Max 10MB)</p>
-                </div>
+                </label>
               )}
             </div>
           );
@@ -663,6 +685,7 @@ function BidderSmartPreFlight() {
   const [testFile, setTestFile] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState(null);
+  const preflightFileRef = useRef(null);
 
   const handleSimulatePreFlight = (fileName = 'CA_Turnover_Certificate_FY24.pdf') => {
     setTestFile(fileName);
@@ -727,17 +750,28 @@ function BidderSmartPreFlight() {
 
       {/* Upload Dropzone */}
       <div 
-        onClick={() => handleSimulatePreFlight('OEM_Authorization_Sungrow.pdf')}
-        className="bg-white border-2 border-dashed border-blue-200 hover:border-[#0062FF] rounded p-8 text-center cursor-pointer shadow-sm hover:shadow transition-all"
+        onClick={() => preflightFileRef.current?.click()}
+        className="bg-white border-2 border-dashed border-indigo-200 hover:border-[#635BFF] rounded-2xl p-8 text-center cursor-pointer shadow-sm hover:shadow transition-all"
       >
-        <UploadCloud className="w-10 h-10 text-[#0062FF] mx-auto mb-2" />
-        <h4 className="text-sm font-bold text-[#111827]">Drop any PDF certificate to run instant Pre-Flight diagnostics</h4>
+        <input
+          type="file"
+          accept=".pdf"
+          ref={preflightFileRef}
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files[0];
+            if (f) handleSimulatePreFlight(f.name);
+            e.target.value = '';
+          }}
+        />
+        <UploadCloud className="w-10 h-10 text-[#635BFF] mx-auto mb-2" />
+        <h4 className="text-sm font-bold text-[#0A2540]">Drop any PDF certificate to run instant Pre-Flight diagnostics</h4>
         <p className="text-xs text-slate-500 mt-1">
           Validates SHA-256, DPI clarity, PDF encryption lock, and format compliance in browser memory.
         </p>
         <div className="mt-4">
-          <span className="px-3 py-1.5 rounded bg-blue-50 text-[#0062FF] text-xs font-bold border border-blue-200">
-             Click to Test OEM Authorization Letter (2.1 MB)
+          <span className="px-3 py-1.5 rounded-xl bg-indigo-50 text-[#635BFF] text-xs font-bold border border-indigo-200">
+            ⚡ Click to Select a PDF Certificate
           </span>
         </div>
       </div>
@@ -834,12 +868,13 @@ function BidderTenderBrowser({ onBidSubmitted }) {
     setTenderDocs(initialDocs);
   };
 
-  const handleAttachSampleDoc = (index) => {
+  const handleAttachRealDoc = (index, file) => {
     setTenderDocs(prev => ({
       ...prev,
       [index]: {
         ...prev[index],
-        fileName: `${prev[index].name.replace(/[^a-zA-Z0-9]/g, '_')}_Signed.pdf`,
+        fileName: file.name,
+        fileObj: file,
         status: 'READY',
       }
     }));
@@ -1140,13 +1175,23 @@ function BidderTenderBrowser({ onBidSubmitted }) {
                               Attached
                             </span>
                           ) : (
-                            <button
-                              type="button"
-                              onClick={() => handleAttachSampleDoc(idx)}
-                              className="px-3 py-1.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium border border-slate-200"
+                            <label
+                              htmlFor={`tender-doc-${idx}`}
+                              className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium border border-slate-200 cursor-pointer inline-block"
                             >
                               Upload File
-                            </button>
+                              <input
+                                type="file"
+                                accept=".pdf,.png,.jpg,.jpeg"
+                                id={`tender-doc-${idx}`}
+                                className="hidden"
+                                onChange={(e) => {
+                                  const f = e.target.files[0];
+                                  if (f) handleAttachRealDoc(idx, f);
+                                  e.target.value = '';
+                                }}
+                              />
+                            </label>
                           )}
                         </div>
                       </div>
