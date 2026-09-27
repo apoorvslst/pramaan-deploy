@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -9,10 +9,20 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
-        darkMode: 'class',
         theme: {
           extend: {
             colors: {
+              stripe: {
+                bg: '#F6F9FC',
+                card: '#FFFFFF',
+                text: '#0A2540',
+                muted: '#425466',
+                border: '#E3E8EE',
+                indigo: '#635BFF',
+                hover: '#5349DF',
+                cyan: '#00D4B2',
+                purple: '#7A73FF',
+              },
               gem: {
                 blue: '#0F2C59',
                 gold: '#E5A93C',
@@ -28,8 +38,12 @@
               }
             },
             fontFamily: {
-              sans: ['Outfit', 'Inter', 'sans-serif'],
+              sans: ['Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'sans-serif'],
               mono: ['Fira Code', 'Courier New', 'monospace']
+            },
+            boxShadow: {
+              'stripe': '0 2px 4px rgba(0,0,0,0.04), 0 8px 16px rgba(0,0,0,0.06)',
+              'stripe-hover': '0 4px 8px rgba(0,0,0,0.06), 0 12px 24px rgba(0,0,0,0.09)'
             }
           }
         }
@@ -40,7 +54,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
   </head>
-  <body class="bg-[#0B132B] text-slate-100 font-sans antialiased min-h-screen selection:bg-cyan-500 selection:text-white">
+  <body class="bg-[#F6F9FC] text-[#0A2540] font-sans antialiased min-h-screen selection:bg-[#635BFF] selection:text-white">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
