@@ -1,7 +1,9 @@
 import React from 'react';
-import { ShieldCheck, Activity, Users, Lock, Sparkles, FileText, Database } from './Icons';
+import { ShieldCheck, Building, User, LogOut, CheckCircle } from './Icons';
 
-export const Header = ({ currentRole, setRole, activeTab, setActiveTab }) => {
+export const Header = ({ currentRole, currentUser, onLogout }) => {
+  const isOfficer = currentRole === 'OFFICER';
+
   return (
     <header className="bg-white/95 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-40 px-4 lg:px-8 py-3 shadow-xs">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
@@ -39,43 +41,60 @@ export const Header = ({ currentRole, setRole, activeTab, setActiveTab }) => {
           </div>
         </div>
 
-        {/* Navigation Mode Pill */}
-        {currentRole === 'BIDDER' ? (
-          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-cyan-50 border border-cyan-200 text-xs font-semibold text-cyan-800 shadow-2xs">
-            <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
-            Bidder Portal: One-Time KYC & Live Tender Bids
+        {/* Dynamic Authenticated Role Pill */}
+        {isOfficer ? (
+          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-xs font-semibold text-[#635BFF] shadow-2xs">
+            <ShieldCheck className="w-4 h-4 text-[#635BFF]" />
+            <span>GeM Procurement Officer Console</span>
+            <span className="px-1.5 py-0.2 rounded-md bg-white text-[10px] font-mono font-bold text-indigo-700 border border-indigo-100">
+              OFFICER ONLY
+            </span>
           </div>
         ) : (
-          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-xs font-semibold text-[#635BFF] shadow-2xs">
-            <span className="w-2 h-2 rounded-full bg-[#635BFF] animate-pulse"></span>
-            {currentRole === 'OFFICER' ? 'GeM Procurement Officer Workspace' : 'CAG Statutory Audit Mode (Read-Only)'}
+          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-cyan-50 border border-cyan-200 text-xs font-semibold text-cyan-800 shadow-2xs">
+            <Building className="w-4 h-4 text-cyan-700" />
+            <span>Verified Bidder & Vendor Portal</span>
+            <span className="px-1.5 py-0.2 rounded-md bg-white text-[10px] font-mono font-bold text-cyan-700 border border-cyan-100">
+              BIDDER ONLY
+            </span>
           </div>
         )}
 
-        {/* Role Switcher & Controls */}
+        {/* User Identity & Logout Button (Strictly No Role Switching) */}
         <div className="flex items-center gap-3">
-          <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-            <span className="font-mono text-slate-400">AI Service:</span>
-            <span className="font-semibold text-emerald-600">CONNECTED</span>
-          </div>
+          
+          {/* Active User Identity Pill */}
+          {currentUser && (
+            <div className="flex items-center gap-2.5 px-3 py-1.5 bg-slate-50 border border-slate-200/90 rounded-xl text-xs shadow-2xs">
+              <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs ${
+                isOfficer ? 'bg-indigo-100 text-[#635BFF]' : 'bg-cyan-100 text-cyan-800'
+              }`}>
+                {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : <User className="w-3.5 h-3.5" />}
+              </div>
+              <div className="text-left">
+                <div className="font-bold text-[#0A2540] text-[11px] leading-tight">
+                  {currentUser.name}
+                </div>
+                <div className="text-[10px] text-slate-500 font-mono truncate max-w-[160px]">
+                  {currentUser.organisation || (isOfficer ? 'NTPC Ltd' : 'Solarix Green Energy')}
+                </div>
+              </div>
+            </div>
+          )}
 
-          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200/80">
-            <span className="text-xs px-2 font-mono text-slate-500">Role:</span>
-            {['OFFICER', 'CAG_AUDITOR', 'BIDDER'].map((role) => (
-              <button
-                key={role}
-                onClick={() => setRole(role)}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
-                  currentRole === role
-                    ? 'bg-white text-[#0A2540] shadow-sm border border-slate-200/60'
-                    : 'text-slate-500 hover:text-slate-900'
-                }`}
-              >
-                {role === 'OFFICER' ? 'GeM Officer' : role === 'CAG_AUDITOR' ? 'CAG Auditor' : 'Bidder Portal'}
-              </button>
-            ))}
-          </div>
+          {/* Secure Logout Button */}
+          {onLogout && (
+            <button
+              type="button"
+              onClick={onLogout}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-rose-50 text-slate-600 hover:text-rose-700 border border-slate-200 hover:border-rose-200 text-xs font-semibold transition-all shadow-2xs"
+              title="Sign Out of Session"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Sign Out</span>
+            </button>
+          )}
+
         </div>
 
       </div>
