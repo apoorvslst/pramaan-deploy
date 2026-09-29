@@ -200,20 +200,22 @@ export default function EvidenceViewer() {
       return;
     }
 
+    if (!selectedBidder?.mongoId) {
+      alert('Cannot submit decision: No valid bid selected. Please select a live bid from the database.');
+      return;
+    }
+
     try {
-      let hash = '0x' + Math.random().toString(16).substring(2, 10) + '...sealed';
-      if (selectedBidder.mongoId) {
-        const res = await api.submitOfficerDecision(selectedBidder.mongoId, decision, overrideText);
-        if (res.auditBlock?.currentHash) {
-          hash = res.auditBlock.currentHash;
-        }
-      }
+      const res = await api.submitOfficerDecision(selectedBidder.mongoId, decision, overrideText);
+      const hash = res.auditBlock?.currentHash || ('0x' + Math.random().toString(16).substring(2, 10) + '...sealed');
       
-      setSelectedBidder(prev => ({
-        ...prev,
+      // Update local state immediately for instant UI feedback
+      const updatedBidder = {
+        ...selectedBidder,
         status: decision,
-        aiRecommendation: decision
-      }));
+      };
+      setSelectedBidder(updatedBidder);
+      setBidders(prev => prev.map(b => b.mongoId === selectedBidder.mongoId ? updatedBidder : b));
 
       setDecisionSuccess({
         message: `Decision recorded: BIDDER ${decision}. Cryptographically sealed into CAG Audit Ledger.`,
@@ -221,21 +223,40 @@ export default function EvidenceViewer() {
       });
       setOverrideMode(false);
       setOverrideText('');
+
+      // Re-fetch bids from backend to confirm the decision persisted
+      try {
+        const liveBids = await api.getAllBids();
+        if (liveBids && liveBids.length > 0) {
+          const formatted = liveBids.map(b => ({
+            id: b.bidReferenceNumber || b._id,
+            mongoId: b._id,
+            legalName: b.bidderId?.legalBusinessName || b.bidderId?.name || b.legalBusinessName || 'Bidder Entity',
+            gstin: b.bidderId?.gstin || b.gstin || '07AAAAA0000A1Z5',
+            pan: b.bidderId?.pan || b.pan || 'AAAAA0000A',
+            score: b.evaluationResult?.complianceScore || 88,
+            riskLevel: b.evaluationResult?.riskLevel || 'LOW',
+            status: b.status || 'SUBMITTED',
+            aiRecommendation: b.evaluationResult?.aiRecommendation || 'QUALIFY',
+            isCollusionFlagged: false,
+            documents: b.uploadedDocuments || []
+          }));
+          setBidders(formatted);
+          const refreshed = formatted.find(f => f.mongoId === selectedBidder.mongoId);
+          if (refreshed) setSelectedBidder(refreshed);
+        }
+      } catch (refetchErr) {
+        console.warn('Post-decision refetch warning:', refetchErr.message);
+      }
     } catch (err) {
-      // Graceful local update
-      setSelectedBidder(prev => ({
-        ...prev,
-        status: decision,
-        aiRecommendation: decision
-      }));
+      console.error('Officer decision failed:', err);
       setDecisionSuccess({
-        message: `Officer Decision (${decision}) Recorded. Sealed in Ledger block.`,
-        hash: '0x' + Math.random().toString(16).substring(2, 10) + '...sealed'
+        message: `❌ Decision FAILED: ${err.message}. Please retry or contact system admin.`,
+        hash: 'ERROR'
       });
-      setOverrideMode(false);
-      setOverrideText('');
     }
   };
+
 
   const isTampered = selectedBidder?.riskLevel === 'HIGH' || 
                      selectedBidder?.status === 'DISQUALIFIED' || 

@@ -10,6 +10,7 @@ import TenderManagement from './pages/TenderManagement';
 import BidderRegistry from './pages/BidderRegistry';
 import DocumentUpload from './pages/DocumentUpload';
 import BidderPortalPage from './pages/BidderPortalPage';
+import { api } from './services/api';
 
 // Strict Role Guard Components
 function OfficerRoute({ currentUser, children }) {
@@ -54,10 +55,31 @@ function App() {
     localStorage.removeItem('praman_user');
   };
 
-  const handleSwitchRole = () => {
+  const handleSwitchRole = async () => {
     if (!currentUser) return;
     const isCurrentlyOfficer = (currentUser.role || '').toUpperCase() === 'OFFICER';
     const newRole = isCurrentlyOfficer ? 'BIDDER' : 'OFFICER';
+
+    // Re-login with the seeded demo account to get a valid JWT with the correct role
+    try {
+      const demoEmail = newRole === 'OFFICER' ? 'officer@praman.test' : 'bidder@praman.test';
+      const loginRes = await api.login(demoEmail, 'password123');
+      if (loginRes && loginRes.token) {
+        const updated = {
+          ...loginRes.user,
+          role: newRole,
+          name: newRole === 'BIDDER' ? 'Vikram Solar Enterprises' : 'Dr. Rajesh Verma',
+          organization: newRole === 'BIDDER' ? 'Vikram Solar Green Energy Pvt Ltd' : 'Ministry of Heavy Industries'
+        };
+        setCurrentUser(updated);
+        localStorage.setItem('praman_user', JSON.stringify(updated));
+        return;
+      }
+    } catch (err) {
+      console.warn('Role switch re-login failed, doing local switch:', err.message);
+    }
+
+    // Fallback: local-only switch (won't have correct JWT for restricted routes)
     const updated = {
       ...currentUser,
       role: newRole,
@@ -67,6 +89,7 @@ function App() {
     setCurrentUser(updated);
     localStorage.setItem('praman_user', JSON.stringify(updated));
   };
+
 
   // If not logged in, render the clean Government of India Auth Page
   if (!currentUser) {

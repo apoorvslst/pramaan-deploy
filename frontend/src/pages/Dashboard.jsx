@@ -380,7 +380,7 @@ export default function Dashboard() {
                 {[...bidders].sort((a, b) => b.score - a.score).map((b, idx) => (
                   <tr
                     key={b.id}
-                    onClick={() => navigate(`/evidence?bidId=${b.id}`)}
+                    onClick={() => navigate(`/evidence?bidId=${b.mongoId || b.id}`)}
                     style={{
                       cursor: 'pointer',
                       ...(b.isCollusionFlagged ? { background: 'rgba(239, 68, 68, 0.04)' } : {})

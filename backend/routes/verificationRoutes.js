@@ -17,7 +17,7 @@ router.post('/:bidId/verify', protect, authorize('OFFICER', 'AUDITOR', 'CAG_AUDI
 router.get('/:bidId/evidence', protect, getEvidenceByBid);
 
 // Officer records final award/disqualification decision (with mandatory override justification)
-router.post('/:bidId/decision', protect, authorize('OFFICER'), submitOfficerDecision);
+router.post('/:bidId/decision', protect, authorize('OFFICER', 'ADMIN'), submitOfficerDecision);
 
 // Ranked evaluations across all competing bidders on a tender
 router.get('/tender/:tenderId/evaluations', protect, authorize('OFFICER', 'AUDITOR', 'CAG_AUDITOR'), getTenderEvaluations);
