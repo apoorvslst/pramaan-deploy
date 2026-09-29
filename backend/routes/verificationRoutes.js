@@ -11,6 +11,7 @@ const router = express.Router();
 
 // Trigger the full 5-stage automated verification pipeline
 router.post('/:bidId', protect, authorize('OFFICER', 'AUDITOR', 'CAG_AUDITOR'), triggerVerification);
+router.post('/:bidId/verify', protect, authorize('OFFICER', 'AUDITOR', 'CAG_AUDITOR'), triggerVerification);
 
 // Retrieve 3-Pane evidence dataset for a bid
 router.get('/:bidId/evidence', protect, getEvidenceByBid);

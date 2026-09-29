@@ -17,7 +17,8 @@ const ACTION_CONFIG = {
   OFFICER_OVERRIDE: { icon: UserCheck, label: 'Officer Override' },
 };
 
-export default function AuditTrail() {
+export default function AuditTrail({ currentUser }) {
+  const isBidder = (currentUser?.role || '').toUpperCase() === 'BIDDER';
   const [expanded, setExpanded] = useState(new Set([3]));
 
   const toggle = (idx) => {
@@ -33,11 +34,15 @@ export default function AuditTrail() {
       {/* Header */}
       <div className="page-header">
         <div>
-          <h1 className="page-title">Hash-Chained Audit Ledger</h1>
+          <h1 className="page-title">{isBidder ? 'Public CAG Audit Ledger' : 'Hash-Chained Audit Ledger'}</h1>
           <p className="page-subtitle">
-            Immutable cryptographic record | 8 blocks | SHA-256 chain verified
+            {isBidder 
+              ? 'Public Cryptographic Record | 8 Blocks | SHA-256 Chain Verified Transparency'
+              : 'Immutable cryptographic record | 8 blocks | SHA-256 chain verified'
+            }
           </p>
         </div>
+
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           <div className="badge badge-pass" style={{ padding: '5px 10px', fontSize: '0.68rem' }}>
             <CheckCircle style={{ width: 13, height: 13 }} />

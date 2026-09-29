@@ -232,3 +232,102 @@ export const publishTender = async (req, res) => {
     });
   }
 };
+
+/**
+ * @desc    AI Tender Rule & Specification Drafting Assistant (Groq LLM)
+ * @route   POST /api/tenders/ai-assist
+ * @access  Private (OFFICER)
+ */
+export const generateAITenderDraft = async (req, res) => {
+  try {
+    const { title, department, estimatedValueINR, category, requirements } = req.body;
+    const val = Number(estimatedValueINR) || 10000000;
+    const dept = department || 'Ministry of Heavy Industries';
+    const cat = category || 'Public Procurement & Services';
+
+    const groqKey = process.env.GROQ_API_KEY;
+    let aiRules = {
+      standardTitle: title || 'Procurement of Statutory Equipment & Works',
+      minimumTurnoverINR: Math.round(val * 0.3),
+      turnoverYearsRequired: 3,
+      minimumExperienceYears: 3,
+      makeInIndiaPercentage: 50,
+      allowStartupExemption: true,
+      allowMSMEExemption: true,
+      emdAmountINR: Math.round(val * 0.02),
+      mandatoryDocuments: [
+        'GST Registration Certificate (Form GST REG-06)',
+        'CA Certified Turnover Certificate (Avg >= 30% of Tender Value)',
+        'Permanent Account Number (PAN Card)',
+        'Udyam MSME Certificate / DPIIT Startup Certificate',
+        'Non-Debarment / Anti-Blacklisting Affidavit'
+      ],
+      aiComplianceJustification: `Standardized in accordance with General Financial Rules (GFR 2017) Rule 149 and DPIIT Public Procurement Order 2017.`
+    };
+
+    if (groqKey) {
+      try {
+        const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${groqKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'qwen/qwen3.8-27b',
+            messages: [
+              {
+                role: 'system',
+                content: `You are an expert Government of India Public Procurement Legal Advisor specialized in GeM & CPPP statutory rules under GFR 2017.
+Generate standardized statutory tender parameters and criteria for an official Notice Inviting Tender (NIT).
+
+Return STRICTLY valid JSON with structure:
+{
+  "standardTitle": string,
+  "minimumTurnoverINR": number,
+  "turnoverYearsRequired": number,
+  "minimumExperienceYears": number,
+  "makeInIndiaPercentage": number,
+  "allowStartupExemption": boolean,
+  "allowMSMEExemption": boolean,
+  "emdAmountINR": number,
+  "mandatoryDocuments": string[],
+  "aiComplianceJustification": string
+}`
+              },
+              {
+                role: 'user',
+                content: `Tender Scope/Title: "${title || 'Supply of Solar Power Inverters'}"
+Department: "${dept}"
+Estimated Value INR: ${val}
+Category: "${cat}"
+Additional Requirements: "${requirements || 'Standard statutory GeM compliance'}"`
+              }
+            ],
+            response_format: { type: 'json_object' },
+            temperature: 0.2,
+            max_tokens: 450,
+          })
+        });
+
+        if (groqRes.ok) {
+          const groqData = await groqRes.json();
+          const parsed = JSON.parse(groqData.choices?.[0]?.message?.content || '{}');
+          if (parsed.standardTitle) {
+            aiRules = { ...aiRules, ...parsed };
+          }
+        }
+      } catch (err) {
+        console.warn('[AI Tender Draft Warning]', err.message);
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      draft: aiRules
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+

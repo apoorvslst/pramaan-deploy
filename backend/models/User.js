@@ -44,11 +44,39 @@ const UserSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
+  gemSellerId: {
+    type: String,
+    trim: true,
+  },
+  panNumber: {
+    type: String,
+    trim: true,
+  },
+  gstinNumber: {
+    type: String,
+    trim: true,
+  },
+  udyamNumber: {
+    type: String,
+    trim: true,
+  },
+  isKycVerified: {
+    type: Boolean,
+    default: false,
+  },
+  kycVerifiedAt: {
+    type: Date,
+  },
+  kycDocuments: {
+    type: Array,
+    default: [],
+  },
   isActive: {
     type: Boolean,
     default: true,
   },
 }, {
+
   timestamps: true,
 });
 

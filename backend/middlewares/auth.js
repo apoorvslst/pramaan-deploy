@@ -64,7 +64,10 @@ export const authorize = (...roles) => {
       });
     }
 
-    if (!roles.includes(req.user.role)) {
+    const normalizedRoles = roles.map(r => String(r).trim().toUpperCase());
+    const userRole = String(req.user?.role || '').trim().toUpperCase();
+
+    if (!normalizedRoles.includes(userRole)) {
       return res.status(403).json({
         success: false,
         error: `Access denied. Role '${req.user.role}' is not authorized to access this resource.`,

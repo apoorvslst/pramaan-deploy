@@ -5,6 +5,7 @@ import {
   getTenderById,
   updateTender,
   publishTender,
+  generateAITenderDraft,
 } from '../controllers/tenderController.js';
 import { protect, authorize } from '../middlewares/auth.js';
 
@@ -14,6 +15,8 @@ router.route('/')
   .get(getAllTenders)
   .post(protect, authorize('OFFICER'), createTender);
 
+router.post('/ai-assist', protect, authorize('OFFICER'), generateAITenderDraft);
+
 router.route('/:id')
   .get(getTenderById)
   .put(protect, authorize('OFFICER'), updateTender);
@@ -21,3 +24,4 @@ router.route('/:id')
 router.patch('/:id/publish', protect, authorize('OFFICER'), publishTender);
 
 export default router;
+

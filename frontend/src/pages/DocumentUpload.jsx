@@ -64,12 +64,13 @@ export default function DocumentUpload() {
       {/* Header */}
       <div className="page-header">
         <div>
-          <h1 className="page-title">Document Upload & AI Verification</h1>
+          <h1 className="page-title">Document Forensics & AI Scrutiny</h1>
           <p className="page-subtitle">
-            Pre-Flight Statutory Document Scrutiny | Instant OCR, Metadata Forensics, Registry Ground-Truth
+            Officer Deep Document Inspection | PyMuPDF Font Forensics, Spatial OCR, Registry Ground-Truth Verification
           </p>
         </div>
       </div>
+
 
       <div className="page-body">
         <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 24 }}>

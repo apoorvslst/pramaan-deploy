@@ -182,6 +182,7 @@ app.use('/api/tenders', tenderRoutes);
 app.use('/api/bids', bidRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/verify', verificationRoutes);
+app.use('/api/verification', verificationRoutes);
 app.use('/api/forensics', forensicsRoutes);
 app.use('/api/system', systemRoutes);
 app.use('/api/ai', aiRoutes);
