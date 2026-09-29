@@ -91,15 +91,20 @@ export function AuthPage({ onLoginSuccess }) {
         setSuccessMessage('Registration successful! Signing you into the portal...');
       }
 
-      setTimeout(() => {
-        const userObj = data.user || {
-          name: name || (selectedRole === 'OFFICER' ? 'Dr. Rajesh Verma' : 'Vikram Solar Enterprises'),
-          email: email.trim().toLowerCase(),
-          role: selectedRole,
-          organization: organisation || (selectedRole === 'OFFICER' ? 'Ministry of Heavy Industries' : 'Vikram Solar Green Energy Pvt Ltd')
-        };
-        onLoginSuccess(userObj, selectedRole);
-      }, 300);
+      const userObj = data?.user || {
+        name: name || (selectedRole === 'OFFICER' ? 'Dr. Rajesh Verma' : 'Vikram Solar Enterprises'),
+        email: email.trim().toLowerCase(),
+        role: selectedRole,
+        organization: organisation || (selectedRole === 'OFFICER' ? 'Ministry of Heavy Industries' : 'Vikram Solar Green Energy Pvt Ltd'),
+        isKycVerified: Boolean(data?.user?.isKycVerified)
+      };
+      
+      if (data?.token) {
+        localStorage.setItem('praman_token', data.token);
+        localStorage.setItem('praman_auth_token', data.token);
+      }
+      localStorage.setItem('praman_user', JSON.stringify(userObj));
+      onLoginSuccess(userObj, userObj.role || selectedRole);
 
     } catch (err) {
       console.error('Auth error:', err.message);

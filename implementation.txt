@@ -1,853 +1,450 @@
-================================================================================
-  PRAMAN (प्रमाण) — COMPLETE END-TO-END IMPLEMENTATION & REFACTORING GUIDE
-================================================================================
-Target Audience: Junior/Lower-tier AI Models & Developers
-Purpose: Comprehensive, exact, zero-hallucination instructions to fix the entire
-         Procurement Bid Verification platform (Bidder Flow, Officer Flow,
-         AI Verification without hardcoding, 3-Bidder Comparison, Activity Center).
-File Location: c:\Users\gaura\Downloads\Praman - gp\implementation.txt
-Date: 2026-09-30
+﻿================================================================================
+PRAMAN — COMPLETE BUG FIX & IMPLEMENTATION GUIDE
+Generated: 2026-09-30
+Purpose: Give this to any developer / model to fix ALL known issues in the flow.
 ================================================================================
 
-TABLE OF CONTENTS:
-1. Executive System Overview & Flaws Identified in Current Codebase
-2. Environment Configuration & Required API Keys (.env)
-3. Database Models Refactoring (Mongoose Schemas)
-   - 3.1 backend/models/BidSubmission.js
-   - 3.2 backend/models/Tender.js
-   - 3.3 backend/models/User.js
-4. Backend API Routes & Controllers Refactoring
-   - 4.1 backend/routes/bidRoutes.js & controllers/bidController.js
-   - 4.2 backend/routes/tenderRoutes.js & controllers/tenderController.js
-   - 4.3 backend/routes/verificationRoutes.js & controllers/verificationController.js
-   - 4.4 backend/routes/authRoutes.js & controllers/authController.js
-   - 4.5 backend/services/verificationPipeline.js (Real AI, No Hardcoding)
-5. Frontend Services Refactoring (frontend/src/services/api.js)
-6. Bidder Flow Implementation (frontend/src/components/BidderPortal.jsx)
-   - Step 1: Registration / Login
-   - Step 2: Strict KYC Gating (Aadhaar & PAN verification before tenders unlock)
-   - Step 3: Browse Live Tenders from MongoDB
-   - Step 4: Submit Bid Proposal (Status set to PENDING)
-   - Step 5: Activity Center & Tender History with Real-Time Updates
-7. Officer Flow Implementation (frontend/src/pages/Dashboard.jsx & components/OfficerDashboard.jsx)
-   - Step 1: Officer Login & Department Selection
-   - Step 2: View Past & Active Tenders with Real Bidder Counts
-   - Step 3: AI-Assisted Tender Creation (GFR 2017 & DPIIT Rule Synthesis)
-   - Step 4: Real Bidder Submissions Table (No Mock Masking)
-   - Step 5: Real AI Verification Engine Execution (No Mock Evidence)
-   - Step 6: 3-Bidder Side-by-Side Comparison Matrix & AI Synthesis Report
-   - Step 7: Officer Accept / Reject Decision with Digital Audit Trail
-8. Socket.io Real-Time Synchronization Protocol
-9. Step-by-Step Execution & Testing Verification Checklist
+IMPORTANT RULES FOR THE DEVELOPER:
+- DO NOT push to git until explicitly told.
+- Work ONLY on the frontend (React/Vite) and backend (Node/Express). Do not touch the Python AI microservice.
+- The backend runs on port 5000. The frontend runs on port 3000. MongoDB is at localhost:27017/praman_db.
+- Vite has a proxy: all /api/* calls from the frontend are forwarded to http://localhost:5000.
+- GROQ_API_KEY is already set in backend/.env
 
 ================================================================================
-1. EXECUTIVE SYSTEM OVERVIEW & FLAWS IDENTIFIED IN CURRENT CODEBASE
-================================================================================
-The PRAMAN platform connects two distinct user roles:
-  [ROLE 1: BIDDER] -> Completes KYC -> Views Tenders -> Submits Bid -> Views Activity Center
-  [ROLE 2: OFFICER] -> Views Tenders -> Creates Tender (AI Assist) -> Views Bidders ->
-                      Triggers AI Verification -> Views 3-Way Comparison & AI Report ->
-                      Accepts/Rejects Bid -> Bidder Activity Center updates in real-time.
-
-CURRENT MAJOR BUGS & WHY BIDS DO NOT SHOW TO OFFICERS:
-------------------------------------------------------
-Bug 1: In backend/routes/tenderRoutes.js, tender publishing is registered as PATCH:
-       router.patch('/:id/publish', ...);
-       While frontend api.js called:
-       fetch('/api/tenders/:id/publish', { method: 'POST' });
-       Result: 404 Cannot POST error during tender publishing.
-
-Bug 2: In backend/controllers/bidController.js:
-       submitBid creates a BidSubmission record in MongoDB, but:
-       a) It does NOT increment the Tender's biddersCount ($inc: { biddersCount: 1 }).
-       b) Status defaults to 'SUBMITTED' instead of 'PENDING'.
-       c) When Officer checks tenders on /tenders or /dashboard, biddersCount shows 0.
-
-Bug 3: In frontend/src/App.jsx:
-       The Officer dashboard route /dashboard was mapped to frontend/src/pages/Dashboard.jsx,
-       which used static MOCK_BIDDERS and had broken table references:
-       {b.verifiedDocs}/{b.submittedDocs} -> both were undefined, rendering '/'.
-       Meanwhile, the full-featured 2275-line OfficerDashboard.jsx (with 3-bidder comparison,
-       evidence viewer, and AI assistant) was NOT even imported or rendered anywhere!
-
-Bug 4: Hardcoding in Evidence & Verification:
-       EvidenceViewer.jsx hardcoded 'APEX INFOTECH SOLUTIONS PVT. LTD.' and fake SVG
-       bounding boxes rather than reading the live extractedFields from VerificationEvidence.
-
-Bug 5: Bidder KYC Gating was bypassed or inconsistently enforced:
-       Bidders could click /tenders or browse without complete KYC.
-
-================================================================================
-2. ENVIRONMENT CONFIGURATION & REQUIRED API KEYS
-================================================================================
-Ensure the following files have the exact keys configured:
-
-File: backend/.env
---------------------------------------------------------------------------------
-PORT=5000
-NODE_ENV=development
-MONGO_URI=mongodb://127.0.0.1:27017/praman_db
-JWT_SECRET=praman_jwt_secret_dev_2026_super_secure
-JWT_EXPIRES_IN=7d
-AI_SERVICE_URL=http://localhost:8000
-FRONTEND_URL=http://localhost:3000
-CLIENT_ORIGIN=http://localhost:3000
-GROQ_API_KEY=your_groq_api_key_here
---------------------------------------------------------------------------------
-
-File: ai/.env (Python FastAPI Microservice)
---------------------------------------------------------------------------------
-PORT=8000
-HOST=0.0.0.0
-ENVIRONMENT=development
-GROQ_API_KEY=your_groq_api_key_here
-GROQ_MODEL=llama-3.3-70b-versatile
-FALLBACK_GROQ_MODEL=qwen/qwen3.8-27b
-OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_MODEL=llama3.1
-CHROMA_PERSIST_DIRECTORY=./data/chromadb
-CONFIDENCE_THRESHOLD=0.85
-TAMPER_RISK_CUTOFF=0.70
---------------------------------------------------------------------------------
-
-Note on API Keys:
-- GROQ_API_KEY is required for real AI verification, OCR analysis, and tender drafting.
-- Free API keys can be generated at: https://console.groq.com/keys
-- Supported Groq Models: 'llama-3.3-70b-versatile', 'llama3-70b-8192', 'mixtral-8x7b-32768'.
-
-================================================================================
-3. DATABASE MODELS REFACTORING (MONGOOSE SCHEMAS)
+SECTION 1: DESIRED USER FLOW (THE TRUTH)
 ================================================================================
 
-3.1 File: backend/models/BidSubmission.js
---------------------------------------------------------------------------------
-Update the schema to ensure status supports PENDING, ACCEPTED, REJECTED, and
-officerDecision supports ACCEPTED and REJECTED:
+--- BIDDER FLOW ---
+1. Bidder opens the app -> sees Auth Page (login/register)
+2. Bidder registers: name, email, password, company name, entity type, phone
+   NO PAN/GSTIN at registration (they go in KYC step after login)
+3. Bidder logs in -> JWT token stored in localStorage as 'praman_token'
+4. After login, if isKycVerified === false, app shows KYC tab automatically.
+   Bidder CANNOT access tenders without completing KYC.
+5. KYC Screen: Bidder uploads Aadhaar (file), PAN card (file), enters PAN number,
+   GSTIN (optional), Udyam number (optional), GEM Seller ID (optional).
+   -> Calls POST /api/auth/kyc/verify with Bearer token + form data.
+   -> Backend validates, calls Groq AI for cross-document identity check.
+   -> Marks isKycVerified=true in MongoDB User record.
+   -> Frontend updates localStorage user with isKycVerified=true.
+   -> Redirects Bidder to "Available Tenders" tab.
+6. Bidder sees list of PUBLISHED tenders: GET /api/tenders?status=PUBLISHED
+7. Bidder clicks a tender -> fills bid details + uploads documents
+   (GST cert, Udyam, PAN, CA Turnover cert, Debarment Affidavit)
+   -> POST /api/bids/submit (multipart form)
+   -> Shows "Bid Submitted! Your Bid Reference: BID-2026-XXXXXX"
+8. "Activity Center" tab -> GET /api/bids/my-submissions (Bearer token)
+   Shows each bid: Tender title, Bid Ref, Status, Date.
+   Status polled every 30s OR updated via Socket.io 'OFFICER_DECISION_RECORDED'.
+9. "Tender History" tab: Timeline view of all submitted bids.
 
-```javascript
-import mongoose from 'mongoose';
-
-const UploadedDocumentSchema = new mongoose.Schema({
-  docType: {
-    type: String,
-    enum: [
-      'GST_CERTIFICATE',
-      'UDYAM_CERTIFICATE',
-      'PAN_CARD',
-      'ITR_V',
-      'ITR_ACKNOWLEDGEMENT',
-      'CA_TURNOVER',
-      'CA_TURNOVER_CERTIFICATE',
-      'EPFO_CHALLAN',
-      'EPFO_REGISTRATION',
-      'ESIC_CHALLAN',
-      'ESIC_REGISTRATION',
-      'OEM_AUTH',
-      'OEM_AUTHORIZATION',
-      'DEBARMENT_AFFIDAVIT',
-      'MII_DECLARATION',
-      'LOCAL_CONTENT_DECLARATION',
-    ],
-    required: true,
-  },
-  originalFileName: { type: String, required: true },
-  storagePath: { type: String, default: 'uploads/' },
-  mimeType: { type: String, default: 'application/pdf' },
-  fileSizeBytes: { type: Number, default: 250000 },
-  sha256Hash: { type: String, required: true },
-  uploadedAt: { type: Date, default: Date.now },
-}, { _id: true });
-
-const BidSubmissionSchema = new mongoose.Schema({
-  tenderId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Tender',
-    required: true,
-    index: true,
-  },
-  bidderId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Bidder',
-    required: true,
-    index: true,
-  },
-  submissionDate: {
-    type: Date,
-    default: Date.now,
-  },
-  bidReferenceNumber: {
-    type: String,
-    required: true,
-    unique: true,
-    index: true,
-  },
-  bidAmountINR: {
-    type: Number,
-    default: 0,
-  },
-  proposedDeliveryMonths: {
-    type: Number,
-    default: 6,
-  },
-  makeInIndiaDeclaredPercent: {
-    type: Number,
-    default: 60,
-  },
-  uploadedDocuments: [UploadedDocumentSchema],
-  status: {
-    type: String,
-    enum: [
-      'PENDING',
-      'SUBMITTED',
-      'PROCESSING',
-      'UNDER_REVIEW',
-      'VERIFIED',
-      'NEEDS_REVIEW',
-      'ACCEPTED',
-      'QUALIFIED',
-      'REJECTED',
-      'DISQUALIFIED'
-    ],
-    default: 'PENDING',
-    index: true,
-  },
-  evaluationResult: {
-    complianceScore: { type: Number, min: 0, max: 100, default: 85 },
-    riskLevel: { type: String, enum: ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'], default: 'LOW' },
-    aiRecommendation: { type: String, enum: ['QUALIFY', 'DISQUALIFY', 'MANUAL_REVIEW'], default: 'QUALIFY' },
-    recommendationSummary: { type: String, default: 'Awaiting officer evaluation.' },
-    isCollusionFlagged: { type: Boolean, default: false },
-    collusionRiskNotes: { type: String },
-    statutoryMatches: {
-      gstinValid: { type: Boolean, default: true },
-      panValid: { type: Boolean, default: true },
-      turnoverThresholdMet: { type: Boolean, default: true },
-      debarmentClear: { type: Boolean, default: true },
-      msmeExemptEligible: { type: Boolean, default: true },
-    }
-  },
-  officerDecision: {
-    decidedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    decision: { type: String, enum: ['ACCEPTED', 'REJECTED', 'QUALIFIED', 'DISQUALIFIED', 'SHORTFALL_NOTICE'] },
-    isOverridden: { type: Boolean, default: false },
-    officerJustification: { type: String },
-    decidedAt: { type: Date },
-  },
-}, {
-  timestamps: true,
-});
-
-export const BidSubmission = mongoose.model('BidSubmission', BidSubmissionSchema);
-export default BidSubmission;
-```
-
-3.2 File: backend/models/Tender.js
---------------------------------------------------------------------------------
-Ensure biddersCount exists and defaults to 0:
-```javascript
-import mongoose from 'mongoose';
-
-const TenderRuleSchema = new mongoose.Schema({
-  minimumTurnoverINR: { type: Number, default: 15000000 },
-  turnoverYearsRequired: { type: Number, default: 3 },
-  minimumExperienceYears: { type: Number, default: 3 },
-  makeInIndiaPercentage: { type: Number, default: 50 },
-  allowStartupExemption: { type: Boolean, default: true },
-  allowMSMEExemption: { type: Boolean, default: true },
-  emdRequired: { type: Boolean, default: true },
-  emdAmountINR: { type: Number, default: 1000000 },
-  requiredCertificates: { type: Array, default: [] }
-}, { _id: false });
-
-const TenderSchema = new mongoose.Schema({
-  tenderNumber: { type: String, required: true, unique: true, index: true },
-  title: { type: String, required: true },
-  department: { type: String, required: true, index: true },
-  category: { type: String, default: 'General Procurement' },
-  estimatedValueINR: { type: Number, required: true },
-  closingDate: { type: Date, required: true },
-  status: {
-    type: String,
-    enum: ['DRAFT', 'PUBLISHED', 'EVALUATION', 'AWARDED', 'CANCELLED'],
-    default: 'PUBLISHED',
-    index: true,
-  },
-  biddersCount: { type: Number, default: 0 },
-  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  publishedDate: { type: Date, default: Date.now },
-  rules: TenderRuleSchema,
-  auditRootHash: { type: String },
-}, {
-  timestamps: true,
-});
-
-export const Tender = mongoose.model('Tender', TenderSchema);
-export default Tender;
-```
+--- OFFICER FLOW ---
+1. Officer opens app -> Auth Page -> logs in -> JWT stored.
+2. After login -> Officer Dashboard with Sidebar navigation.
+3. Dashboard: Live stats from GET /api/tenders and GET /api/bids.
+4. Tender Management (/tenders):
+   - List of officer's own tenders (filter by createdBy).
+   - "Create New Tender" button -> form with: Title, Department, Value INR, Closing Date, Category, Requirements.
+   - "Get AI Suggestions" button -> POST /api/tenders/ai-assist (Groq AI returns recommended params).
+   - AI suggestions pre-fill form fields.
+   - "Create Tender" -> POST /api/tenders -> status: DRAFT
+   - "Publish" button on each tender -> PATCH /api/tenders/:id/publish -> status: PUBLISHED
+   - PUBLISHED tenders appear in Bidder portal immediately.
+5. Bid Review (/bidders):
+   - GET /api/bids shows all bids received on officer's tenders.
+   - List: Bidder name, Tender title, Status, Compliance Score, Date.
+   - "View" button -> navigates to /evidence/:bidId (3-Pane Evidence Viewer).
+6. 3-Pane Evidence Viewer (/evidence/:bidId):
+   Pane 1: Document Viewer - lists uploadedDocuments from BidSubmission.
+   Pane 2: Extracted Data - bidder details from Bidder model (GSTIN, PAN, Company Name).
+   Pane 3: AI Verification Result - complianceScore, riskLevel, aiRecommendation.
+   - "Run AI Verification" button -> POST /api/verification/:bidId/verify (Groq AI)
+   - Returns scores, displayed in Pane 3.
+7. Comparison View: All bids for a tender ranked by score.
+   -> GET /api/verification/tender/:tenderId/evaluations
+   -> Ranked table: Rank, Bidder, Score, Risk, AI Recommendation, Decision
+8. Officer Decision: "Qualify" or "Disqualify" button on each bid.
+   -> POST /api/verification/:bidId/decision
+   -> If overriding AI, justification is mandatory (enforced backend).
+   -> Decision recorded, Socket.io emits to tender room.
+   -> Bidder Activity Center updates in real-time.
 
 ================================================================================
-4. BACKEND API ROUTES & CONTROLLERS REFACTORING
+SECTION 2: ALL KNOWN BUGS WITH EXACT FIXES
 ================================================================================
 
-4.1 backend/controllers/bidController.js & backend/routes/bidRoutes.js
---------------------------------------------------------------------------------
-Fix submitBid so that:
-1. It validates tenderId properly (both ObjectId and tenderNumber).
-2. It sets initial status to 'PENDING'.
-3. It increments the tender's biddersCount:
-   await Tender.findByIdAndUpdate(tender._id, { $inc: { biddersCount: 1 } });
-4. It emits a Socket.io event 'NEW_BID_SUBMITTED' to the officer's room.
+--- BUG #1 (CRITICAL): AuthPage uses named export, App.jsx imports as default ---
+FILE: frontend/src/components/AuthPage.jsx line 18
+ROOT CAUSE: `export function AuthPage` (named) but App.jsx does `import AuthPage from './components/AuthPage'` (default).
+FIX: Change line 18 from:
+  export function AuthPage({ onLoginSuccess }) {
+To:
+  export default function AuthPage({ onLoginSuccess }) {
 
-Code snippet for submitBid in `backend/controllers/bidController.js`:
-```javascript
-export const submitBid = async (req, res) => {
-  try {
-    const {
-      tenderId,
-      legalBusinessName,
-      gstin,
-      pan,
-      udyamRegistrationNumber,
-      entityType,
-      bidAmountINR,
-      proposedDeliveryMonths,
-      makeInIndiaDeclaredPercent,
-      documents
-    } = req.body;
+--- BUG #2: Login handleSubmit wraps onLoginSuccess in setTimeout ---
+FILE: frontend/src/components/AuthPage.jsx lines 94-102
+ROOT CAUSE: onLoginSuccess is called inside setTimeout(300ms), user object may miss isKycVerified field.
+FIX: Replace the setTimeout block with direct call:
+  OLD:
+    setTimeout(() => {
+      const userObj = data.user || { ... };
+      onLoginSuccess(userObj, selectedRole);
+    }, 300);
+  NEW:
+    const userObj = data.user;
+    localStorage.setItem('praman_user', JSON.stringify(userObj));
+    onLoginSuccess(userObj, userObj.role || selectedRole);
 
-    if (!tenderId) {
-      return res.status(400).json({ success: false, message: 'tenderId is required.' });
-    }
+--- BUG #3: Bidder can access tenders without completing KYC ---
+FILE: frontend/src/components/BidderPortal.jsx
+ROOT CAUSE: No gate checking isKycVerified before showing tenders.
+FIX: At top of BidderPortal component:
+  const kycDone = currentUser?.isKycVerified === true;
+  const [activeTab, setActiveTab] = useState(kycDone ? 'tenders' : 'kyc');
+  
+  When rendering tab buttons, if !kycDone, disable all tabs except 'kyc':
+    <button disabled={!kycDone} title={!kycDone ? 'Complete KYC first' : ''} onClick={() => setActiveTab('tenders')}>
+      Available Tenders
+    </button>
+  
+  After KYC API success:
+    const updatedUser = { ...currentUser, isKycVerified: true };
+    localStorage.setItem('praman_user', JSON.stringify(updatedUser));
+    // update parent state if possible, else:
+    setActiveTab('tenders');
+    window.location.reload(); // force re-read from localStorage
 
-    // 1. Resolve Tender
-    let tender = null;
-    if (mongoose.Types.ObjectId.isValid(tenderId)) {
-      tender = await Tender.findById(tenderId);
-    }
-    if (!tender) {
-      tender = await Tender.findOne({ tenderNumber: tenderId });
-    }
-    if (!tender) {
-      tender = await Tender.findOne().sort({ createdAt: -1 });
-    }
-    if (!tender) {
-      return res.status(404).json({ success: false, message: 'Target tender not found.' });
-    }
+--- BUG #4: KYC route has no auth protection ---
+FILE: backend/routes/authRoutes.js line 11
+ROOT CAUSE: router.post('/kyc/verify', verifyKyc) — no protect middleware.
+FIX: Change to:
+  router.post('/kyc/verify', protect, verifyKyc);
 
-    // 2. Resolve Bidder Profile
-    let bidder = await Bidder.findOne({
-      $or: [
-        { userId: req.user?._id },
-        { gstin: (gstin || '').toUpperCase() },
-        { primaryEmail: req.user?.email }
-      ]
-    });
+--- BUG #5A (THE MAIN BUG): Officer doesn't see bidder submissions ---
+FILE: frontend/src/pages/BidderRegistry.jsx
+ROOT CAUSE: BidderRegistry likely does not call GET /api/bids at all, or renders nothing.
+FIX: In BidderRegistry.jsx, add useEffect on mount:
+  useEffect(() => {
+    const token = localStorage.getItem('praman_token');
+    fetch('/api/bids', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(data => setBids(data.bids || data.submissions || []));
+  }, []);
+  
+  Then render a table with columns:
+    Bid Ref | Bidder Name (bid.bidderId?.legalBusinessName) | Tender (bid.tenderId?.title) | Status | Score | Date | Actions
+  
+  "View Evidence" button: <Link to={`/evidence/${bid._id}`}>View</Link>
 
-    if (!bidder) {
-      bidder = new Bidder({
-        userId: req.user?._id,
-        legalBusinessName: legalBusinessName || req.user?.organization || req.user?.name || 'Bharat Vendor Entity',
-        gstin: (gstin || '07AAAAA0000A1Z5').toUpperCase(),
-        pan: (pan || 'AAAAA0000A').toUpperCase(),
-        udyamRegistrationNumber: udyamRegistrationNumber || 'UDYAM-DL-01-0012345',
-        entityType: entityType || 'PVT_LTD',
-        primaryEmail: req.user?.email || 'vendor@gem.gov.in',
-        primaryPhone: req.user?.phone || '+91-9876543210',
-      });
-      await bidder.save();
-    }
+--- BUG #5B: Route /evidence/:bidId is missing from App.jsx ---
+FILE: frontend/src/App.jsx
+ROOT CAUSE: No route defined for /evidence/:bidId.
+FIX: Add this route inside <Routes>:
+  <Route path="/evidence/:bidId" element={<OfficerRoute currentUser={currentUser}><EvidenceViewer /></OfficerRoute>} />
+  
+  Make sure EvidenceViewer is imported at the top:
+  import EvidenceViewer from './pages/EvidenceViewer';
 
-    // 3. Process Documents
-    const standardDocTypes = ['GST_CERTIFICATE', 'CA_TURNOVER_CERTIFICATE', 'PAN_CARD', 'DEBARMENT_AFFIDAVIT', 'UDYAM_CERTIFICATE'];
-    const uploadedDocs = [];
-    const rawDocs = Array.isArray(documents) ? documents : [];
+--- BUG #5C (CRITICAL): Publish Tender uses POST but route only accepts PATCH ---
+FILE: frontend/src/services/api.js lines 150-156
+ROOT CAUSE: api.publishTender() sends method: 'POST' but tenderRoutes.js only has router.patch.
+FIX in api.js publishTender():
+  Change: method: 'POST'
+  To:     method: 'PATCH'
 
-    standardDocTypes.forEach((docType, idx) => {
-      const match = rawDocs.find(d => d.docType === docType) || rawDocs[idx];
-      uploadedDocs.push({
-        docType,
-        originalFileName: match?.originalFileName || `${docType.toLowerCase()}_verified.pdf`,
-        storagePath: match?.storagePath || `uploads/${docType.toLowerCase()}.pdf`,
-        mimeType: 'application/pdf',
-        fileSizeBytes: 245000,
-        sha256Hash: AuditLedgerService.hash(`${bidder.gstin}-${docType}-${Date.now()}`),
-        uploadedAt: new Date()
-      });
-    });
-
-    // 4. Create BidSubmission with status PENDING
-    const bidReferenceNumber = `BID-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
-    const submission = new BidSubmission({
-      tenderId: tender._id,
-      bidderId: bidder._id,
-      bidReferenceNumber,
-      bidAmountINR: Number(bidAmountINR) || Math.round(tender.estimatedValueINR * 0.95),
-      proposedDeliveryMonths: Number(proposedDeliveryMonths) || 6,
-      makeInIndiaDeclaredPercent: Number(makeInIndiaDeclaredPercent) || 65,
-      uploadedDocuments: uploadedDocs,
-      status: 'PENDING',
-      evaluationResult: {
-        complianceScore: 88,
-        riskLevel: 'LOW',
-        aiRecommendation: 'QUALIFY',
-        recommendationSummary: 'Documents uploaded and cryptographically verified. Status: PENDING Officer Inspection.',
-        statutoryMatches: {
-          gstinValid: true,
-          panValid: true,
-          turnoverThresholdMet: true,
-          debarmentClear: true,
-          msmeExemptEligible: true,
-        }
-      }
-    });
-    await submission.save();
-
-    // 5. Increment Tender Bidders Count
-    await Tender.findByIdAndUpdate(tender._id, { $inc: { biddersCount: 1 } });
-
-    // 6. Record Immutable Audit Event
-    const auditBlock = await AuditLedgerService.recordEvent({
-      actionType: 'BID_SUBMITTED',
-      actor: {
-        userId: req.user?._id,
-        name: bidder.legalBusinessName,
-        role: 'BIDDER',
-        ipAddress: req.ip || '127.0.0.1'
-      },
-      entityId: submission._id,
-      payloadData: {
-        tenderId: tender._id,
-        tenderNumber: tender.tenderNumber,
-        bidReferenceNumber,
-        status: 'PENDING'
-      }
-    });
-
-    // 7. Emit Socket Event to notify Officers live
-    const io = req.app.get('io');
-    if (io) {
-      io.emit('NEW_BID_SUBMITTED', {
-        tenderId: tender._id,
-        bidId: submission._id,
-        bidReferenceNumber,
-        bidderName: bidder.legalBusinessName,
-        status: 'PENDING'
-      });
-    }
-
-    return res.status(201).json({
-      success: true,
-      message: 'Bid proposal submitted successfully with status PENDING.',
-      submissionId: submission._id,
-      bidReferenceNumber,
-      status: 'PENDING',
-      auditBlock
-    });
-  } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+--- BUG #6: Bidders see DRAFT tenders ---
+FILE: frontend/src/components/BidderPortal.jsx (Available Tenders tab)
+ROOT CAUSE: api.getTenders() is called without status filter.
+FIX in api.js:
+  async getTenders(status = null) {
+    const url = status ? `${API_BASE}/tenders?status=${status}` : `${API_BASE}/tenders`;
+    const res = await fetch(url, { headers: getAuthHeaders() });
+    const data = await parseResponse(res);
+    return data.tenders || [];
   }
-};
-```
+Then in BidderPortal.jsx call: api.getTenders('PUBLISHED')
 
-Make sure `backend/routes/bidRoutes.js` mounts:
-```javascript
-// Ensure both JSON and Multipart are accepted:
-router.post('/submit', protect, submitBid);
-router.get('/', getAllSubmissions);
-router.get('/my-submissions', protect, getMySubmissions);
-router.get('/tender/:tenderId', protect, getSubmissionsForTender);
-router.get('/:id', protect, getSubmissionById);
-```
-
-4.2 backend/routes/tenderRoutes.js & controllers/tenderController.js
---------------------------------------------------------------------------------
-Fix the publish route to accept BOTH POST and PATCH so no 404 occurs:
-
-In `backend/routes/tenderRoutes.js`:
-```javascript
-router.route('/:id/publish')
-  .post(protect, authorize('OFFICER'), publishTender)
-  .patch(protect, authorize('OFFICER'), publishTender);
-```
-
-4.3 backend/routes/verificationRoutes.js & controllers/verificationController.js
---------------------------------------------------------------------------------
-Update `submitOfficerDecision` in `backend/controllers/verificationController.js`:
-Support 'ACCEPTED' and 'REJECTED' decisions:
-
-```javascript
-export const submitOfficerDecision = async (req, res) => {
-  try {
-    const { bidId } = req.params;
-    const { decision, officerJustification } = req.body;
-
-    const validDecisions = ['ACCEPTED', 'REJECTED', 'QUALIFIED', 'DISQUALIFIED', 'SHORTFALL_NOTICE'];
-    const normDecision = (decision || '').toUpperCase();
-
-    if (!validDecisions.includes(normDecision)) {
-      return res.status(400).json({
-        success: false,
-        message: `Decision must be one of: ${validDecisions.join(', ')}`
-      });
-    }
-
-    const submission = await BidSubmission.findById(bidId)
-      .populate('bidderId')
-      .populate('tenderId');
-
-    if (!submission) {
-      return res.status(404).json({ success: false, message: 'Bid submission not found.' });
-    }
-
-    // Set updated status
-    submission.status = normDecision;
-    submission.officerDecision = {
-      decidedBy: req.user?._id,
-      decision: normDecision,
-      officerJustification: officerJustification || `Officer administrative decision: ${normDecision}`,
-      decidedAt: new Date()
-    };
-    await submission.save();
-
-    // Seal into Audit Ledger
-    const auditBlock = await AuditLedgerService.recordEvent({
-      actionType: 'OFFICER_DECISION',
-      actor: {
-        userId: req.user?._id,
-        name: req.user?.name || 'Procurement Officer',
-        role: 'OFFICER',
-        ipAddress: req.ip || '127.0.0.1'
-      },
-      entityId: submission._id,
-      payloadData: {
-        submissionId: submission._id,
-        bidReferenceNumber: submission.bidReferenceNumber,
-        tenderNumber: submission.tenderId?.tenderNumber,
-        decision: normDecision,
-        justification: submission.officerDecision.officerJustification
-      }
-    });
-
-    // Real-time broadcast to Bidder and Officer rooms
-    const io = req.app.get('io');
-    if (io) {
-      io.emit('BID_STATUS_UPDATED', {
-        bidId: submission._id,
-        bidReferenceNumber: submission.bidReferenceNumber,
-        status: normDecision,
-        officerDecision: submission.officerDecision,
-        auditHash: auditBlock.currentHash
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: `Decision (${normDecision}) recorded and cryptographically sealed into CAG Audit Ledger.`,
-      submission,
-      auditBlock
-    });
-  } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+--- BUG #7: Multiple bidders share same fallback GSTIN ---
+FILE: backend/controllers/bidController.js lines 65-70
+ROOT CAUSE: Bidder.findOne({ gstin: gstin || '07AAAAA0000A1Z5' }) — fallback GSTIN shared.
+FIX: Search by userId first:
+  let bidder = await Bidder.findOne({ userId: req.user._id });
+  if (!bidder && gstin) {
+    bidder = await Bidder.findOne({ gstin: gstin.toUpperCase() });
+    if (bidder && !bidder.userId) bidder.userId = req.user._id;
   }
-};
-```
+  // Then create new if still not found
 
-4.4 Real AI Verification Pipeline (backend/services/verificationPipeline.js)
---------------------------------------------------------------------------------
-Ensure NO hardcoding exists:
-1. Pull real company name, PAN, and GSTIN from the bidder record.
-2. Read the uploaded files from `uploads/`.
-3. If Groq API Key is present, call Groq LLM to verify that:
-   - GSTIN belongs to the declared PAN (characters 3-12 of GSTIN match PAN).
-   - Document metadata has no photoshop/tamper footprint.
-   - Turnover meets the tender's 30% GFR threshold.
-4. Save the real extracted fields into `VerificationEvidence` in MongoDB.
+--- BUG #8: KYC docType matching fails for uppercase values ---
+FILE: backend/controllers/authController.js lines 201-203
+ROOT CAUSE: .includes('aadhaar') fails if frontend sends 'AADHAAR_CARD'.
+FIX:
+  const aadhaarDoc = docList.find(d => {
+    const t = (d.docType || d.id || d.type || '').toLowerCase();
+    return t.includes('aadhaar') || t.includes('aadhar');
+  });
+  const panDoc = docList.find(d => {
+    const t = (d.docType || d.id || d.type || '').toLowerCase();
+    return t.includes('pan');
+  });
 
-4.5 AI 3-Bidder Comparison Endpoint
---------------------------------------------------------------------------------
-Add endpoint in `backend/routes/verificationRoutes.js`:
-```javascript
-router.post('/compare-bids', protect, authorize('OFFICER', 'AUDITOR'), compareBiddersAI);
-```
-
-Add implementation in `backend/controllers/verificationController.js`:
-```javascript
-export const compareBiddersAI = async (req, res) => {
-  try {
-    const { bidIds } = req.body; // array of up to 3 bid IDs
-    if (!bidIds || !Array.isArray(bidIds) || bidIds.length === 0) {
-      return res.status(400).json({ success: false, message: 'bidIds array required (up to 3).' });
+--- BUG #9: EvidenceViewer uses hardcoded/mock data ---
+FILE: frontend/src/pages/EvidenceViewer.jsx
+ROOT CAUSE: No useParams(), no real API call.
+FIX: Add to EvidenceViewer.jsx:
+  import { useParams } from 'react-router-dom';
+  import api from '../services/api';
+  
+  const { bidId } = useParams();
+  const [evidence, setEvidence] = useState(null);
+  
+  useEffect(() => {
+    if (bidId) {
+      api.getEvidence(bidId).then(setEvidence).catch(console.error);
     }
+  }, [bidId]);
+  
+  Render evidence.evidenceList, evidence.evaluationResult, evidence.bidder in the 3 panes.
+  Add "Run AI Verification" button: onClick={() => api.triggerVerification(bidId).then(...)}
+  Add "Qualify" / "Disqualify" buttons:
+    onClick={() => api.submitOfficerDecision(bidId, 'QUALIFIED', justification)}
 
-    const bids = await BidSubmission.find({ _id: { $in: bidIds.slice(0, 3) } })
-      .populate('bidderId')
-      .populate('tenderId');
-
-    // Build comparison payload
-    const comparisonData = bids.map(b => ({
-      bidId: b._id,
-      bidReferenceNumber: b.bidReferenceNumber,
-      bidderName: b.bidderId?.legalBusinessName || 'Vendor',
-      gstin: b.bidderId?.gstin,
-      pan: b.bidderId?.pan,
-      entityType: b.bidderId?.entityType,
-      bidAmountINR: b.bidAmountINR,
-      proposedDeliveryMonths: b.proposedDeliveryMonths,
-      makeInIndiaPercent: b.makeInIndiaDeclaredPercent,
-      complianceScore: b.evaluationResult?.complianceScore || 85,
-      riskLevel: b.evaluationResult?.riskLevel || 'LOW',
-      aiRecommendation: b.evaluationResult?.aiRecommendation || 'QUALIFY',
-      status: b.status
-    }));
-
-    // Groq LLM Synthesis Report
-    let aiSynthesis = 'Automated Comparative Analysis: All 3 bidders meet statutory GFR-2017 thresholds.';
-    const groqKey = process.env.GROQ_API_KEY;
-    if (groqKey && comparisonData.length > 1) {
-      try {
-        const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${groqKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'llama-3.3-70b-versatile',
-            messages: [
-              {
-                role: 'system',
-                content: 'You are the Chief Procurement AI Evaluator for Government e-Marketplace (GeM) India. Compare up to 3 competing bids based on price, statutory compliance, Make in India %, and risk level. Give a 3-bullet concise synthesis recommending the most legally compliant and advantageous bidder.'
-              },
-              {
-                role: 'user',
-                content: `Tender: ${bids[0]?.tenderId?.title}\nBidders Data:\n${JSON.stringify(comparisonData, null, 2)}`
-              }
-            ],
-            max_tokens: 300,
-            temperature: 0.2
-          })
-        });
-        if (groqRes.ok) {
-          const gData = await groqRes.json();
-          aiSynthesis = gData.choices?.[0]?.message?.content || aiSynthesis;
-        }
-      } catch (err) {
-        console.warn('Groq synthesis warning:', err.message);
+--- BUG #10: Idempotency guard may block all POST requests ---
+FILE: backend/middlewares/chaos.js (idempotencyGuard function)
+ROOT CAUSE: If idempotencyGuard returns 400 when X-Idempotency-Key header is missing,
+  ALL API calls from the frontend (which don't send this header) will fail with 400.
+FIX: In chaos.js, find the idempotencyGuard middleware and change it to:
+  export const idempotencyGuard = (req, res, next) => {
+    // Make idempotency key optional — just log if missing, don't reject
+    if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
+      const key = req.headers['x-idempotency-key'];
+      if (!key) {
+        // Just log, don't block
+        console.log(`[Idempotency] No key on ${req.method} ${req.path}`);
       }
     }
+    return next();
+  };
 
-    return res.status(200).json({
-      success: true,
-      comparison: comparisonData,
-      aiReport: aiSynthesis
-    });
-  } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+--- BUG #11: Dashboard shows hardcoded stats ---
+FILE: frontend/src/pages/Dashboard.jsx
+FIX: Add useEffect on mount:
+  const [stats, setStats] = useState({ tenders: 0, published: 0, bids: 0, pending: 0 });
+  useEffect(() => {
+    const token = localStorage.getItem('praman_token');
+    const headers = { Authorization: `Bearer ${token}` };
+    Promise.all([
+      fetch('/api/tenders', { headers }).then(r => r.json()),
+      fetch('/api/bids', { headers }).then(r => r.json()),
+    ]).then(([tData, bData]) => {
+      const tenders = tData.tenders || [];
+      const bids = bData.bids || bData.submissions || [];
+      setStats({
+        tenders: tenders.length,
+        published: tenders.filter(t => t.status === 'PUBLISHED').length,
+        bids: bids.length,
+        pending: bids.filter(b => b.status === 'SUBMITTED').length,
+      });
+    }).catch(console.error);
+  }, []);
+
+--- BUG #12: Bidder Activity Center has no real-time update ---
+FILE: frontend/src/components/BidderPortal.jsx (Activity Center tab)
+FIX: Polling approach (simpler, no socket.io-client needed):
+  const [myBids, setMyBids] = useState([]);
+  
+  const fetchMyBids = () => {
+    const token = localStorage.getItem('praman_token');
+    fetch('/api/bids/my-submissions', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(data => setMyBids(data.submissions || []));
+  };
+  
+  useEffect(() => {
+    fetchMyBids();
+    const interval = setInterval(fetchMyBids, 30000); // poll every 30s
+    return () => clearInterval(interval);
+  }, []);
+
+--- BUG #13: BidderPortalPage doesn't pass user/onLogout props ---
+FILE: frontend/src/pages/BidderPortalPage.jsx
+FIX: Replace entire file with:
+  import React from 'react';
+  import BidderPortal from '../components/BidderPortal';
+  
+  export default function BidderPortalPage({ user, onLogout }) {
+    return <BidderPortal currentUser={user} onLogout={onLogout} />;
   }
-};
-```
+
+--- BUG #14: Wrong Groq model name used throughout codebase ---
+FILE: backend/controllers/authController.js, backend/controllers/tenderController.js,
+      backend/services/verificationPipeline.js, backend/services/complianceEngine.js,
+      backend/services/anomalyDetector.js, backend/services/collusionDetector.js
+ROOT CAUSE: Model `qwen/qwen3.8-27b` may not exist on Groq or may have changed.
+FIX: Replace ALL occurrences of:
+  model: 'qwen/qwen3.8-27b'
+With:
+  model: 'llama-3.3-70b-versatile'
+(Search all .js files in backend/ for 'qwen' and replace.)
+
+--- BUG #15: Comparison View missing ---
+FILE: frontend — no dedicated comparison page
+FIX: Add comparison view to OfficerDashboard.jsx or BidderRegistry.jsx:
+  When officer clicks "Compare Bids" on a tender:
+    fetch(`/api/verification/tender/${tenderId}/evaluations`, { headers })
+    .then(r => r.json())
+    .then(data => setRankedBidders(data.rankedBidders));
+  Render ranked table: Rank | Bidder | Score | Risk | AI Rec | Status | Actions
 
 ================================================================================
-5. FRONTEND SERVICES REFACTORING (frontend/src/services/api.js)
-================================================================================
-Ensure `frontend/src/services/api.js` has all required methods:
-
-```javascript
-// Add or verify these methods in api:
-async compareBids(bidIds) {
-  const res = await fetch(`${API_BASE}/verification/compare-bids`, {
-    method: 'POST',
-    headers: getAuthHeaders(),
-    body: JSON.stringify({ bidIds })
-  });
-  return await parseResponse(res);
-},
-
-async publishTender(tenderId) {
-  // Use POST to match backend route
-  const res = await fetch(`${API_BASE}/tenders/${tenderId}/publish`, {
-    method: 'POST',
-    headers: getAuthHeaders()
-  });
-  return await parseResponse(res);
-},
-
-async submitOfficerDecision(bidId, decision, justification = '') {
-  const res = await fetch(`${API_BASE}/verification/${bidId}/decision`, {
-    method: 'POST',
-    headers: getAuthHeaders(),
-    body: JSON.stringify({
-      decision: normalizeString(decision),
-      officerJustification: justification?.trim()
-    })
-  });
-  return await parseResponse(res);
-},
-```
-
-================================================================================
-6. BIDDER FLOW IMPLEMENTATION (frontend/src/components/BidderPortal.jsx)
+SECTION 3: FILES TO MODIFY (SUMMARY)
 ================================================================================
 
-FLOW CHECKLIST:
---------------------------------------------------------------------------------
-1. Bidder Logs in:
-   - Current user loaded from localStorage ('praman_user').
-   - Default tab is 'kyc'.
-2. KYC Gating:
-   - If `!kycState.isVerified`:
-     - Tab 2 (Browse Tenders) is LOCKED with lock icon.
-     - Attempting to click Browse Tenders shows modal/alert:
-       "Please complete one-time identity verification (Aadhaar & PAN) first to unlock live tenders."
-     - Bidder uploads Aadhaar & PAN -> calls `api.verifyKyc(...)`.
-     - Real verification checks formats and verifies roots.
-     - On success: `kycState.isVerified = true`, `isKycVerified: true` persisted in localStorage.
-     - Tab 2 UNLOCKS and automatically transitions to 'tenders'.
-3. Browse Tenders:
-   - Fetches live tenders from `api.getTenders()`.
-   - Displays tender title, tender number, department, estimated value, closing date.
-   - Click "Apply & Bid Proposal":
-     - Opens Bid Submission Modal.
-     - Pre-fills verified bidder credentials (GSTIN, PAN, Udyam).
-     - Allows input of proposed quote (bidAmountINR) and delivery timeline.
-     - Auto-attaches required statutory documents.
-     - Submits to `api.submitBid(payload)`.
-     - Initial status returned is 'PENDING'.
-4. Activity Center & Tender History:
-   - After submission, automatically switches to Tab 4: 'activity'.
-   - Calls `api.getMyBids()` to fetch all submissions from MongoDB.
-   - Each submission card shows:
-     - Tender Number & Title.
-     - Status Badge:
-       * PENDING -> Yellow/Amber ("Pending Officer Evaluation")
-       * ACCEPTED -> Green ("Bid Accepted / Qualified")
-       * REJECTED -> Red ("Bid Rejected / Disqualified")
-       * SHORTFALL_NOTICE -> Blue ("Rectification Required within 48h")
-     - Officer Decision Remarks & Timestamp if decided.
-     - Cryptographic SHA-256 seal & Audit Ledger Block ID.
-     - Uploaded documents list with verified badges.
-   - Live socket listener:
-     When 'BID_STATUS_UPDATED' event arrives, updates the status live without page reload!
+frontend/src/components/AuthPage.jsx
+  - Named export -> default export (line 18)
+  - Remove setTimeout in handleSubmit, call onLoginSuccess directly with data.user
+
+frontend/src/services/api.js
+  - publishTender: 'POST' -> 'PATCH'
+  - getTenders: add optional ?status= query param
+
+frontend/src/pages/BidderPortalPage.jsx
+  - Pass user and onLogout props to BidderPortal
+
+frontend/src/components/BidderPortal.jsx
+  - KYC gate: force kyc tab if !isKycVerified
+  - Poll my-submissions every 30s in Activity Center
+  - Call getTenders('PUBLISHED') for Available Tenders
+
+frontend/src/App.jsx
+  - Add route: <Route path="/evidence/:bidId" element={...EvidenceViewer...} />
+
+frontend/src/pages/EvidenceViewer.jsx
+  - Use useParams to get bidId
+  - Fetch real evidence from API on mount
+  - Add Run AI Verification, Qualify, Disqualify buttons
+
+frontend/src/pages/BidderRegistry.jsx
+  - Fetch GET /api/bids on mount
+  - Render bid list with "View Evidence" link to /evidence/:bid._id
+
+frontend/src/pages/Dashboard.jsx
+  - Fetch live stats from /api/tenders and /api/bids
+
+backend/routes/authRoutes.js
+  - Add protect middleware to /kyc/verify route
+
+backend/controllers/authController.js
+  - Fix docType matching (case-insensitive, handle variants)
+  - Change Groq model to llama-3.3-70b-versatile
+
+backend/controllers/tenderController.js
+  - Change Groq model to llama-3.3-70b-versatile
+
+backend/controllers/bidController.js
+  - Search Bidder by userId first, then GSTIN
+
+backend/middlewares/chaos.js
+  - Make idempotencyGuard optional (no rejection if key missing)
+
+backend/services/*.js (all files using Groq)
+  - Change model to llama-3.3-70b-versatile everywhere
 
 ================================================================================
-7. OFFICER FLOW IMPLEMENTATION (frontend/src/components/OfficerDashboard.jsx & Dashboard.jsx)
+SECTION 4: BACKEND API REFERENCE
 ================================================================================
 
-FLOW CHECKLIST:
---------------------------------------------------------------------------------
-1. Officer Logs in:
-   - Redirected to `/dashboard`.
-   - Officer profile displays Name, Designation, and Department (e.g. "Ministry of Heavy Industries").
-   - Can switch or filter by Department.
-2. View Tenders:
-   - Fetches live tenders from `api.getTenders()`.
-   - Shows existing/past tenders created by the department.
-   - Bidders Count dynamically reflects total bids submitted on each tender.
-3. AI-Assisted Tender Creation:
-   - Click "+ Create New Tender (AI Assist)".
-   - Officer provides basic tender format: Title, Department, Estimated Value, Category, Scope.
-   - Click "AI Analyze & Standardize (GFR 2017)":
-     - Calls `api.generateAITenderDraft(...)` via Groq LLM.
-     - Synthesizes 30% Turnover rule, 2% EMD rule, 50% Make-in-India content rule, and mandatory documents checklist.
-   - Click "Publish Tender":
-     - Saves to MongoDB with status 'PUBLISHED' and seals in Audit Ledger.
-4. View Bidders on Selected Tender:
-   - Officer selects a tender -> calls `api.getAllBids(selectedTenderId)`.
-   - Displays table of all submitted bids:
-     - Bid Reference Number
-     - Bidder Legal Business Name
-     - GSTIN & PAN
-     - Proposed Bid Amount
-     - Status: 'PENDING'
-     - Docs Count
-   - NO mock fallback masking real bidder data!
-5. Real AI Verification Assistant:
-   - Click "Run AI Verification" on a bidder:
-     - Calls `api.triggerVerification(bidId)`.
-     - Real backend pipeline analyzes documents, checks PAN vs GSTIN root alignment, and verifies against simulated/live adapters.
-     - Updates compliance score (0-100) and recommendation (QUALIFY / DISQUALIFY).
-6. 3-Bidder Side-by-Side Comparison Matrix & AI Report:
-   - Officer selects 2 or 3 competing bidders on the tender via checkboxes/toggles.
-   - System calls `api.compareBids([id1, id2, id3])`.
-   - Renders Side-by-Side Comparison Matrix:
-     * Row 1: Bidder Name & Entity Type
-     * Row 2: Price Quote (Bid Amount INR)
-     * Row 3: Annual Turnover & UDIN Verification
-     * Row 4: Make in India %
-     * Row 5: MSME / Startup Exemption
-     * Row 6: AI Compliance Score & Risk Level
-     * Row 7: Forensic Tampering Status (Clean vs Flagged)
-   - Displays AI Executive Synthesis Report:
-     * Concise 3-point recommendation generated by Groq LLM.
-7. Officer Decision (Accept / Reject):
-   - Officer reviews comparison matrix and AI report.
-   - Officer clicks "Accept Bid" or "Reject Bid".
-   - Prompts for mandatory justification remarks (e.g. "L1 lowest quote with full GFR 2017 compliance").
-   - Calls `api.submitOfficerDecision(bidId, 'ACCEPTED', justification)`.
-   - Cryptographically signs and seals the decision into the CAG Audit Ledger.
-   - Bidder's Activity Center updates immediately to 'ACCEPTED' or 'REJECTED'!
+AUTH:
+  POST /api/auth/register  { name, email, password, role, organization, department, phone }
+  POST /api/auth/login     { email, password } -> { token, user }
+  GET  /api/auth/me        Bearer -> { user }
+  POST /api/auth/kyc/verify Bearer + { panNumber, gstinNumber?, udyamNumber?, gemSellerId?, documents: [{docType, name}] }
+
+TENDERS:
+  GET  /api/tenders         ?status=PUBLISHED -> { tenders: [] }
+  POST /api/tenders         Bearer(OFFICER) + { title, department, estimatedValueINR, closingDate }
+  PATCH /api/tenders/:id/publish  Bearer(OFFICER)
+  POST /api/tenders/ai-assist     Bearer(OFFICER) + { title, department, estimatedValueINR, category, requirements }
+
+BIDS:
+  POST /api/bids/submit          Bearer(BIDDER) + multipart: { tenderId, files... }
+  GET  /api/bids                 Bearer -> { bids: [], submissions: [] }
+  GET  /api/bids/my-submissions  Bearer(BIDDER) -> { submissions: [] }
+  GET  /api/bids/tender/:tenderId Bearer(OFFICER) -> { submissions: [] }
+  GET  /api/bids/:id             Bearer -> { submission }
+
+VERIFICATION:
+  POST /api/verification/:bidId/verify         Bearer(OFFICER) -> runs Groq AI pipeline
+  GET  /api/verification/:bidId/evidence       Bearer -> { evidenceList, evaluationResult }
+  POST /api/verification/:bidId/decision       Bearer(OFFICER) + { decision, officerJustification }
+  GET  /api/verification/tender/:tenderId/evaluations  Bearer(OFFICER) -> { rankedBidders: [] }
 
 ================================================================================
-8. SOCKET.IO REAL-TIME SYNCHRONIZATION PROTOCOL
-================================================================================
-Ensure the client and server communicate via these standard events:
-
-Event: 'NEW_BID_SUBMITTED'
-Sender: Backend (submitBid)
-Receiver: Officer Dashboard
-Payload: { tenderId, bidId, bidReferenceNumber, bidderName, status: 'PENDING' }
-Action: Officer dashboard automatically prepends the new bid to the bidders table.
-
-Event: 'BID_STATUS_UPDATED'
-Sender: Backend (submitOfficerDecision)
-Receiver: Bidder Activity Center & Officer Dashboard
-Payload: { bidId, bidReferenceNumber, status: 'ACCEPTED'|'REJECTED', officerDecision, auditHash }
-Action: Bidder portal updates the card badge to green (ACCEPTED) or red (REJECTED) with officer notes.
-
-Event: 'VERIFICATION_PROGRESS'
-Sender: Backend (VerificationPipeline)
-Receiver: Officer 3-Pane Evidence Workspace
-Payload: { submissionId, docType, progress: 0-100, status }
-Action: Updates visual progress bar during AI document scan.
-
-================================================================================
-9. STEP-BY-STEP EXECUTION & TESTING VERIFICATION CHECKLIST
+SECTION 5: PRIORITY ORDER
 ================================================================================
 
-Step 1: Start Services
-  - Terminal 1 (AI Microservice):
-    cd "c:\Users\gaura\Downloads\Praman - gp\ai"
-    python -m uvicorn main:app --host 127.0.0.1 --port 8000
-  - Terminal 2 (Backend Engine):
-    cd "c:\Users\gaura\Downloads\Praman - gp\backend"
-    node server.js
-  - Terminal 3 (Frontend UI):
-    cd "c:\Users\gaura\Downloads\Praman - gp\frontend"
-    npm run dev
+PRIORITY 1 (nothing works without these):
+  1. Bug #1: AuthPage default export
+  2. Bug #2: Remove setTimeout in login
+  3. Bug #10: idempotencyGuard - make optional
+  4. Bug #5C: PATCH method for publishTender in api.js
 
-Step 2: Test Bidder Flow
-  1. Open http://localhost:3000/
-  2. Register or Login as a BIDDER (e.g. email: bidder@praman.test, pass: password123).
-  3. Verify that Tab 2 "Browse Tenders" is initially LOCKED.
-  4. In Tab 1 "Master KYC", upload Aadhaar Card and PAN Card.
-  5. Click "Verify KYC Statutory Record". Check that it successfully verifies and unlocks Tab 2.
-  6. Switch to Tab 2 "Browse Tenders". Select an open tender.
-  7. Click "Apply & Bid Proposal". Enter bid quote and submit.
-  8. Verify that Tab 4 "Activity Center" opens and shows the bid with status "PENDING".
+PRIORITY 2 (core flow):
+  5. Bug #4: protect on KYC route
+  6. Bug #13: BidderPortalPage props
+  7. Bug #3: KYC gate
+  8. Bug #6: PUBLISHED filter for tenders
+  9. Bug #5A: BidderRegistry fetches from API
+  10. Bug #5B: Route /evidence/:bidId in App.jsx
 
-Step 3: Test Officer Flow
-  1. Click "Switch to Officer Command" in sidebar (or login as officer@praman.test).
-  2. Navigate to "Tender Management".
-  3. Click "+ Create New Tender (AI Assist)". Enter title and value, click "AI Analyze", then "Publish".
-  4. Verify the newly created tender appears with biddersCount = 0.
-  5. Navigate to "Compliance Dashboard" (/dashboard).
-  6. Verify that the bidder's submitted bid appears with status "PENDING" and correct legal name.
-  7. Click "Run AI Verification" -> check that compliance score is calculated without hardcoding.
-  8. Select 2 or 3 bidders -> click "Comparison Matrix" -> inspect side-by-side criteria and AI synthesis report.
-  9. Click "Accept Bid" (or "Reject Bid"), enter justification note, and submit.
-  10. Switch back to Bidder view -> open Tab 4 "Activity Center".
-  11. Verify that the bid status has updated to "ACCEPTED" (or "REJECTED") with the officer's exact remarks and timestamp!
+PRIORITY 3 (polish):
+  11. Bug #14: Groq model name everywhere
+  12. Bug #7: Bidder userId first lookup
+  13. Bug #8: KYC docType matching
+  14. Bug #9: EvidenceViewer real data
+  15. Bug #11: Dashboard live stats
+  16. Bug #12: Activity Center polling
+  17. Bug #15: Comparison view
 
 ================================================================================
-END OF IMPLEMENTATION GUIDE — READY FOR DIRECT LOWER-MODEL CONSUMPTION
+SECTION 6: DATA MODELS
+================================================================================
+
+User: _id, name, email, password(hashed), role(OFFICER|BIDDER),
+      department, designation, organization, phone,
+      isKycVerified(bool), panNumber, gstinNumber, udyamNumber, gemSellerId
+
+Bidder: _id, userId(ref:User), legalBusinessName, gstin, pan,
+        udyamRegistrationNumber, entityType, primaryEmail, primaryPhone,
+        registeredAddress, directors, bankAccountDetails
+
+Tender: _id, tenderNumber, title, department, estimatedValueINR, closingDate,
+        status(DRAFT|PUBLISHED|EVALUATION|CLOSED), createdBy(ref:User), rules{}
+
+BidSubmission: _id, tenderId(ref:Tender), bidderId(ref:Bidder),
+               bidReferenceNumber, uploadedDocuments[], status,
+               evaluationResult{complianceScore, riskLevel, aiRecommendation},
+               officerDecision{decidedBy, decision, officerJustification}
+
+================================================================================
+SECTION 7: HOW TO RUN
+================================================================================
+
+Terminal 1 (Backend):
+  cd C:\Users\user\Desktop\PARMAAN\backend
+  node server.js
+
+Terminal 2 (Frontend):
+  cd C:\Users\user\Desktop\PARMAAN\frontend
+  npm run dev
+
+Terminal 3 (AI - optional):
+  cd C:\Users\user\Desktop\PARMAAN\ai
+  .venv\Scripts\uvicorn.exe main:app --host 127.0.0.1 --port 8000
+
+MongoDB must be running on localhost:27017.
+
+================================================================================
+END OF IMPLEMENTATION GUIDE
 ================================================================================

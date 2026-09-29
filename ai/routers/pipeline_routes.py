@@ -26,6 +26,7 @@ from services.ocr_engine import extract_document_fields
 from services.forensic_scanner import analyze_metadata
 from services.qr_verifier import verify_qr_codes
 from services.signature_engine import detect_signatures_in_pdf
+from utils.pdf_utils import extract_full_text
 
 router = APIRouter()
 
@@ -116,17 +117,50 @@ async def verify_document(
             ),
         )
 
-        # ── Step 3: Classify Document if not provided ──
+        # ── Step 3: Extract PDF Text and Classify Document ──
+        full_text = extract_full_text(temp_path)
+        classification = classify_document(full_text)
+        
+        is_mismatch = False
+        target_type = classification.docType
+        class_conf = classification.confidence
+
         if claimedType and claimedType != DocType.UNKNOWN:
-            target_type = claimedType
-            class_conf = 1.0
+            # Check if text actually supports claimedType
+            if classification.docType == claimedType:
+                target_type = claimedType
+                class_conf = max(classification.confidence, 0.85)
+            elif classification.docType == DocType.UNKNOWN or classification.confidence < 0.2:
+                # Completely unknown or non-statutory document
+                target_type = DocType.UNKNOWN
+                class_conf = 0.0
+                is_mismatch = True
+            else:
+                # Document matches a different statutory type than claimed
+                target_type = classification.docType
+                is_mismatch = True
         else:
-            classification = classify_document(temp_path)
             target_type = classification.docType
-            class_conf = classification.confidence
 
         # ── Step 4: Extract Key-Value Claims & Bounding Boxes ──
-        ocr_result = await extract_document_fields(temp_path, doc_type=target_type)
+        if target_type != DocType.UNKNOWN:
+            ocr_result = await extract_document_fields(temp_path, doc_type=target_type)
+        else:
+            ocr_result = DocumentExtractionResponse(
+                docType=DocType.UNKNOWN,
+                extractedFields={
+                    "Detected Type": "UNKNOWN / NON-STATUTORY",
+                    "Statutory Status": "REJECTED_CATEGORY_MISMATCH",
+                    "Extracted Text Snippet": full_text[:200] if full_text else "No text found"
+                },
+                fieldsWithBoxes={},
+                visualMarkers={},
+                confidence=0.0,
+                pageCount=metadata_result.pageCount if hasattr(metadata_result, 'pageCount') else 1,
+                warnings=[
+                    f"Uploaded PDF does not match claimed category '{claimedType.value if claimedType else 'Statutory Document'}'. No valid statutory identifiers (GSTIN, PAN, UDYAM, etc.) detected."
+                ]
+            )
 
         # ── Step 5: Detect and Crop Signatures + Compute Embeddings ──
         sig_result = detect_signatures_in_pdf(temp_path, max_pages=3)
@@ -141,12 +175,23 @@ async def verify_document(
         # ── Step 6: Determine Overall Status ──
         warnings = list(ocr_result.warnings) + metadata_flags + sig_result.warnings
 
+        # Check claimed identifier against document text if provided
+        if claimedId and claimedId.strip():
+            clean_claimed = claimedId.strip().upper()
+            if clean_claimed not in full_text.upper():
+                warnings.append(f"Claimed Identifier '{claimedId}' was NOT found anywhere in the document text.")
+                is_mismatch = True
+
         if qr_result.isForgeryDetected:
             overall_status = "FLAGGED_FORGERY"
             warnings.append("Document flagged for cryptographic QR code forgery.")
         elif metadata_result.isTampered:
             overall_status = "FLAGGED_TAMPERED"
             warnings.append(f"Document edited using forbidden software: {', '.join(metadata_result.flaggedTools)}")
+        elif is_mismatch or target_type == DocType.UNKNOWN:
+            overall_status = "REJECTED_MISMATCH"
+            if not any("Statutory" in w or "Mismatch" in w for w in warnings):
+                warnings.append(f"Document does not match claimed category '{claimedType.value if claimedType else 'Statutory Document'}'.")
         elif ocr_result.confidence > 0.8:
             overall_status = "VERIFIED"
         else:

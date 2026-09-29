@@ -51,7 +51,8 @@ class AIClient {
 
     const formData = new FormData();
     const fileBlob = await fs.openAsBlob(filePath);
-    formData.append('file', fileBlob, path.basename(filePath));
+    const fileName = path.basename(filePath).toLowerCase().endsWith('.pdf') ? path.basename(filePath) : `${path.basename(filePath)}.pdf`;
+    formData.append('file', fileBlob, fileName);
 
     if (claimedType) {
       formData.append('claimedType', claimedType);
@@ -91,7 +92,8 @@ class AIClient {
 
     const formData = new FormData();
     const fileBlob = await fs.openAsBlob(filePath);
-    formData.append('file', fileBlob, path.basename(filePath));
+    const fileName = path.basename(filePath).toLowerCase().endsWith('.pdf') ? path.basename(filePath) : `${path.basename(filePath)}.pdf`;
+    formData.append('file', fileBlob, fileName);
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 30000); // 30s for large tender documents

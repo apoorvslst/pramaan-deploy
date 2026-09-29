@@ -115,6 +115,14 @@ function App() {
             }
           />
           <Route
+            path="/evidence/:bidId"
+            element={
+              <OfficerRoute currentUser={currentUser}>
+                <EvidenceViewer />
+              </OfficerRoute>
+            }
+          />
+          <Route
             path="/collusion"
             element={
               <OfficerRoute currentUser={currentUser}>

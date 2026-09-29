@@ -198,8 +198,14 @@ export const verifyKyc = async (req, res) => {
 
     // 1. Mandatory Documents Validation
     const docList = Array.isArray(documents) ? documents : [];
-    const aadhaarDoc = docList.find(d => (d.docType || d.id || '').toLowerCase().includes('aadhaar'));
-    const panDoc = docList.find(d => (d.docType || d.id || '').toLowerCase().includes('pan'));
+    const aadhaarDoc = docList.find(d => {
+      const t = (d.docType || d.id || d.type || '').toLowerCase();
+      return t.includes('aadhaar') || t.includes('aadhar');
+    });
+    const panDoc = docList.find(d => {
+      const t = (d.docType || d.id || d.type || '').toLowerCase();
+      return t.includes('pan');
+    });
 
     if (!aadhaarDoc || !aadhaarDoc.name || !panDoc || !panDoc.name) {
       return res.status(400).json({
@@ -253,7 +259,7 @@ export const verifyKyc = async (req, res) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'qwen/qwen3.8-27b',
+            model: 'llama-3.3-70b-versatile',
             messages: [
               {
                 role: 'system',

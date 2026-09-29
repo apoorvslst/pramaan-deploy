@@ -1802,34 +1802,41 @@ function BidderActivityCentre({ bids = [], onReuploadDocument }) {
   );
 }
 
-export function BidderPortal({ user, defaultTab = 'kyc', onLogout }) {
+export function BidderPortal({ user, currentUser: propCurrentUser, defaultTab = 'kyc', onLogout }) {
+  const activeUser = propCurrentUser || user;
+  const isKycDone = Boolean(activeUser?.isKycVerified);
+
   const [currentUser, setCurrentUser] = useState(() => ({
-    id: user?.gemSellerId || 'GEM-VEND-2024-8841',
-    name: user?.name || defaultBidderProfile.name,
-    email: user?.email || defaultBidderProfile.email,
-    company: user?.organization || user?.company || defaultBidderProfile.companyName,
-    designation: user?.designation || defaultBidderProfile.designation,
-    entityType: user?.entityType || defaultBidderProfile.entityType,
-    panNumber: user?.panNumber || '',
-    gstinNumber: user?.gstinNumber || '',
-    udyamNumber: user?.udyamNumber || '',
+    id: activeUser?.gemSellerId || 'GEM-VEND-2024-8841',
+    name: activeUser?.name || defaultBidderProfile.name,
+    email: activeUser?.email || defaultBidderProfile.email,
+    company: activeUser?.organization || activeUser?.company || defaultBidderProfile.companyName,
+    designation: activeUser?.designation || defaultBidderProfile.designation,
+    entityType: activeUser?.entityType || defaultBidderProfile.entityType,
+    panNumber: activeUser?.panNumber || '',
+    gstinNumber: activeUser?.gstinNumber || '',
+    udyamNumber: activeUser?.udyamNumber || '',
+    isKycVerified: isKycDone,
   }));
 
   const [kycState, setKycState] = useState(() => ({
-    isVerified: Boolean(user?.isKycVerified),
-    verifiedAt: user?.kycVerifiedAt || null,
-    documents: user?.kycDocuments || null,
+    isVerified: isKycDone,
+    verifiedAt: activeUser?.kycVerifiedAt || null,
+    documents: activeUser?.kycDocuments || null,
   }));
 
   // Active sub-navigation tab: 'kyc' | 'tenders' | 'preflight' | 'activity'
-  const [activeTab, setActiveTab] = useState(defaultTab || 'kyc');
+  const [activeTab, setActiveTab] = useState(() => {
+    if (!isKycDone) return 'kyc';
+    return defaultTab || 'tenders';
+  });
   const [bids, setBids] = useState(defaultMyBids);
 
   React.useEffect(() => {
-    if (defaultTab) {
+    if (defaultTab && kycState.isVerified) {
       setActiveTab(defaultTab);
     }
-  }, [defaultTab]);
+  }, [defaultTab, kycState.isVerified]);
 
   const handleLogin = (userData) => {
     setCurrentUser(userData);
@@ -1845,6 +1852,7 @@ export function BidderPortal({ user, defaultTab = 'kyc', onLogout }) {
 
   const handleVerifyKyc = (result) => {
     setKycState(result);
+    setCurrentUser(prev => ({ ...prev, isKycVerified: true }));
     try {
       const saved = localStorage.getItem('praman_user');
       if (saved) {
@@ -1860,6 +1868,7 @@ export function BidderPortal({ user, defaultTab = 'kyc', onLogout }) {
     } catch (e) {
       console.warn('Could not persist KYC verification:', e);
     }
+    setActiveTab('tenders');
   };
 
   const handleBidSubmitted = (newBid) => {

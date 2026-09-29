@@ -120,8 +120,9 @@ export const api = {
   },
 
   // ─── TENDERS ───
-  async getTenders() {
-    const res = await fetch(`${API_BASE}/tenders`, {
+  async getTenders(status = null) {
+    const url = status ? `${API_BASE}/tenders?status=${status}` : `${API_BASE}/tenders`;
+    const res = await fetch(url, {
       headers: getAuthHeaders()
     });
     const data = await parseResponse(res);
@@ -149,7 +150,14 @@ export const api = {
 
   async publishTender(tenderId) {
     const res = await fetch(`${API_BASE}/tenders/${tenderId}/publish`, {
-      method: 'POST',
+      method: 'PATCH',
+      headers: getAuthHeaders()
+    });
+    return await parseResponse(res);
+  },
+
+  async getTenderEvaluations(tenderId) {
+    const res = await fetch(`${API_BASE}/verification/tender/${tenderId}/evaluations`, {
       headers: getAuthHeaders()
     });
     return await parseResponse(res);
@@ -184,6 +192,32 @@ export const api = {
   },
 
   // ─── AI ASSISTANCE ───
+  async scanDocument(file, claimedType = '', claimedId = '') {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (claimedType) formData.append('claimedType', claimedType);
+    if (claimedId) formData.append('claimedId', claimedId);
+
+    const res = await fetch(`${API_BASE}/ai/verify-document`, {
+      method: 'POST',
+      headers: getAuthHeaders(false), // multipart/form-data
+      body: formData
+    });
+    return await parseResponse(res);
+  },
+
+  async parseTenderNit(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const res = await fetch(`${API_BASE}/ai/tender/parse-nit`, {
+      method: 'POST',
+      headers: getAuthHeaders(false), // multipart/form-data
+      body: formData
+    });
+    return await parseResponse(res);
+  },
+
   async preflightCheck(payload) {
     const res = await fetch(`${API_BASE}/ai/preflight`, {
       method: 'POST',

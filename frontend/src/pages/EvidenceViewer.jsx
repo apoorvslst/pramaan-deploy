@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import {
   FileText, Server, Globe, ShieldAlert, CheckCircle, AlertTriangle,
   XCircle, Eye, Zap, ShieldCheck, RefreshCw, Lock, ArrowRight
@@ -111,8 +111,9 @@ function GSTCertificateSheet({ docData }) {
 }
 
 export default function EvidenceViewer() {
+  const { bidId } = useParams();
   const [searchParams] = useSearchParams();
-  const bidIdParam = searchParams.get('bidId');
+  const targetBidId = bidId || searchParams.get('bidId');
 
   const [bidders, setBidders] = useState(MOCK_BIDDERS);
   const [selectedBidder, setSelectedBidder] = useState(MOCK_BIDDERS[0]);
@@ -144,9 +145,13 @@ export default function EvidenceViewer() {
           }));
           setBidders(formatted);
           
-          if (bidIdParam) {
-            const target = formatted.find(f => f.id === bidIdParam || f.mongoId === bidIdParam);
-            if (target) setSelectedBidder(target);
+          if (targetBidId) {
+            const target = formatted.find(f => f.id === targetBidId || f.mongoId === targetBidId);
+            if (target) {
+              setSelectedBidder(target);
+            } else {
+              setSelectedBidder(formatted[0]);
+            }
           } else {
             setSelectedBidder(formatted[0]);
           }
@@ -156,7 +161,7 @@ export default function EvidenceViewer() {
       }
     }
     loadBids();
-  }, [bidIdParam]);
+  }, [targetBidId]);
 
 
   const handleTriggerAI = async () => {
@@ -196,8 +201,13 @@ export default function EvidenceViewer() {
     }
 
     try {
-      const bidId = selectedBidder.mongoId || '6abb9dbdb87b740ae91dd650';
-      const res = await api.submitOfficerDecision(bidId, decision, overrideText);
+      let hash = '0x' + Math.random().toString(16).substring(2, 10) + '...sealed';
+      if (selectedBidder.mongoId) {
+        const res = await api.submitOfficerDecision(selectedBidder.mongoId, decision, overrideText);
+        if (res.auditBlock?.currentHash) {
+          hash = res.auditBlock.currentHash;
+        }
+      }
       
       setSelectedBidder(prev => ({
         ...prev,
@@ -207,12 +217,12 @@ export default function EvidenceViewer() {
 
       setDecisionSuccess({
         message: `Decision recorded: BIDDER ${decision}. Cryptographically sealed into CAG Audit Ledger.`,
-        hash: res.auditBlock?.currentHash || '0x' + Math.random().toString(16).substring(2, 10) + '...sealed'
+        hash
       });
       setOverrideMode(false);
       setOverrideText('');
     } catch (err) {
-      // Offline fallback
+      // Graceful local update
       setSelectedBidder(prev => ({
         ...prev,
         status: decision,
@@ -227,7 +237,10 @@ export default function EvidenceViewer() {
     }
   };
 
-  const isTampered = selectedBidder?.id === 'BID-004' || selectedBidder?.legalName?.toLowerCase().includes('apex');
+  const isTampered = selectedBidder?.riskLevel === 'HIGH' || 
+                     selectedBidder?.status === 'DISQUALIFIED' || 
+                     Boolean(selectedBidder?.isCollusionFlagged) ||
+                     (selectedBidder?.documents && selectedBidder.documents.some(d => d.hasTampering || d.status === 'FLAGGED_TAMPERED'));
 
   return (
     <div className="main-content">

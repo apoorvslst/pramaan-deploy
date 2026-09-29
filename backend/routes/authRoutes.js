@@ -8,7 +8,7 @@ router.post('/register', register);
 router.post('/login', login);
 router.get('/me', protect, getMe);
 router.post('/logout', logout);
-router.post('/kyc/verify', verifyKyc);
+router.post('/kyc/verify', protect, verifyKyc);
 
 export default router;
 

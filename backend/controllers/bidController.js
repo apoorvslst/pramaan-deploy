@@ -62,24 +62,32 @@ export const submitBid = async (req, res) => {
 
 
     // 1. Find or create Bidder profile
-    let bidder = await Bidder.findOne({ 
-      $or: [
-        { gstin: (gstin || '').toUpperCase() },
-        { userId: req.user?._id }
-      ]
-    });
+    let bidder = null;
+    if (req.user?._id) {
+      bidder = await Bidder.findOne({ userId: req.user._id });
+    }
+    if (!bidder && gstin && gstin.trim()) {
+      bidder = await Bidder.findOne({ gstin: gstin.trim().toUpperCase() });
+      if (bidder && req.user?._id && !bidder.userId) {
+        bidder.userId = req.user._id;
+      }
+    }
 
     const parsedDirectors = typeof directors === 'string' 
       ? JSON.parse(directors) 
       : (Array.isArray(directors) ? directors : []);
 
     if (!bidder) {
+      const generatedGstin = (gstin && gstin.trim()) 
+        ? gstin.trim().toUpperCase() 
+        : `07${(pan || req.user?.panNumber || 'AAAAA0000A').toUpperCase()}1Z${Math.floor(Math.random() * 9 + 1)}`;
+
       bidder = new Bidder({
         userId: req.user?._id,
         legalBusinessName: legalBusinessName || req.user?.organization || req.user?.name || 'Bharat Solar Solutions Pvt Ltd',
-        gstin: (gstin || '07AAAAA0000A1Z5').toUpperCase(),
-        pan: (pan || 'AAAAA0000A').toUpperCase(),
-        udyamRegistrationNumber: udyamRegistrationNumber || 'UDYAM-DL-03-0049281',
+        gstin: generatedGstin,
+        pan: (pan || req.user?.panNumber || 'AAAAA0000A').toUpperCase(),
+        udyamRegistrationNumber: udyamRegistrationNumber || req.user?.udyamNumber || 'UDYAM-DL-03-0049281',
         entityType: entityType || 'PVT_LTD',
         primaryEmail: primaryEmail || req.user?.email || 'bidder@gem.gov.in',
         primaryPhone: primaryPhone || '+91-9876543210',
