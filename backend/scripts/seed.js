@@ -14,6 +14,9 @@ const seedDatabase = async () => {
       User.deleteMany({ email: /@praman\.test$/ }),
       Tender.deleteMany({ tenderNumber: /^GEM\/2026\// }),
       Bidder.deleteMany({ gstin: /^07AAAAA/ }),
+      BidSubmission.deleteMany({ bidReferenceNumber: /^BID-REF-2026/ }),
+      VerificationEvidence.deleteMany({}),
+      AuditLedger.deleteMany({}),
     ]);
 
     console.log('\x1b[36m[Seed]\x1b[0m Creating Officer & Bidder users...');
