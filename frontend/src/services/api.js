@@ -163,6 +163,20 @@ export const api = {
     return await parseResponse(res);
   },
 
+  // ─── BIDDER DIRECTORY ───
+  async getBidders() {
+    try {
+      const res = await fetch(`${API_BASE}/bidders`, {
+        headers: getAuthHeaders()
+      });
+      const data = await parseResponse(res);
+      return data.bidders || [];
+    } catch (e) {
+      console.warn('Could not fetch bidders:', e.message);
+      return [];
+    }
+  },
+
   // ─── BIDS & SUBMISSIONS ───
   async getAllBids(tenderId = null) {
     const url = tenderId ? `${API_BASE}/bids?tenderId=${tenderId}` : `${API_BASE}/bids`;
@@ -196,6 +210,24 @@ export const api = {
       headers: getAuthHeaders(!isFormData),
       body: isFormData ? formDataOrJson : JSON.stringify(formDataOrJson)
     });
+    return await parseResponse(res);
+  },
+
+  async resolveGstin(gstin) {
+    if (!gstin) return null;
+    const res = await fetch(`${API_BASE}/bids/resolve-gstin/${encodeURIComponent(gstin.trim())}`);
+    return await parseResponse(res);
+  },
+
+  async verifyPan(pan, name = '', context = {}) {
+    if (!pan) return null;
+    const params = new URLSearchParams();
+    if (name) params.append('name', name);
+    if (context.city) params.append('city', context.city);
+    if (context.state) params.append('state', context.state);
+    if (context.udyam) params.append('udyam', context.udyam);
+    const query = params.toString() ? `?${params.toString()}` : '';
+    const res = await fetch(`${API_BASE}/bids/verify-pan/${encodeURIComponent(pan.trim())}${query}`);
     return await parseResponse(res);
   },
 
@@ -233,6 +265,31 @@ export const api = {
       body: JSON.stringify(payload)
     });
     return await parseResponse(res);
+  },
+
+  // ─── FORENSICS & COLLUSION ───
+  async getCollusionAnalysis(tenderId) {
+    try {
+      const res = await fetch(`${API_BASE}/forensics/${tenderId}/collusion`, {
+        headers: getAuthHeaders()
+      });
+      return await parseResponse(res);
+    } catch (e) {
+      console.warn('Backend collusion fetch error:', e.message);
+      return null;
+    }
+  },
+
+  async getForensicDashboard(tenderId) {
+    try {
+      const res = await fetch(`${API_BASE}/forensics/${tenderId}/dashboard`, {
+        headers: getAuthHeaders()
+      });
+      return await parseResponse(res);
+    } catch (e) {
+      console.warn('Backend forensics dashboard fetch error:', e.message);
+      return null;
+    }
   },
 
   // ─── VERIFICATION & 3-PANE WORKSPACE ───
@@ -274,6 +331,57 @@ export const api = {
 
   async verifyAuditChain() {
     const res = await fetch(`${API_BASE}/audit/verify`, {
+      headers: getAuthHeaders()
+    });
+    return await parseResponse(res);
+  },
+
+  // ─── CRAC (Consignee Receipt and Acceptance Certificate) ───
+  async submitCrac(data) {
+    const isFormData = data instanceof FormData;
+    const headers = getAuthHeaders(!isFormData);
+    const res = await fetch(`${API_BASE}/crac/create`, {
+      method: 'POST',
+      headers,
+      body: isFormData ? data : JSON.stringify(data)
+    });
+    return await parseResponse(res);
+  },
+
+  async updateCrac(cracId, data) {
+    const isFormData = data instanceof FormData;
+    const headers = getAuthHeaders(!isFormData);
+    const res = await fetch(`${API_BASE}/crac/update/${cracId}`, {
+      method: 'POST',
+      headers,
+      body: isFormData ? data : JSON.stringify(data)
+    });
+    return await parseResponse(res);
+  },
+
+  async getMyCracs() {
+    const res = await fetch(`${API_BASE}/crac/my-cracs`, {
+      headers: getAuthHeaders()
+    });
+    return await parseResponse(res);
+  },
+
+  async getPendingContractsForCrac() {
+    const res = await fetch(`${API_BASE}/crac/pending-contracts`, {
+      headers: getAuthHeaders()
+    });
+    return await parseResponse(res);
+  },
+
+  async getAllCracs() {
+    const res = await fetch(`${API_BASE}/crac/all`, {
+      headers: getAuthHeaders()
+    });
+    return await parseResponse(res);
+  },
+
+  async getCracForBid(bidId) {
+    const res = await fetch(`${API_BASE}/crac/bid/${bidId}`, {
       headers: getAuthHeaders()
     });
     return await parseResponse(res);

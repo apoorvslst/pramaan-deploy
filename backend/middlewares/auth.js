@@ -25,11 +25,21 @@ export const protect = async (req, res, next) => {
     const secret = process.env.JWT_SECRET || 'praman_super_secure_jwt_secret_dev_key_2026';
     const decoded = jwt.verify(token, secret);
 
-    const user = await User.findById(decoded.id).select('-password');
+    let user = null;
+    try {
+      user = await User.findById(decoded.id).select('-password');
+    } catch (idErr) {
+      user = null;
+    }
+
+    if (!user && decoded.email) {
+      user = await User.findOne({ email: decoded.email.toLowerCase() }).select('-password');
+    }
+
     if (!user) {
       return res.status(401).json({
         success: false,
-        error: 'User belonging to this token no longer exists.',
+        error: 'User belonging to this token no longer exists. Please re-login.',
       });
     }
 

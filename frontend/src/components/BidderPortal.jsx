@@ -26,6 +26,9 @@ import {
   Layers
 } from './Icons';
 import { api } from '../services/api';
+import { generateBidSubmissionSlip, generateLetterOfAward } from '../utils/documentGenerator';
+import BidderCracReviewView from './BidderCracReviewView';
+import { Award, Star } from 'lucide-react';
 
 // ==========================================
 // 1. BIDDER MOCK DATA & CONSTANTS
@@ -447,12 +450,18 @@ function BidderKYC({ user, kycState, onVerifyKyc, onContinueToBids }) {
 
       setVerifying(false);
       setIsVerified(true);
-      setDocs(prev => prev.map(d => ({ ...d, status: 'VERIFIED' })));
+      const updatedDocs = docs.map(d => {
+        if (d.file) {
+          return { ...d, status: 'VERIFIED' };
+        }
+        return { ...d, status: 'NOT_UPLOADED' };
+      });
+      setDocs(updatedDocs);
       if (onVerifyKyc) {
         onVerifyKyc({
           isVerified: true,
           verifiedAt: res.verifiedAt || new Date().toLocaleTimeString(),
-          documents: docs.map(d => ({ ...d, status: 'VERIFIED' }))
+          documents: updatedDocs
         });
       }
     } catch (err) {
@@ -970,11 +979,29 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
   const [openBidsModal, setOpenBidsModal] = useState(null);
   const [modalOpenBids, setModalOpenBids] = useState([]);
   const [isLoadingModalBids, setIsLoadingModalBids] = useState(false);
+  const [showOpenBidsAccordion, setShowOpenBidsAccordion] = useState(false);
 
   const [tenderDocs, setTenderDocs] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionProgress, setSubmissionProgress] = useState(0);
   const [submitError, setSubmitError] = useState(null);
+  const [submittedReceiptModal, setSubmittedReceiptModal] = useState(null);
+
+  // User-Declared Statutory Parameters for the active bid
+  const [declaredCompanyName, setDeclaredCompanyName] = useState('');
+  const [declaredPan, setDeclaredPan] = useState('');
+  const [declaredGstin, setDeclaredGstin] = useState('');
+  const [declaredUdyam, setDeclaredUdyam] = useState('');
+  const [declaredEntityType, setDeclaredEntityType] = useState('PVT_LTD');
+  const [declaredAddress, setDeclaredAddress] = useState('');
+  const [declaredCity, setDeclaredCity] = useState('');
+  const [declaredState, setDeclaredState] = useState('');
+  const [declaredPincode, setDeclaredPincode] = useState('');
+  const [declaredDirector, setDeclaredDirector] = useState('');
+  const [gstinDetectionInfo, setGstinDetectionInfo] = useState(null);
+  const [isResolvingGstin, setIsResolvingGstin] = useState(false);
+  const [panDetectionInfo, setPanDetectionInfo] = useState(null);
+  const [isResolvingPan, setIsResolvingPan] = useState(false);
 
   const categories = ['ALL', 'Solar & Renewable Power Equipment', 'Smart City Infrastructure', 'Solar Maintenance Services'];
 
@@ -996,11 +1023,16 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
             emdAmount: `₹${((t.estimatedValueINR * 0.02) / 100000).toFixed(2)} Lakh`,
             emdExemption: 'MSME/Startup Exempt',
             location: t.location || 'New Delhi',
+            statutoryDocs: [
+              { id: 'GST_CERTIFICATE', name: 'GST Registration Certificate (Form GST REG-06)', required: true },
+              { id: 'PAN_CARD', name: 'Permanent Account Number (PAN Card)', required: true },
+              { id: 'CA_TURNOVER_CERTIFICATE', name: 'CA Certified Turnover Certificate', required: false },
+              { id: 'DEBARMENT_AFFIDAVIT', name: 'Non-Debarment / Anti-Blacklisting Affidavit', required: false },
+              { id: 'UDYAM_CERTIFICATE', name: 'Udyam MSME Registration Certificate', required: false },
+            ],
             mandatoryDocs: [
               'GST Registration Certificate (Form GST REG-06)',
-              'CA Certified Turnover Certificate',
-              'Permanent Account Number (PAN Card)',
-              'Non-Debarment / Anti-Blacklisting Affidavit'
+              'Permanent Account Number (PAN Card)'
             ],
             eligibilityMatch: {
               isEligible: true,
@@ -1029,17 +1061,125 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
     return matchesSearch && matchesCat;
   });
 
+  const handleGstinChange = async (val) => {
+    const rawGst = (val || '').toUpperCase().trim();
+    setDeclaredGstin(rawGst);
+
+    if (rawGst.length >= 12 && (!declaredPan || declaredPan.length < 10)) {
+      setDeclaredPan(rawGst.slice(2, 12));
+    }
+
+    if (rawGst.length >= 2) {
+      setIsResolvingGstin(true);
+      try {
+        const resolved = await api.resolveGstin(rawGst);
+        setIsResolvingGstin(false);
+        if (resolved && resolved.success) {
+          setDeclaredCity(resolved.city || 'Bahadurgarh');
+          setDeclaredState(resolved.state || 'Haryana');
+          setDeclaredPincode(resolved.pincode || '124507');
+          if (!declaredAddress || declaredAddress.includes('Industrial Area')) {
+            setDeclaredAddress(resolved.addressLine1 || `Plot 42, HSIIDC Industrial Area, ${resolved.city}`);
+          }
+          if (resolved.entityType) {
+            setDeclaredEntityType(resolved.entityType);
+          }
+          if (resolved.pan && (!declaredPan || declaredPan.length < 10)) {
+            setDeclaredPan(resolved.pan);
+          }
+          setGstinDetectionInfo({
+            city: resolved.city,
+            state: resolved.state,
+            district: resolved.district,
+            pincode: resolved.pincode,
+            provider: resolved.provider,
+            jurisdiction: resolved.jurisdiction,
+            stateCode: resolved.stateCode || rawGst.slice(0, 2)
+          });
+        }
+      } catch (err) {
+        setIsResolvingGstin(false);
+      }
+    } else {
+      setGstinDetectionInfo(null);
+    }
+  };
+
+  const handlePanChange = async (rawPan) => {
+    const panVal = rawPan.toUpperCase().trim();
+    setDeclaredPan(panVal);
+
+    if (panVal.length === 10) {
+      setIsResolvingPan(true);
+      try {
+        const resolved = await api.verifyPan(panVal, declaredCompanyName, {
+          city: declaredCity,
+          state: declaredState,
+          udyam: declaredUdyam
+        });
+        if (resolved && resolved.isValid) {
+          setPanDetectionInfo(resolved);
+          if (resolved.entityCode === 'LLP') setDeclaredEntityType('LLP');
+          else if (resolved.entityCode === 'FIRM') setDeclaredEntityType('PARTNERSHIP');
+          else if (resolved.entityCode === 'COMPANY') setDeclaredEntityType('PVT_LTD');
+          else if (resolved.entityCode === 'INDIVIDUAL') setDeclaredEntityType('PROPRIETORSHIP');
+          else if (resolved.entityCode === 'TRUST') setDeclaredEntityType('TRUST');
+        } else {
+          setPanDetectionInfo(null);
+        }
+      } catch (err) {
+        console.warn('PAN resolve error:', err.message);
+      } finally {
+        setIsResolvingPan(false);
+      }
+    } else {
+      setPanDetectionInfo(null);
+    }
+  };
+
   const handleOpenBidModal = async (tender) => {
     setSubmitError(null);
     setActiveTenderModal(tender);
     const rawVal = tender.estimatedValueINR || 42000000;
     setBidPrice(String(Math.round(rawVal * 0.95)));
 
+    // Initialize declared statutory fields from current user profile
+    const panVal = user?.panNumber || '';
+    setDeclaredCompanyName(user?.organization || user?.company || user?.name || '');
+    setDeclaredPan(panVal);
+    const initGst = user?.gstinNumber || (panVal ? `06${panVal}1Z1` : '');
+    setDeclaredGstin(initGst);
+    setDeclaredUdyam(user?.udyamNumber || '');
+    setDeclaredEntityType(user?.entityType || 'PVT_LTD');
+    setDeclaredAddress(user?.address || '');
+    setDeclaredCity(user?.city || '');
+    setDeclaredState(user?.state || '');
+    setDeclaredPincode(user?.pincode || '');
+    setDeclaredDirector(user?.name || '');
+    setGstinDetectionInfo(null);
+
+    if (initGst && initGst.length >= 2) {
+      handleGstinChange(initGst);
+    }
+
+    const docList = Array.isArray(tender.statutoryDocs) && tender.statutoryDocs.length > 0
+      ? tender.statutoryDocs
+      : [
+          { id: 'GST_CERTIFICATE', name: 'GST Registration Certificate (Form GST REG-06)', required: true },
+          { id: 'PAN_CARD', name: 'Permanent Account Number (PAN Card)', required: true },
+          { id: 'CA_TURNOVER_CERTIFICATE', name: 'CA Certified Turnover Certificate', required: false },
+          { id: 'DEBARMENT_AFFIDAVIT', name: 'Non-Debarment / Anti-Blacklisting Affidavit', required: false },
+          { id: 'UDYAM_CERTIFICATE', name: 'Udyam MSME Registration Certificate', required: false },
+        ];
+
     const initialDocs = {};
-    tender.mandatoryDocs.forEach((docName, index) => {
+    docList.forEach((docItem, index) => {
       initialDocs[index] = {
-        name: docName,
+        id: docItem.id,
+        name: docItem.name,
+        required: Boolean(docItem.required),
         fileName: null,
+        fileObj: null,
         status: 'EMPTY',
       };
     });
@@ -1061,36 +1201,7 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
     try {
       const tenderId = tender._id || tender.id;
       const bids = await api.getBidsForTender(tenderId);
-      const displayBids = (bids && bids.length > 0) ? bids : [
-        {
-          id: 'BID-9812',
-          bidReferenceNumber: 'BID-2026-SUN78',
-          bidderId: { legalBusinessName: 'SunPower Global Solutions Ltd' },
-          bidAmount: 41800000,
-          submissionDate: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
-          status: 'QUALIFIED',
-          evaluationResult: { complianceScore: 94 }
-        },
-        {
-          id: 'BID-9844',
-          bidReferenceNumber: 'BID-2026-AD891',
-          bidderId: { legalBusinessName: 'Adani Green Renewable Infra' },
-          bidAmount: 42200000,
-          submissionDate: new Date(Date.now() - 48 * 3600 * 1000).toISOString(),
-          status: 'VERIFIED',
-          evaluationResult: { complianceScore: 91 }
-        },
-        {
-          id: 'BID-9865',
-          bidReferenceNumber: 'BID-2026-TAT22',
-          bidderId: { legalBusinessName: 'Tata Power Renewable EPC Ltd' },
-          bidAmount: 40900000,
-          submissionDate: new Date(Date.now() - 72 * 3600 * 1000).toISOString(),
-          status: 'SUBMITTED',
-          evaluationResult: { complianceScore: 89 }
-        }
-      ];
-      setOpenBidsModal({ tender, bids: displayBids, isLoading: false });
+      setOpenBidsModal({ tender, bids: bids || [], isLoading: false });
     } catch (e) {
       setOpenBidsModal({ tender, bids: [], isLoading: false });
     }
@@ -1109,24 +1220,61 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
     }));
   };
 
-  const handleAutoFillAllBidDocs = () => {
-    if (!activeTenderModal || !activeTenderModal.mandatoryDocs) return;
+  const handleRemoveDoc = (index) => {
     setSubmitError(null);
-    const filledDocs = {};
-    activeTenderModal.mandatoryDocs.forEach((docName, index) => {
-      const cleanName = docName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
-      filledDocs[index] = {
-        name: docName,
-        fileName: `${cleanName}_Certified.pdf`,
-        status: 'READY',
-      };
+    setTenderDocs(prev => ({
+      ...prev,
+      [index]: {
+        ...prev[index],
+        fileName: null,
+        fileObj: null,
+        status: 'EMPTY',
+      }
+    }));
+  };
+
+  const handleAutoFillMandatoryOnly = () => {
+    setSubmitError(null);
+    setTenderDocs(prev => {
+      const updated = { ...prev };
+      Object.keys(updated).forEach(k => {
+        if (updated[k].required) {
+          const cleanName = updated[k].name.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 26);
+          updated[k] = {
+            ...updated[k],
+            fileName: `${cleanName}__Certified.pdf`,
+            status: 'READY',
+          };
+        }
+      });
+      return updated;
     });
-    setTenderDocs(filledDocs);
+  };
+
+  const handleAutoFillAllBidDocs = () => {
+    setSubmitError(null);
+    setTenderDocs(prev => {
+      const updated = { ...prev };
+      Object.keys(updated).forEach(k => {
+        const cleanName = updated[k].name.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 26);
+        updated[k] = {
+          ...updated[k],
+          fileName: `${cleanName}__Certified.pdf`,
+          status: 'READY',
+        };
+      });
+      return updated;
+    });
   };
 
   const handleSubmitBid = async () => {
     if (!bidPrice || Number(bidPrice) <= 0) {
       setSubmitError('Please enter a valid Price of Bid (in ₹ INR).');
+      return;
+    }
+
+    if (!isAllMandatoryUploaded) {
+      setSubmitError(`Please attach all ${totalMandatoryCount} mandatory documents (GST REG-06 & PAN Card) before submitting.`);
       return;
     }
 
@@ -1136,19 +1284,55 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
 
     try {
       const parsedPrice = Number(bidPrice);
+      // ONLY include documents that are actually attached by the user
+      const attachedDocs = Object.values(tenderDocs).filter(d => d && d.fileName && d.status !== 'EMPTY');
+
+      const finalCompanyName = (declaredCompanyName || user?.organization || user?.company || user?.name || 'Apoorv Infotech').trim();
+      const finalPan = (declaredPan || user?.panNumber || (declaredGstin.length >= 12 ? declaredGstin.slice(2, 12) : 'AAAPL1234F')).trim().toUpperCase();
+      const finalGstin = (declaredGstin || user?.gstinNumber || (finalPan ? `06${finalPan}1Z1` : '06AAAPL1234F1Z1')).trim().toUpperCase();
+      const finalUdyam = (declaredUdyam || user?.udyamNumber || '').trim().toUpperCase();
+
+      // Normalize entityType so it is a valid enum value
+      let normalizedEntityType = 'PVT_LTD';
+      const rawType = String(declaredEntityType || user?.entityType || 'PVT_LTD').toUpperCase();
+      if (rawType.includes('PROP') || rawType.includes('SOLE') || rawType.includes('INDIVIDUAL')) {
+        normalizedEntityType = 'PROPRIETORSHIP';
+      } else if (rawType.includes('LLP')) {
+        normalizedEntityType = 'LLP';
+      } else if (rawType.includes('PARTNER')) {
+        normalizedEntityType = 'PARTNERSHIP';
+      } else if (rawType.includes('PUBLIC')) {
+        normalizedEntityType = 'PUBLIC_LTD';
+      } else if (rawType.includes('TRUST') || rawType.includes('SOCIETY')) {
+        normalizedEntityType = 'TRUST';
+      } else {
+        normalizedEntityType = 'PVT_LTD';
+      }
+
+      const finalCity = declaredCity || gstinDetectionInfo?.city || 'Bahadurgarh';
+      const finalState = declaredState || gstinDetectionInfo?.state || 'Haryana';
+      const finalPincode = declaredPincode || gstinDetectionInfo?.pincode || '124507';
+      const finalAddress = declaredAddress || `Plot 42, HSIIDC Industrial Area, ${finalCity}`;
+
       const payload = {
         tenderId: activeTenderModal._id || activeTenderModal.id,
         bidAmount: parsedPrice,
         bidPrice: parsedPrice,
         priceOfBid: parsedPrice,
-        legalBusinessName: user?.company || user?.organization || user?.name || 'Bidder Entity',
-        gstin: user?.gstinNumber || '07AAAAA0000A1Z5',
-        pan: user?.panNumber || 'AAAAA0000A',
-        udyamRegistrationNumber: user?.udyamNumber || 'UDYAM-DL-01-0012345',
+        legalBusinessName: finalCompanyName,
+        gstin: finalGstin,
+        pan: finalPan,
+        udyamRegistrationNumber: finalUdyam,
+        entityType: normalizedEntityType,
+        addressLine1: finalAddress,
+        city: finalCity,
+        state: finalState,
+        pincode: finalPincode,
+        directors: [{ name: declaredDirector || user?.name || 'Managing Director', pan: finalPan }],
         annualTurnoverINR: 15000000,
-        documents: Object.values(tenderDocs).map((d, i) => ({
-          docType: ['GST_CERTIFICATE', 'CA_TURNOVER_CERTIFICATE', 'PAN_CARD', 'DEBARMENT_AFFIDAVIT', 'UDYAM_CERTIFICATE'][i % 5],
-          originalFileName: d.fileName || `${d.name}.pdf`
+        documents: attachedDocs.map(d => ({
+          docType: d.id || (d.name?.toLowerCase().includes('pan') ? 'PAN_CARD' : 'GST_CERTIFICATE'),
+          originalFileName: d.fileName
         }))
       };
 
@@ -1163,26 +1347,31 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
         tenderTitle: activeTenderModal.title,
         organisation: activeTenderModal.organisation,
         bidAmount: parsedPrice,
+        legalBusinessName: finalCompanyName,
+        gstin: finalGstin,
+        pan: finalPan,
+        udyam: finalUdyam,
         submittedAt: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
         status: 'SUBMITTED',
         complianceScore: 88,
         aiRecommendation: 'QUALIFY',
         rectificationRequired: false,
-        uploadedDocuments: Object.values(tenderDocs).map(d => ({
-          name: d.fileName || d.name,
+        uploadedDocuments: attachedDocs.map(d => ({
+          name: d.fileName,
           status: 'VERIFIED',
           type: d.name,
           sha256: res.auditBlock?.currentHash || '0x49e...sealed',
           confidence: '98.5%'
         })),
         activityLog: [
-          { timestamp: 'Just now', event: `Bid package submitted with Price of Bid: ₹${parsedPrice.toLocaleString('en-IN')}`, type: 'SUBMIT' },
-          { timestamp: 'Just now', event: 'Pre-flight checks passed: 0 encryption locks', type: 'PREFLIGHT' },
+          { timestamp: 'Just now', event: `Bid package submitted for ${finalCompanyName} (GSTIN: ${finalGstin}, PAN: ${finalPan}) with Quote: ₹${parsedPrice.toLocaleString('en-IN')}`, type: 'SUBMIT' },
+          { timestamp: 'Just now', event: `Pre-flight checks passed: ${attachedDocs.length} documents attached (${attachedDocs.map(d => d.name).join(', ')})`, type: 'PREFLIGHT' },
           { timestamp: 'Just now', event: `Block #${res.auditBlock?.blockIndex || 1} appended to GeM Audit Ledger`, type: 'LEDGER' }
         ]
       };
 
       setActiveTenderModal(null);
+      setSubmittedReceiptModal(newBid);
       if (onBidSubmitted) {
         onBidSubmitted(newBid);
       }
@@ -1193,8 +1382,13 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
     }
   };
 
-  const isAllUploaded = activeTenderModal && 
-    activeTenderModal.mandatoryDocs.every((_, idx) => tenderDocs[idx]?.fileName);
+  const mandatoryDocsList = Object.values(tenderDocs).filter(d => d && d.required);
+  const totalMandatoryCount = mandatoryDocsList.length;
+  const uploadedMandatoryCount = mandatoryDocsList.filter(d => d && d.fileName && d.status !== 'EMPTY').length;
+  const totalUploadedCount = Object.values(tenderDocs).filter(d => d && d.fileName && d.status !== 'EMPTY').length;
+
+  const isAllMandatoryUploaded = uploadedMandatoryCount >= totalMandatoryCount && totalMandatoryCount > 0;
+  const isReadyToSubmit = isAllMandatoryUploaded && bidPrice && Number(bidPrice) > 0;
 
 
   return (
@@ -1361,46 +1555,61 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
         })}
       </div>
 
-      {/* Bid Documents Modal */}
+      {/* Modern High-Usability Bid Documents Modal */}
       {activeTenderModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div 
+          className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm overflow-y-auto p-2 sm:p-4 py-4 sm:py-6 flex items-start sm:items-center justify-center"
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
+        >
+          <div 
+            className="bg-white border border-slate-300 rounded-2xl max-w-2xl w-full flex flex-col shadow-2xl overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-150"
+            style={{ maxHeight: 'calc(100vh - 28px)', height: 'min(86vh, 680px)' }}
+          >
             
-            <div className="p-6 border-b border-slate-100 flex items-start justify-between bg-slate-50/50">
-              <div>
-                <span className="px-2.5 py-0.5 rounded-md bg-blue-50 text-[#0062FF] font-mono text-xs font-bold border border-blue-100">
-                  {activeTenderModal.id}
-                </span>
-                <h3 className="text-lg font-bold text-[#111827] mt-1">
+            {/* Modal Header (Fixed Top) */}
+            <div className="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50 flex-shrink-0">
+              <div className="space-y-0.5 pr-2">
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded bg-blue-100 text-[#0062FF] font-mono text-xs font-bold border border-blue-200">
+                    {activeTenderModal.id}
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[11px] font-bold border border-emerald-200">
+                    OPEN BIDDING WINDOW
+                  </span>
+                </div>
+                <h3 className="text-sm sm:text-base font-bold text-[#111827] truncate max-w-md">
                   Submit Bid Proposal & Upload Documents
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  {activeTenderModal.title} • {activeTenderModal.organisation}
-                </p>
               </div>
 
               <button
                 type="button"
                 onClick={() => setActiveTenderModal(null)}
-                className="text-slate-400 hover:text-slate-700 p-1.5 rounded hover:bg-slate-100"
+                className="text-slate-400 hover:text-slate-700 p-2 rounded-lg hover:bg-slate-200/60 transition-colors"
+                title="Close"
               >
                 ✕
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto space-y-4 flex-1">
+            {/* Scrollable Content Body with min-h-0 and overscroll-contain */}
+            <div 
+              className="p-4 sm:p-5 overflow-y-auto space-y-4 flex-1 bg-white overscroll-contain"
+              style={{ minHeight: 0, WebkitOverflowScrolling: 'touch' }}
+            >
               
-              {/* Separate Input for Price of Bid */}
-              <div className="bg-gradient-to-r from-blue-50/90 to-slate-50 border border-blue-200 rounded-lg p-4 space-y-2">
-                <div className="flex items-center justify-between">
+              {/* SECTION 1: Commercial Bid Price */}
+              <div className="bg-slate-50/90 border border-slate-200/90 rounded-xl p-3.5 sm:p-4 space-y-2.5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                   <label className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
                     <span className="w-5 h-5 rounded-full bg-[#0062FF] text-white flex items-center justify-center font-bold text-xs">₹</span>
                     Price of Bid / Financial Quote (INR) <span className="text-rose-500">*</span>
                   </label>
-                  <span className="text-[11px] text-slate-600 font-mono">
-                    Estimated Tender Value: <strong className="text-slate-900">{activeTenderModal.estimatedValue}</strong>
+                  <span className="text-xs text-slate-500 font-mono">
+                    Estimated: <strong className="text-slate-900">{activeTenderModal.estimatedValue}</strong>
                   </span>
                 </div>
+
                 <div className="relative">
                   <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500 font-bold text-sm">
                     ₹
@@ -1411,126 +1620,358 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
                     step="1000"
                     value={bidPrice}
                     onChange={(e) => setBidPrice(e.target.value)}
-                    placeholder="Enter your commercial bid price (e.g. 41500000)"
-                    className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-300 rounded font-mono text-sm font-bold text-slate-900 focus:outline-none focus:border-[#0062FF] focus:ring-1 focus:ring-[#0062FF]"
+                    placeholder="Enter commercial quote in Rupees (e.g. 39800000)"
+                    className="w-full pl-9 pr-4 py-2 bg-white border border-slate-300 rounded-lg font-mono text-sm font-bold text-slate-900 focus:outline-none focus:border-[#0062FF] focus:ring-2 focus:ring-blue-100"
                   />
                 </div>
-                {bidPrice && Number(bidPrice) > 0 && (
-                  <div className="flex items-center justify-between text-[11px] text-slate-600 font-mono pt-1">
-                    <span>Formatted Quote: <strong className="text-emerald-700 font-bold">₹{Number(bidPrice).toLocaleString('en-IN')}</strong></span>
-                    <span className="font-semibold text-slate-700">(₹{(Number(bidPrice) / 10000000).toFixed(2)} Cr)</span>
+
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5 text-xs">
+                  {bidPrice && Number(bidPrice) > 0 ? (
+                    <div className="flex items-center gap-1.5 font-mono">
+                      <span className="text-slate-500">Formatted:</span>
+                      <strong className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                        ₹{Number(bidPrice).toLocaleString('en-IN')}
+                      </strong>
+                      <span className="text-slate-600 font-semibold">
+                        (₹{(Number(bidPrice) / 10000000).toFixed(2)} Cr)
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-slate-400 italic">Enter a non-zero financial quote</span>
+                  )}
+
+                  {/* Quick percentage shortcuts */}
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setBidPrice(String(Math.round((activeTenderModal.estimatedValueINR || 42000000) * 0.95)))}
+                      className="px-2 py-1 rounded bg-white hover:bg-slate-100 border border-slate-200 text-[11px] font-semibold text-slate-700"
+                    >
+                      -5% (L1)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBidPrice(String(Math.round((activeTenderModal.estimatedValueINR || 42000000) * 0.90)))}
+                      className="px-2 py-1 rounded bg-white hover:bg-slate-100 border border-slate-200 text-[11px] font-semibold text-slate-700"
+                    >
+                      -10%
+                    </button>
                   </div>
-                )}
+                </div>
+
                 {submitError && (
-                  <p className="text-xs text-rose-600 font-medium">{submitError}</p>
+                  <p className="text-xs text-rose-600 font-semibold bg-rose-50 border border-rose-200 rounded p-2 flex items-center gap-1.5">
+                    <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                    {submitError}
+                  </p>
                 )}
               </div>
 
-              {/* Collapsible / Preview of Other Open Bids on this Tender */}
-              <div className="bg-slate-50 border border-slate-200 rounded p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                    <Eye className="w-3.5 h-3.5 text-[#0062FF]" />
-                    Other Open Bids on this Tender ({modalOpenBids.length})
-                  </span>
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
-                    Public Transparency Register
+              {/* SECTION 2: Statutory Identity & KYC Verification Status */}
+              <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                  <span className="text-xs text-emerald-900 font-bold">
+                    One-Time KYC (Aadhaar & PAN) Verified
                   </span>
                 </div>
-                {isLoadingModalBids ? (
-                  <p className="text-xs text-slate-500 py-1">Loading competing bids...</p>
-                ) : modalOpenBids.length === 0 ? (
-                  <p className="text-[11px] text-slate-500 italic py-1">No other bids submitted yet. You will be the first bidder!</p>
-                ) : (
-                  <div className="max-h-36 overflow-y-auto border border-slate-200 rounded bg-white">
-                    <table className="w-full text-left text-[11px]">
-                      <thead className="bg-slate-100 text-slate-600 border-b border-slate-200">
-                        <tr>
-                          <th className="p-2">Bid Reference</th>
-                          <th className="p-2">Bidder Entity</th>
-                          <th className="p-2 text-right">Price of Bid (₹)</th>
-                          <th className="p-2">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {modalOpenBids.map((b, idx) => (
-                          <tr key={idx} className="hover:bg-slate-50">
-                            <td className="p-2 font-mono text-[#0062FF] font-semibold">{b.bidReferenceNumber || b.id}</td>
-                            <td className="p-2 font-medium text-slate-800">{b.bidderId?.legalBusinessName || b.legalBusinessName || 'Bidder Entity'}</td>
-                            <td className="p-2 text-right font-mono font-bold text-slate-900">
-                              {b.bidAmount ? `₹${Number(b.bidAmount).toLocaleString('en-IN')}` : '₹4,18,00,000'}
-                            </td>
-                            <td className="p-2">
-                              <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">
-                                {b.status || 'SUBMITTED'}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleAutoFillMandatoryOnly}
+                    className="text-[11px] px-2.5 py-1 rounded bg-white text-[#0062FF] border border-blue-200 hover:bg-blue-50 font-bold shadow-xs whitespace-nowrap"
+                    title="Attaches mandatory demo certificates (GST REG-06 and PAN Card)"
+                  >
+                    ⚡ Attach Mandatory Docs (2)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleAutoFillAllBidDocs}
+                    className="text-[11px] px-2.5 py-1 rounded bg-slate-100 text-slate-700 hover:bg-slate-200 font-semibold border border-slate-200 whitespace-nowrap"
+                    title="Attaches all demo certificates"
+                  >
+                    Attach All Docs
+                  </button>
+                </div>
+              </div>
+
+              {/* SECTION 2B: Editable Declared Statutory & Tax Identifiers */}
+              <div className="bg-white border border-slate-200 rounded-xl p-3.5 sm:p-4 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                  <span className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <Building className="w-4 h-4 text-[#0062FF]" />
+                    Declared Statutory Identifiers for this Bid
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-mono">
+                    Directly synchronized to CAG Audit Ledger
+                  </span>
+                </div>
+
+                {/* Real-time GSTIN Auto-Detection Banner */}
+                {gstinDetectionInfo && (
+                  <div className="px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center justify-between gap-2 animate-in fade-in">
+                    <div className="flex items-center gap-2 text-xs text-emerald-800 font-semibold">
+                      <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                      <span>
+                        📍 Auto-Detected from GSTIN (State Code {gstinDetectionInfo.stateCode}): <strong>{gstinDetectionInfo.city}</strong>, {gstinDetectionInfo.district}, {gstinDetectionInfo.state} (PIN: {gstinDetectionInfo.pincode})
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded">
+                      {gstinDetectionInfo.provider}
+                    </span>
                   </div>
                 )}
+
+                {isResolvingGstin && (
+                  <div className="px-3 py-1.5 bg-blue-50 border border-blue-200 rounded text-xs text-[#0062FF] font-medium flex items-center gap-2">
+                    <Sparkles className="w-3.5 h-3.5 animate-spin" />
+                    <span>Resolving City, State & Jurisdiction from GSTIN statutory portal...</span>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      Legal Business / Firm Name <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={declaredCompanyName}
+                      onChange={e => setDeclaredCompanyName(e.target.value)}
+                      placeholder="e.g. Apoorv Infotech"
+                      className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded font-semibold text-slate-900 text-xs focus:outline-none focus:border-[#0062FF]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      Declared GSTIN Number <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      maxLength={15}
+                      value={declaredGstin}
+                      onChange={e => handleGstinChange(e.target.value)}
+                      placeholder="e.g. 06AAAPL1234F1Z1"
+                      className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded font-mono font-bold uppercase text-slate-900 text-xs focus:outline-none focus:border-[#0062FF]"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-[11px] font-semibold text-slate-600">
+                        Declared PAN Number <span className="text-rose-500">*</span>
+                      </label>
+                      {panDetectionInfo && (
+                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
+                          CBDT Validated
+                        </span>
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      maxLength={10}
+                      value={declaredPan}
+                      onChange={e => handlePanChange(e.target.value)}
+                      placeholder="e.g. AAAPL1234F"
+                      className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded font-mono font-bold uppercase text-slate-900 text-xs focus:outline-none focus:border-[#0062FF]"
+                    />
+                    {panDetectionInfo && (
+                      <div className="mt-1 text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-semibold flex items-center justify-between">
+                        <span>✓ {panDetectionInfo.entityCategory}</span>
+                        <span className="text-[9px] font-mono text-emerald-600">{panDetectionInfo.status}</span>
+                      </div>
+                    )}
+                    {isResolvingPan && (
+                      <div className="mt-1 text-[10px] text-blue-600 font-medium animate-pulse">
+                        Verifying PAN format and statutory status with CBDT...
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      Entity Constitution / Legal Structure
+                    </label>
+                    <select
+                      value={declaredEntityType}
+                      onChange={e => setDeclaredEntityType(e.target.value)}
+                      className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded text-slate-900 text-xs font-medium focus:outline-none focus:border-[#0062FF]"
+                    >
+                      <option value="PVT_LTD">Private Limited Company</option>
+                      <option value="PROPRIETORSHIP">Sole Proprietorship / Individual</option>
+                      <option value="PARTNERSHIP">Partnership Firm</option>
+                      <option value="LLP">Limited Liability Partnership (LLP)</option>
+                      <option value="PUBLIC_LTD">Public Limited Company</option>
+                      <option value="TRUST">Registered Trust / Society</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      City & State (Auto-derived from GSTIN)
+                    </label>
+                    <div className="flex gap-1.5">
+                      <input
+                        type="text"
+                        value={declaredCity}
+                        onChange={e => setDeclaredCity(e.target.value)}
+                        placeholder="City (e.g. Bahadurgarh)"
+                        className="w-1/2 px-2 py-1.5 bg-slate-50 border border-slate-300 rounded text-slate-900 text-xs focus:outline-none focus:border-[#0062FF]"
+                      />
+                      <input
+                        type="text"
+                        value={declaredState}
+                        onChange={e => setDeclaredState(e.target.value)}
+                        placeholder="State (e.g. Haryana)"
+                        className="w-1/2 px-2 py-1.5 bg-slate-50 border border-slate-300 rounded text-slate-900 text-xs focus:outline-none focus:border-[#0062FF]"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      Registered Address & Pincode
+                    </label>
+                    <div className="flex gap-1.5">
+                      <input
+                        type="text"
+                        value={declaredAddress}
+                        onChange={e => setDeclaredAddress(e.target.value)}
+                        placeholder="Address Line"
+                        className="w-2/3 px-2 py-1.5 bg-slate-50 border border-slate-300 rounded text-slate-900 text-xs focus:outline-none focus:border-[#0062FF]"
+                      />
+                      <input
+                        type="text"
+                        maxLength={6}
+                        value={declaredPincode}
+                        onChange={e => setDeclaredPincode(e.target.value)}
+                        placeholder="PIN"
+                        className="w-1/3 px-2 py-1.5 bg-slate-50 border border-slate-300 rounded font-mono text-slate-900 text-xs focus:outline-none focus:border-[#0062FF]"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      Udyam MSME Registration (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={declaredUdyam}
+                      onChange={e => setDeclaredUdyam(e.target.value.toUpperCase())}
+                      placeholder="e.g. UDYAM-HR-03-0049281"
+                      className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded font-mono text-slate-900 text-xs focus:outline-none focus:border-[#0062FF]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      Authorized Signatory / Director Name
+                    </label>
+                    <input
+                      type="text"
+                      value={declaredDirector}
+                      onChange={e => setDeclaredDirector(e.target.value)}
+                      placeholder="e.g. Apoorv"
+                      className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded text-slate-900 text-xs focus:outline-none focus:border-[#0062FF]"
+                    />
+                  </div>
+                </div>
               </div>
 
-              <div className="bg-emerald-50/60 border border-emerald-200 rounded p-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-emerald-600" />
-                  <span className="text-xs text-emerald-800 font-medium">
-                    One-Time Identity KYC (Aadhaar & PAN) verified
+              {/* SECTION 3: Required Statutory Bid Documents */}
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                    Statutory Documents ({uploadedMandatoryCount}/{totalMandatoryCount} Mandatory Attached):
+                  </p>
+                  <span className={`text-[11px] font-bold font-mono px-2 py-0.5 rounded ${
+                    isAllMandatoryUploaded ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                  }`}>
+                    {isAllMandatoryUploaded 
+                      ? (totalUploadedCount > uploadedMandatoryCount 
+                          ? `✓ Mandatory Ready (+${totalUploadedCount - uploadedMandatoryCount} Optional Attached)` 
+                          : '✓ Mandatory Documents Ready') 
+                      : `${totalMandatoryCount - uploadedMandatoryCount} Mandatory Missing`}
                   </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleAutoFillAllBidDocs}
-                  className="text-xs px-2.5 py-1 rounded bg-white text-[#0062FF] border border-blue-200 hover:bg-blue-50 font-semibold"
-                >
-                   Auto-Attach Demo Docs
-                </button>
-              </div>
 
-              <div className="space-y-3">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                  Remaining Bid Specific Documents:
-                </p>
-
-                {activeTenderModal.mandatoryDocs.map((docName, idx) => {
-                  const currentDoc = tenderDocs[idx];
-                  const hasFile = currentDoc?.fileName;
+                {Object.entries(tenderDocs).map(([idx, currentDoc]) => {
+                  const hasFile = Boolean(currentDoc?.fileName && currentDoc.status !== 'EMPTY');
+                  const isMandatory = Boolean(currentDoc.required);
 
                   return (
                     <div
                       key={idx}
-                      className={`border rounded p-3.5 transition-all ${
+                      className={`border rounded-xl p-3 transition-all ${
                         hasFile 
-                          ? 'border-indigo-300 bg-blue-50/20' 
-                          : 'border-slate-200 bg-white'
+                          ? 'border-emerald-300 bg-emerald-50/20' 
+                          : isMandatory
+                            ? 'border-amber-200 bg-amber-50/15'
+                            : 'border-slate-200 bg-slate-50/40 hover:border-slate-300'
                       }`}
                     >
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3 overflow-hidden">
-                          <FileText className={`w-5 h-5 flex-shrink-0 ${hasFile ? 'text-[#0062FF]' : 'text-slate-400'}`} />
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2.5 overflow-hidden">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                            hasFile ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'
+                          }`}>
+                            <FileText className="w-4 h-4" />
+                          </div>
                           <div className="truncate">
-                            <p className="text-xs font-bold text-slate-800 truncate">{docName}</p>
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-xs font-bold text-slate-900 truncate">{currentDoc.name}</p>
+                              {isMandatory ? (
+                                <span className="text-[9px] px-1.5 py-0.2 rounded bg-rose-50 text-rose-700 font-bold border border-rose-200">
+                                  REQUIRED
+                                </span>
+                              ) : (
+                                <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 font-medium border border-slate-200">
+                                  OPTIONAL
+                                </span>
+                              )}
+                            </div>
                             {hasFile ? (
-                              <p className="text-[11px] font-mono text-[#0062FF] truncate">{currentDoc.fileName}</p>
+                              <p className="text-[11px] font-mono text-emerald-700 font-semibold truncate flex items-center gap-1 mt-0.5">
+                                <CheckCircle className="w-3 h-3" />
+                                {currentDoc.fileName}
+                              </p>
                             ) : (
-                              <p className="text-[11px] text-slate-400">Required format: PDF (Max 15MB)</p>
+                              <p className="text-[10px] text-slate-500 mt-0.5">
+                                {isMandatory ? 'Mandatory for eligibility (PDF, PNG, JPG)' : 'Optional — attach if applicable'}
+                              </p>
                             )}
                           </div>
                         </div>
 
-                        <div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
                           {hasFile ? (
-                            <span className="px-2.5 py-1 rounded bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200">
-                              Attached
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[11px] font-bold">
+                                Attached
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveDoc(idx)}
+                                className="text-[11px] text-slate-400 hover:text-rose-600 font-semibold px-1 py-0.5"
+                                title="Remove file"
+                              >
+                                Remove
+                              </button>
+                            </div>
                           ) : (
                             <label
                               htmlFor={`tender-doc-${idx}`}
-                              className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium border border-slate-200 cursor-pointer inline-block"
+                              className={`px-3 py-1.5 rounded-lg text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-1 transition-all ${
+                                isMandatory
+                                  ? 'bg-[#0062FF] hover:bg-[#0050D4] text-white'
+                                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200'
+                              }`}
                             >
-                              Upload File
+                              <UploadCloud className="w-3 h-3" />
+                              Upload
                               <input
                                 type="file"
                                 accept=".pdf,.png,.jpg,.jpeg"
@@ -1551,18 +1992,115 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
                 })}
               </div>
 
-              {isSubmitting && (
-                <div className="bg-slate-50 border border-blue-200 rounded p-4 space-y-2">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-[#0062FF] font-mono font-semibold flex items-center gap-2">
-                      <Sparkles className="w-3.5 h-3.5 animate-spin" />
-                      Computing Hashes & Running PaddleOCR + Forensics Check...
-                    </span>
-                    <span className="text-slate-500 font-mono font-bold">{submissionProgress}%</span>
+              {/* IN-BODY SUBMIT ACTION CARD (Directly below documents) */}
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                    {isReadyToSubmit ? (
+                      <span className="text-emerald-700 flex items-center gap-1">
+                        <CheckCircle className="w-4 h-4" /> Ready to Submit Bid Proposal
+                      </span>
+                    ) : (
+                      <span className="text-slate-800 flex items-center gap-1">
+                        <AlertTriangle className="w-4 h-4 text-amber-500" /> Pending Mandatory Uploads
+                      </span>
+                    )}
+                  </h4>
+                  <p className="text-[11px] text-slate-600 mt-0.5">
+                    {isReadyToSubmit 
+                      ? `Quote: ₹${Number(bidPrice).toLocaleString('en-IN')} (${totalUploadedCount} document${totalUploadedCount > 1 ? 's' : ''} attached)` 
+                      : `Attach mandatory documents (GST REG-06 & PAN Card) to submit`}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  disabled={!isReadyToSubmit || isSubmitting}
+                  onClick={handleSubmitBid}
+                  className={`w-full sm:w-auto px-6 py-2.5 rounded-lg font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all whitespace-nowrap ${
+                    isReadyToSubmit && !isSubmitting
+                      ? 'bg-[#0062FF] hover:bg-[#0050D4] text-white cursor-pointer active:scale-95 shadow-blue-500/25'
+                      : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                  }`}
+                >
+                  <Sparkles className="w-4 h-4" />
+                  {isSubmitting 
+                    ? 'Verifying & Submitting...' 
+                    : isReadyToSubmit 
+                      ? `Submit Bid Proposal (₹${Number(bidPrice || 0).toLocaleString('en-IN')})` 
+                      : 'Attach Mandatory Docs to Enable'}
+                </button>
+              </div>
+
+              {/* SECTION 4: Collapsible Competing Bids Registry */}
+              <div className="border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
+                <button
+                  type="button"
+                  onClick={() => setShowOpenBidsAccordion(!showOpenBidsAccordion)}
+                  className="w-full p-3 text-left flex items-center justify-between hover:bg-slate-100 transition-colors"
+                >
+                  <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <Eye className="w-3.5 h-3.5 text-[#0062FF]" />
+                    Other Open Bids on this Tender ({modalOpenBids.length})
+                  </span>
+                  <span className="text-[11px] font-bold text-[#0062FF]">
+                    {showOpenBidsAccordion ? '▲ Hide Competing Bids' : '▼ View Competing Bids'}
+                  </span>
+                </button>
+
+                {showOpenBidsAccordion && (
+                  <div className="p-3 bg-white border-t border-slate-200">
+                    {isLoadingModalBids ? (
+                      <p className="text-xs text-slate-500 py-1">Loading competing bids...</p>
+                    ) : modalOpenBids.length === 0 ? (
+                      <p className="text-[11px] text-slate-500 italic py-1">No other bids submitted yet. You will be the first bidder!</p>
+                    ) : (
+                      <div className="max-h-32 overflow-y-auto border border-slate-200 rounded-lg">
+                        <table className="w-full text-left text-[11px]">
+                          <thead className="bg-slate-100 text-slate-600 border-b border-slate-200 sticky top-0">
+                            <tr>
+                              <th className="p-2">Bid Reference</th>
+                              <th className="p-2">Bidder Entity</th>
+                              <th className="p-2 text-right">Price of Bid (₹)</th>
+                              <th className="p-2">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {modalOpenBids.map((b, idx) => (
+                              <tr key={idx} className="hover:bg-slate-50">
+                                <td className="p-2 font-mono text-[#0062FF] font-semibold">{b.bidReferenceNumber || b.id}</td>
+                                <td className="p-2 font-medium text-slate-800">{b.bidderId?.legalBusinessName || b.legalBusinessName || 'Bidder Entity'}</td>
+                                <td className="p-2 text-right font-mono font-bold text-slate-900">
+                                  {b.bidAmount ? `₹${Number(b.bidAmount).toLocaleString('en-IN')}` : '—'}
+                                </td>
+                                <td className="p-2">
+                                  <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">
+                                    {b.status || 'SUBMITTED'}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
                   </div>
-                  <div className="w-full bg-slate-200 rounded h-2 overflow-hidden">
+                )}
+              </div>
+
+              {/* Submitting Progress Indicator */}
+              {isSubmitting && (
+                <div className="bg-blue-50 border-2 border-blue-300 rounded-xl p-4 space-y-2 animate-pulse">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-[#0062FF] font-mono font-bold flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 animate-spin text-[#0062FF]" />
+                      Computing Hashes & Running PaddleOCR + Forensics Verification...
+                    </span>
+                    <span className="text-slate-700 font-mono font-black">{submissionProgress}%</span>
+                  </div>
+                  <div className="w-full bg-blue-100 rounded-full h-2.5 overflow-hidden border border-blue-200">
                     <div 
-                      className="bg-[#0062FF] h-2 rounded transition-all duration-300"
+                      className="bg-[#0062FF] h-2.5 rounded-full transition-all duration-300"
                       style={{ width: `${submissionProgress}%` }}
                     />
                   </div>
@@ -1571,24 +2109,45 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
 
             </div>
 
-            <div className="p-6 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">
-              <button
-                type="button"
-                onClick={() => setActiveTenderModal(null)}
-                className="px-4 py-2 rounded text-slate-500 hover:text-slate-800 text-xs font-semibold"
-              >
-                Cancel
-              </button>
+            {/* STICKY PINNED FOOTER (Fixed Bottom) */}
+            <div className="px-5 py-3.5 border-t-2 border-slate-200 bg-slate-100 flex items-center justify-between gap-3 flex-shrink-0 shadow-lg">
+              <div className="flex items-center gap-2">
+                {isReadyToSubmit ? (
+                  <span className="text-xs font-bold text-emerald-700 flex items-center gap-1">
+                    <CheckCircle className="w-4 h-4 text-emerald-600" />
+                    Mandatory ({uploadedMandatoryCount}/{totalMandatoryCount}) ready • {totalUploadedCount} total attached
+                  </span>
+                ) : (
+                  <span className="text-xs font-semibold text-amber-700 flex items-center gap-1">
+                    <AlertTriangle className="w-4 h-4 text-amber-500" />
+                    {uploadedMandatoryCount}/{totalMandatoryCount} mandatory documents attached
+                  </span>
+                )}
+              </div>
 
-              <button
-                type="button"
-                disabled={!isAllUploaded || isSubmitting}
-                onClick={handleSubmitBid}
-                className="px-6 py-2.5 rounded bg-[#0062FF] hover:bg-[#0050D4] text-white font-bold text-xs shadow-sm flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <Sparkles className="w-4 h-4" />
-                {isSubmitting ? 'Verifying Bid Documents...' : `Submit Bid (₹${Number(bidPrice || 0).toLocaleString('en-IN')})`}
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setActiveTenderModal(null)}
+                  className="px-4 py-2 rounded-lg bg-white border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  disabled={!isReadyToSubmit || isSubmitting}
+                  onClick={handleSubmitBid}
+                  className={`px-5 py-2 rounded-lg text-xs font-bold shadow-md flex items-center gap-1.5 transition-all whitespace-nowrap ${
+                    isReadyToSubmit && !isSubmitting
+                      ? 'bg-[#0062FF] hover:bg-[#0050D4] text-white cursor-pointer active:scale-95 shadow-blue-500/25'
+                      : 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                  }`}
+                >
+                  <Sparkles className="w-4 h-4" />
+                  {isSubmitting ? 'Submitting...' : `Submit Bid Proposal (₹${Number(bidPrice || 0).toLocaleString('en-IN')})`}
+                </button>
+              </div>
             </div>
 
           </div>
@@ -1706,6 +2265,53 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
         </div>
       )}
 
+      {/* Bid Submitted Success & Statutory Slip Download Modal */}
+      {submittedReceiptModal && (
+        <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-300 rounded-2xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl animate-in zoom-in-95">
+            <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto text-2xl font-black">
+              ✓
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-slate-900">Bid Proposal Submitted Successfully!</h3>
+              <p className="text-xs text-slate-500 mt-1">
+                Your bid package has been cryptographically signed and recorded into the GeM CAG Audit Ledger.
+              </p>
+            </div>
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-left space-y-1.5 text-xs font-mono">
+              <div className="flex justify-between">
+                <span className="text-slate-500">Bid Reference:</span>
+                <span className="font-bold text-[#0062FF]">{submittedReceiptModal.id}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Quoted Price:</span>
+                <span className="font-bold text-slate-900">₹{Number(submittedReceiptModal.bidAmount).toLocaleString('en-IN')}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Tender Ref:</span>
+                <span className="font-bold text-slate-700">{submittedReceiptModal.tenderId}</span>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => generateBidSubmissionSlip(submittedReceiptModal, user)}
+                className="w-full py-2.5 px-4 rounded-lg bg-[#0062FF] hover:bg-[#0050D4] text-white text-xs font-bold shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-95 transition-all"
+              >
+                <Download className="w-4 h-4" /> Download Statutory Submission Slip
+              </button>
+              <button
+                type="button"
+                onClick={() => setSubmittedReceiptModal(null)}
+                className="w-full sm:w-auto py-2.5 px-4 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
@@ -1714,7 +2320,7 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
 // 6. SUB-COMPONENT: BIDDER ACTIVITY & RECTIFICATION CENTRE
 // ==========================================
 
-function BidderActivityCentre({ bids = [], onReuploadDocument }) {
+function BidderActivityCentre({ bids = [], user = {}, onReuploadDocument }) {
   const [liveBids, setLiveBids] = useState(bids);
   const [selectedBidId, setSelectedBidId] = useState(null);
   const [isReuploading, setIsReuploading] = useState(false);
@@ -1734,7 +2340,7 @@ function BidderActivityCentre({ bids = [], onReuploadDocument }) {
           submittedAt: new Date(b.submissionDate || b.createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
           status: b.status || 'SUBMITTED',
           bidAmount: Number(b.bidAmount || 0),
-          complianceScore: b.evaluationResult?.complianceScore || 88,
+          complianceScore: b.evaluationResult?.complianceScore || 95.4,
           aiRecommendation: b.evaluationResult?.aiRecommendation || b.status,
           rectificationRequired: b.status === 'DISQUALIFIED' || b.status === 'NEEDS_REVIEW',
           officerDecision: b.officerDecision,
@@ -1742,7 +2348,7 @@ function BidderActivityCentre({ bids = [], onReuploadDocument }) {
             name: d.originalFileName || d.name,
             status: d.status || 'VERIFIED',
             type: d.docType || d.type || 'Statutory Certificate',
-            sha256: d.sha256Fingerprint || '0x89ab...c12d',
+            sha256: d.sha256Hash || d.sha256Fingerprint || '0x89ab...c12d',
             confidence: `${d.ocrConfidenceScore || 98.5}%`
           })),
           activityLog: [
@@ -1834,8 +2440,8 @@ function BidderActivityCentre({ bids = [], onReuploadDocument }) {
 
             <button
               type="button"
-              onClick={() => alert('Downloading official GeM AI Compliance Certificate (PDF) stamped with SHA-256 proof...')}
-              className="px-4 py-2.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold border border-slate-200 transition-all flex items-center gap-2"
+              onClick={() => generateBidSubmissionSlip(selectedBid || activeBids[0], user)}
+              className="px-4 py-2.5 rounded bg-blue-50 hover:bg-blue-100 text-[#0062FF] text-xs font-bold border border-blue-200 transition-all flex items-center gap-2 cursor-pointer shadow-2xs"
             >
               <Download className="w-4 h-4 text-[#0062FF]" />
               Download Slip
@@ -1856,31 +2462,41 @@ function BidderActivityCentre({ bids = [], onReuploadDocument }) {
           {activeBids.map((bid) => {
             const isSelected = bid.id === selectedBid?.id;
             const statusUpper = (bid.status || '').toUpperCase();
-            const isQualified = statusUpper === 'QUALIFIED' || statusUpper === 'ACCEPTED' || bid.aiRecommendation === 'QUALIFIED';
+            const isAwarded = statusUpper === 'AWARDED' || statusUpper === 'ACCEPTED';
+            const isQualified = statusUpper === 'QUALIFIED' || bid.aiRecommendation === 'QUALIFIED';
             const isDisqualified = statusUpper === 'DISQUALIFIED' || statusUpper === 'REJECTED';
+            const isNotSelected = statusUpper === 'NOT_SELECTED';
 
             return (
               <div
                 key={bid.id}
                 onClick={() => setSelectedBidId(bid.id)}
                 className={`p-4 rounded border cursor-pointer transition-all shadow-2xs ${
-                  isSelected 
-                    ? 'bg-blue-50/40 border-[#0062FF] shadow-sm' 
-                    : 'bg-white border-slate-200 hover:border-slate-300'
+                  isAwarded
+                    ? isSelected 
+                      ? 'bg-emerald-50/70 border-emerald-500 shadow-md ring-1 ring-emerald-400' 
+                      : 'bg-emerald-50/30 border-emerald-300 hover:border-emerald-400'
+                    : isSelected 
+                      ? 'bg-blue-50/40 border-[#0062FF] shadow-sm' 
+                      : 'bg-white border-slate-200 hover:border-slate-300'
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-mono text-xs font-bold text-[#0062FF]">
                     {bid.id}
                   </span>
-                  <span className={`text-[10px] px-2 py-0.5 rounded font-semibold border ${
-                    isQualified 
-                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
-                      : isDisqualified
-                        ? 'bg-rose-50 text-rose-700 border-rose-200'
-                        : 'bg-amber-50 text-amber-800 border-amber-200'
+                  <span className={`text-[10px] px-2 py-0.5 rounded font-bold border ${
+                    isAwarded
+                      ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                      : isQualified 
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                        : isDisqualified
+                          ? 'bg-rose-50 text-rose-700 border-rose-200'
+                          : isNotSelected
+                            ? 'bg-slate-100 text-slate-600 border-slate-200'
+                            : 'bg-amber-50 text-amber-800 border-amber-200'
                   }`}>
-                    {isQualified ? '✓ ACCEPTED / QUALIFIED' : isDisqualified ? '✕ DISQUALIFIED' : '⏳ PENDING EVALUATION'}
+                    {isAwarded ? '🏆 CONTRACT AWARDED (L1)' : isQualified ? '✓ ACCEPTED / QUALIFIED' : isDisqualified ? '✕ DISQUALIFIED' : isNotSelected ? '— NOT SELECTED (L2/L3)' : '⏳ PENDING EVALUATION'}
                   </span>
                 </div>
 
@@ -1896,12 +2512,31 @@ function BidderActivityCentre({ bids = [], onReuploadDocument }) {
                 </div>
 
                 <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1.5 border-t border-slate-100">
-                  <span className="truncate">{bid.organisation}</span>
-                  {bid.complianceScore && (
-                    <span className="font-mono font-bold text-emerald-700 ml-2 flex-shrink-0">
-                      Score: {bid.complianceScore}/100
-                    </span>
-                  )}
+                  <span className="truncate max-w-[130px]">{bid.organisation}</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        generateBidSubmissionSlip(bid, user);
+                      }}
+                      className="text-[10px] text-[#0062FF] font-bold hover:underline flex items-center gap-0.5 cursor-pointer"
+                    >
+                      <Download className="w-3 h-3" /> Slip
+                    </button>
+                    {isAwarded && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          generateLetterOfAward(bid, user);
+                        }}
+                        className="text-[10px] text-emerald-700 font-bold hover:underline flex items-center gap-0.5 cursor-pointer"
+                      >
+                        🏆 LoA
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -1912,6 +2547,46 @@ function BidderActivityCentre({ bids = [], onReuploadDocument }) {
         {selectedBid ? (
           <div className="lg:col-span-2 space-y-6">
             
+            {/* 🏆 Awarded Contract Notice Card */}
+            {((selectedBid.status || '').toUpperCase() === 'AWARDED' || (selectedBid.status || '').toUpperCase() === 'ACCEPTED') && (
+              <div className="p-4 sm:p-5 rounded-xl border-2 border-emerald-500 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-100 text-emerald-950 shadow-md animate-in fade-in">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-black tracking-wider uppercase flex items-center gap-1 shadow-xs">
+                        🏆 CONTRACT OFFICIALLY AWARDED (L1 WINNER)
+                      </span>
+                      <span className="text-xs font-mono font-bold text-emerald-800">
+                        Sanction Ref: LOA/2026/{selectedBid.id}
+                      </span>
+                    </div>
+                    <h3 className="text-base font-black text-emerald-950">
+                      Tendering Authority Approved & Awarded this Proposal!
+                    </h3>
+                    <p className="text-xs text-emerald-800 leading-relaxed">
+                      Final Contract Value: <strong>₹{Number(selectedBid.bidAmount || 0).toLocaleString('en-IN')}</strong> • Evaluated as Lowest Responsive Bidder (L1) under GFR Rule 173.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => generateLetterOfAward(selectedBid, user)}
+                      className="px-4 py-2.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs shadow-md flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                    >
+                      <Download className="w-4 h-4" /> Letter of Award (LoA)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => generateBidSubmissionSlip(selectedBid, user)}
+                      className="px-3.5 py-2.5 rounded-lg bg-white border border-emerald-300 text-emerald-800 font-bold text-xs hover:bg-emerald-50 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    >
+                      <Download className="w-4 h-4" /> Submission Slip
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Officer Decision Banner if Available */}
             {selectedBid.officerDecision && (
               <div className={`p-4 rounded border text-xs shadow-sm ${
@@ -1964,13 +2639,20 @@ function BidderActivityCentre({ bids = [], onReuploadDocument }) {
             <div className="bg-white border border-slate-200/80 rounded p-6 shadow-sm">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
                     <span className="text-xs font-mono font-bold text-[#0062FF] px-2 py-0.5 rounded bg-blue-50 border border-blue-100">
                       {selectedBid.tenderId}
                     </span>
                     <span className="text-xs text-slate-500">
                       Submitted: {selectedBid.submittedAt || 'Draft State'}
                     </span>
+                    <button
+                      type="button"
+                      onClick={() => generateBidSubmissionSlip(selectedBid, user)}
+                      className="px-2.5 py-1 rounded bg-blue-50 hover:bg-blue-100 text-[#0062FF] text-[11px] font-bold border border-blue-200 flex items-center gap-1 cursor-pointer transition-all ml-1 shadow-2xs"
+                    >
+                      <Download className="w-3.5 h-3.5" /> Download Slip
+                    </button>
                   </div>
                   <h3 className="text-base font-bold text-[#111827]">
                     {selectedBid.tenderTitle}
@@ -2127,9 +2809,81 @@ export function BidderPortal({ user, currentUser: propCurrentUser, defaultTab = 
     return defaultTab || 'tenders';
   });
   const [bids, setBids] = useState(defaultMyBids);
+  const [awardedBid, setAwardedBid] = useState(null);
+  const [cracs, setCracs] = useState([]);
+  const [loadingCracs, setLoadingCracs] = useState(false);
+
+  const fetchLiveCracs = async () => {
+    try {
+      setLoadingCracs(true);
+      const res = await api.getMyCracs();
+      if (res?.success && res.cracs) {
+        setCracs(res.cracs);
+      }
+    } catch (e) {
+      console.warn('Bidder live CRAC fetch error:', e.message);
+    } finally {
+      setLoadingCracs(false);
+    }
+  };
+
+  const fetchLiveBids = async () => {
+    try {
+      const submissions = await api.getMyBids();
+      if (submissions && submissions.length > 0) {
+        const formatted = submissions.map(b => ({
+          id: b.bidReferenceNumber || b._id,
+          _id: b._id,
+          tenderId: b.tenderId?.tenderNumber || b.tenderId || 'GEM/2026/B/849201',
+          tenderTitle: b.tenderId?.title || 'Supply of Statutory Equipment',
+          organisation: b.tenderId?.department || 'Ministry of Heavy Industries',
+          submittedAt: new Date(b.submissionDate || b.createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+          status: b.status || 'SUBMITTED',
+          bidAmount: Number(b.bidAmount || 0),
+          complianceScore: b.evaluationResult?.complianceScore || 95.4,
+          aiRecommendation: b.evaluationResult?.aiRecommendation || b.status,
+          rectificationRequired: b.status === 'DISQUALIFIED' || b.status === 'NEEDS_REVIEW',
+          officerDecision: b.officerDecision,
+          uploadedDocuments: (b.uploadedDocuments || []).map(d => ({
+            name: d.originalFileName || d.name,
+            status: d.status || 'VERIFIED',
+            type: d.docType || d.type || 'Statutory Certificate',
+            sha256: d.sha256Hash || d.sha256Fingerprint || '0x89ab...c12d',
+            confidence: `${d.ocrConfidenceScore || 98.5}%`
+          })),
+          activityLog: [
+            { timestamp: new Date(b.submissionDate || b.createdAt).toLocaleTimeString(), event: `Bid submission recorded in MongoDB with status: ${b.status}`, type: 'SUBMIT' },
+            ...(b.officerDecision?.decision ? [{
+              timestamp: new Date(b.officerDecision.decidedAt).toLocaleTimeString(),
+              event: `Procurement Officer recorded decision: ${b.officerDecision.decision}. Note: ${b.officerDecision.officerJustification || 'No remarks'}`,
+              type: 'DECISION'
+            }] : [])
+          ]
+        }));
+        setBids(formatted);
+        const win = formatted.find(f => (f.status || '').toUpperCase() === 'AWARDED' || (f.status || '').toUpperCase() === 'ACCEPTED');
+        setAwardedBid(win || null);
+      }
+    } catch (e) {
+      console.warn('Bidder live fetch error:', e.message);
+    }
+  };
 
   React.useEffect(() => {
-    if (defaultTab && kycState.isVerified) {
+    fetchLiveBids();
+    fetchLiveCracs();
+    const timer = setInterval(() => {
+      fetchLiveBids();
+      fetchLiveCracs();
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('tab') === 'crac') {
+      setActiveTab('crac');
+    } else if (defaultTab && kycState.isVerified) {
       setActiveTab(defaultTab);
     }
   }, [defaultTab, kycState.isVerified]);
@@ -2169,6 +2923,7 @@ export function BidderPortal({ user, currentUser: propCurrentUser, defaultTab = 
 
   const handleBidSubmitted = (newBid) => {
     setBids(prev => [newBid, ...prev]);
+    fetchLiveBids();
     setActiveTab('activity');
   };
 
@@ -2227,6 +2982,57 @@ export function BidderPortal({ user, currentUser: propCurrentUser, defaultTab = 
           </button>
         </div>
       </div>
+
+      {/* 🏆 CONTRACT AWARDED CELEBRATION HERO BANNER */}
+      {awardedBid && (
+        <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 text-white rounded-xl p-5 shadow-lg relative overflow-hidden animate-in fade-in slide-in-from-top-4 border-2 border-emerald-400/50">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full bg-white/20 text-white text-[11px] font-black uppercase tracking-wider border border-white/30 flex items-center gap-1 shadow-xs">
+                  🏆 CONTRACT OFFICIALLY AWARDED (L1 WINNER)
+                </span>
+                <span className="font-mono text-xs text-emerald-100 font-bold">
+                  {awardedBid.id}
+                </span>
+              </div>
+              <h2 className="text-lg md:text-xl font-black text-white tracking-tight">
+                Congratulations! Your Bid Proposal has been ACCEPTED & AWARDED!
+              </h2>
+              <p className="text-xs text-emerald-100 max-w-2xl leading-relaxed">
+                Tender: <strong>{awardedBid.tenderTitle}</strong> ({awardedBid.tenderId}) • 
+                Quoted Value: <strong>₹{Number(awardedBid.bidAmount || 0).toLocaleString('en-IN')}</strong>. 
+                The competent procurement authority has accepted your proposal as the Lowest Responsive Bidder (L1).
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2.5 flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => generateLetterOfAward(awardedBid, currentUser)}
+                className="px-4 py-2.5 rounded-lg bg-white text-emerald-800 hover:bg-emerald-50 text-xs font-black shadow-md transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+              >
+                🏆 Download Letter of Award (LoA)
+              </button>
+              <button
+                type="button"
+                onClick={() => generateBidSubmissionSlip(awardedBid, currentUser)}
+                className="px-3.5 py-2.5 rounded-lg bg-emerald-800/80 hover:bg-emerald-800 text-white border border-emerald-400/40 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-xs"
+              >
+                📄 Download Submission Slip
+              </button>
+              {cracs.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('crac')}
+                  className="px-3.5 py-2.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 border border-amber-300 text-xs font-black shadow-md transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                >
+                  ⭐ View Consignee CRAC Review ({cracs[0]?.rating || 5}★)
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* AHREFS-STYLE SUB-NAVIGATION NAVBAR */}
       <div className="flex items-center gap-2 bg-white p-1.5 rounded border border-slate-200/80 shadow-xs overflow-x-auto">
@@ -2315,6 +3121,26 @@ export function BidderPortal({ user, currentUser: propCurrentUser, defaultTab = 
           </span>
         </button>
 
+        {/* Tab 5: Consignee CRAC Reviews */}
+        <button
+          onClick={() => setActiveTab('crac')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded text-xs font-semibold transition-all whitespace-nowrap ${
+            activeTab === 'crac'
+              ? 'bg-[#0062FF] text-white shadow-xs'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+          }`}
+        >
+          <span className={`w-5 h-5 rounded flex items-center justify-center text-[10px] font-bold ${
+            activeTab === 'crac' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
+          }`}>
+            5
+          </span>
+          Consignee CRAC Reviews
+          <span className="px-1.5 py-0.2 rounded bg-amber-50 text-amber-700 text-[10px] font-mono ml-1 font-bold">
+            {cracs.length}
+          </span>
+        </button>
+
       </div>
 
       {/* View Panels */}
@@ -2343,6 +3169,16 @@ export function BidderPortal({ user, currentUser: propCurrentUser, defaultTab = 
       {activeTab === 'activity' && (
         <BidderActivityCentre 
           bids={bids}
+          user={currentUser}
+        />
+      )}
+
+      {activeTab === 'crac' && (
+        <BidderCracReviewView 
+          user={currentUser}
+          cracs={cracs}
+          onRefresh={fetchLiveCracs}
+          loading={loadingCracs}
         />
       )}
 

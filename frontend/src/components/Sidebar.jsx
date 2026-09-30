@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, FileSearch, Network, ShieldCheck, ScrollText,
-  Upload, Users, LogOut, ArrowLeftRight, UserCheck
+  Upload, Users, LogOut, ArrowLeftRight, UserCheck, Award
 } from 'lucide-react';
 
 export default function Sidebar({ currentUser, onSwitchRole, onLogout }) {
@@ -16,6 +16,7 @@ export default function Sidebar({ currentUser, onSwitchRole, onLogout }) {
     { section: 'COMMAND CENTER' },
     { path: '/dashboard', label: 'Compliance Dashboard', icon: LayoutDashboard },
     { path: '/evidence', label: '3-Pane Evidence Viewer', icon: FileSearch, badge: 'ACTIVE' },
+    { path: '/crac', label: 'CRAC Consignee Centre', icon: Award, badge: 'GFR-173' },
     { path: '/collusion', label: 'Cartel & Collusion Graph', icon: Network, badge: 'AI' },
     { path: '/audit', label: 'Audit Trail & Ledger', icon: ScrollText },
     { section: 'ADMINISTRATION' },
@@ -25,6 +26,7 @@ export default function Sidebar({ currentUser, onSwitchRole, onLogout }) {
   ] : [
     { section: 'BIDDER WORKSPACE' },
     { path: '/bidder', label: 'Bidder Workspace & KYC', icon: UserCheck },
+    { path: '/bidder?tab=crac', label: 'Consignee CRAC Reviews', icon: Award, badge: 'REVIEWS' },
     { path: '/tenders', label: 'Browse Published Tenders', icon: ShieldCheck },
     { path: '/upload', label: 'Smart Pre-Flight AI', icon: Upload, badge: 'AI' },
     { section: 'PUBLIC RECORDS' },
@@ -69,7 +71,10 @@ export default function Sidebar({ currentUser, onSwitchRole, onLogout }) {
           }
 
           const Icon = item.icon;
-          const isActive = location.pathname === item.path;
+          const currentFullPath = location.pathname + location.search;
+          const isActive = item.path.includes('?') 
+            ? currentFullPath === item.path 
+            : (location.pathname === item.path && !location.search.includes('tab=crac'));
 
           return (
             <button

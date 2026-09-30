@@ -5,11 +5,19 @@ import {
   getSubmissionById,
   getSubmissionsForTender,
   getAllSubmissions,
+  resolveGstinEndpoint,
+  verifyPanEndpoint,
 } from '../controllers/bidController.js';
 import { protect, authorize } from '../middlewares/auth.js';
 import { upload, computeFileHashes } from '../middlewares/upload.js';
 
 const router = express.Router();
+
+// Public GSTIN resolver endpoint (derives City, State, District, Pincode from GSTIN)
+router.get('/resolve-gstin/:gstin', resolveGstinEndpoint);
+
+// Public Income Tax PAN verification endpoint
+router.get('/verify-pan/:pan', verifyPanEndpoint);
 
 // List all submissions (accessible by authenticated users, or for dashboard)
 router.get('/', getAllSubmissions);

@@ -17,6 +17,9 @@ import verificationRoutes from './routes/verificationRoutes.js';
 import forensicsRoutes from './routes/forensicsRoutes.js';
 import systemRoutes from './routes/systemRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
+import bidderRoutes from './routes/bidderRoutes.js';
+import cracRoutes from './routes/cracRoutes.js';
+import path from 'path';
 
 // ─── Chaos Engineering & Resilience Middleware ───
 import {
@@ -186,6 +189,9 @@ app.use('/api/verification', verificationRoutes);
 app.use('/api/forensics', forensicsRoutes);
 app.use('/api/system', systemRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/bidders', bidderRoutes);
+app.use('/api/crac', cracRoutes);
+app.use('/uploads', express.static(path.resolve('uploads')));
 
 // ═══════════════════════════════════════════════════════════════
 // ERROR HANDLING

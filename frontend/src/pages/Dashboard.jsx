@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   TrendingUp, TrendingDown, FileCheck, AlertTriangle,
   ShieldAlert, Users, FileText, Activity, Zap, Server,
   CheckCircle, Eye, BarChart3, Gauge
 } from 'lucide-react';
-import { MOCK_BIDDERS, MOCK_TENDER, DASHBOARD_STATS } from '../data/mockData';
+import { MOCK_TENDER, DASHBOARD_STATS } from '../data/mockData';
+import { api } from '../services/api';
 
 function ScoreGauge({ score, size = 46, strokeWidth = 3.5 }) {
   const radius = (size - strokeWidth * 2) / 2;
@@ -30,11 +32,12 @@ function ScoreGauge({ score, size = 46, strokeWidth = 3.5 }) {
   );
 }
 
-function StatCard({ label, value, icon: Icon, change, changeType, accentColor, iconBg, iconColor }) {
+function StatCard({ label, value, icon: Icon, change, changeType, accentColor, iconBg, iconColor, onClick }) {
   return (
     <div
       className="stat-card-accent"
-      style={{ '--card-accent': accentColor }}
+      style={{ '--card-accent': accentColor, cursor: onClick ? 'pointer' : 'default' }}
+      onClick={onClick}
     >
       <div className="stat-card-header">
         <span className="stat-card-label">{label}</span>
@@ -57,12 +60,9 @@ function StatCard({ label, value, icon: Icon, change, changeType, accentColor, i
   );
 }
 
-import { useNavigate } from 'react-router-dom';
-import { api } from '../services/api';
-
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [bidders, setBidders] = useState(MOCK_BIDDERS);
+  const [bidders, setBidders] = useState([]);
   const [tender, setTender] = useState(MOCK_TENDER);
   const [isScanning, setIsScanning] = useState(false);
   const [scanMessage, setScanMessage] = useState(null);
@@ -77,9 +77,10 @@ export default function Dashboard() {
   useEffect(() => {
     async function fetchLive() {
       try {
-        const [liveTenders, liveBids] = await Promise.all([
+        const [liveTenders, liveBids, liveBidders] = await Promise.all([
           api.getTenders().catch(() => []),
-          api.getAllBids().catch(() => [])
+          api.getAllBids().catch(() => []),
+          api.getBidders().catch(() => [])
         ]);
 
         if (liveTenders && liveTenders.length > 0) {
@@ -98,41 +99,61 @@ export default function Dashboard() {
           const formatted = liveBids.map((b) => ({
             id: b.bidReferenceNumber || b._id,
             mongoId: b._id,
-            legalName: b.bidderId?.legalBusinessName || b.bidderId?.name || b.legalBusinessName || 'Bidder Entity',
-            gstin: b.bidderId?.gstin || b.gstin || '07AAAAA0000A1Z5',
-            pan: b.bidderId?.pan || b.pan || 'AAAAA0000A',
+            legalName: b.bidderId?.legalBusinessName || b.bidderId?.name || b.legalBusinessName || '—',
+            gstin: b.bidderId?.gstin || b.gstin || '—',
+            pan: b.bidderId?.pan || b.pan || '—',
             entityType: b.bidderId?.entityType || 'PVT_LTD',
             isMSME: b.bidderId?.isDPIITStartup !== false,
             bidAmount: Number(b.bidAmount || 0),
-            score: b.evaluationResult?.complianceScore || 88,
-            riskLevel: b.evaluationResult?.riskLevel || 'LOW',
-            docsCount: (b.uploadedDocuments || []).length || 5,
+            score: b.evaluationResult?.complianceScore || 0,
+            riskLevel: b.evaluationResult?.riskLevel || 'MEDIUM',
+            docsCount: (b.uploadedDocuments || []).length || 0,
             forensicFlagsCount: 0,
-            aiRecommendation: b.evaluationResult?.aiRecommendation || 'QUALIFY',
+            aiRecommendation: b.evaluationResult?.aiRecommendation || 'MANUAL_REVIEW',
             status: b.status || 'SUBMITTED',
             isCollusionFlagged: false,
+          }));
+          setBidders(formatted);
+        } else if (liveBidders && liveBidders.length > 0) {
+          // Fallback: use bidder directory if no bids exist yet
+          const formatted = liveBidders.map((b) => ({
+            id: b._id,
+            mongoId: b._id,
+            legalName: b.legalName,
+            gstin: b.gstin,
+            pan: b.pan,
+            entityType: b.entityType || 'PVT_LTD',
+            isMSME: b.isMSME,
+            bidAmount: b.bidAmount || 0,
+            score: b.score || 0,
+            riskLevel: b.riskLevel || 'MEDIUM',
+            docsCount: b.submittedDocs || 0,
+            forensicFlagsCount: b.forensicFlags || 0,
+            aiRecommendation: b.aiRecommendation || 'MANUAL_REVIEW',
+            status: b.status || 'REGISTERED',
+            isCollusionFlagged: b.isCollusionFlagged || false,
           }));
           setBidders(formatted);
         }
 
         const activeTendersCount = (liveTenders && liveTenders.length > 0)
           ? liveTenders.filter(t => t.status === 'PUBLISHED').length || liveTenders.length
-          : DASHBOARD_STATS.activeTenders;
+          : 0;
 
-        const totalBiddersCount = (liveBids && liveBids.length > 0)
-          ? liveBids.length
-          : DASHBOARD_STATS.totalBidders;
+        const totalBiddersCount = (liveBidders && liveBidders.length > 0)
+          ? liveBidders.length
+          : (liveBids && liveBids.length > 0) ? liveBids.length : 0;
 
         const totalDocsCount = (liveBids && liveBids.length > 0)
-          ? liveBids.reduce((sum, b) => sum + (b.uploadedDocuments?.length || 4), 0) + 1400
-          : DASHBOARD_STATS.documentsProcessed;
+          ? liveBids.reduce((sum, b) => sum + (b.uploadedDocuments?.length || 0), 0)
+          : 0;
 
         setStats({
           activeTenders: activeTendersCount,
           totalBidders: totalBiddersCount,
           documentsProcessed: totalDocsCount,
-          forensicFlagsRaised: 3,
-          cartelsDetected: 1
+          forensicFlagsRaised: 0,
+          cartelsDetected: 0
         });
       } catch (err) {
         console.warn('Dashboard fetch error:', err.message);
@@ -261,6 +282,7 @@ export default function Dashboard() {
             accentColor="#8b5cf6"
             iconBg="#f5f3ff"
             iconColor="#7c3aed"
+            onClick={() => navigate('/collusion')}
           />
         </div>
 

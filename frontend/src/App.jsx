@@ -10,6 +10,7 @@ import TenderManagement from './pages/TenderManagement';
 import BidderRegistry from './pages/BidderRegistry';
 import DocumentUpload from './pages/DocumentUpload';
 import BidderPortalPage from './pages/BidderPortalPage';
+import CracOfficerPortal from './pages/CracOfficerPortal';
 import { api } from './services/api';
 
 // Strict Role Guard Components
@@ -142,6 +143,14 @@ function App() {
             element={
               <OfficerRoute currentUser={currentUser}>
                 <EvidenceViewer />
+              </OfficerRoute>
+            }
+          />
+          <Route
+            path="/crac"
+            element={
+              <OfficerRoute currentUser={currentUser}>
+                <CracOfficerPortal />
               </OfficerRoute>
             }
           />

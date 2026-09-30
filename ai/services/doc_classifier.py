@@ -32,7 +32,7 @@ CLASSIFICATION_RULES = {
             r"certificate\s+of\s+registration",
             r"form\s+gst\s+reg[\s\-]*06",
             r"goods\s+and\s+services?\s+tax",
-            r"gstin\s*[:\-]?\s*\d{2}[A-Z]{5}\d{4}[A-Z]\d[A-Z\d][A-Z]\d",
+            r"gstin\s*[:\-]?\s*[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][0-9A-Z]{3}",
         ],
         "secondary": [
             r"central\s+goods",

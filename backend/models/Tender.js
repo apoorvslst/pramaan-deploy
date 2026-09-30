@@ -86,6 +86,25 @@ const TenderSchema = new mongoose.Schema({
     type: String,
     default: null,
   }, // Merkle root of tender setup
+
+  awardedBidId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'BidSubmission',
+    default: null,
+  },
+  awardedBidderId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Bidder',
+    default: null,
+  },
+  awardedAmount: {
+    type: Number,
+    default: null,
+  },
+  awardedAt: {
+    type: Date,
+    default: null,
+  },
 }, {
   timestamps: true,
 });

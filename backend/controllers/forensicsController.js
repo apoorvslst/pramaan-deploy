@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { Bidder } from '../models/Bidder.js';
 import { BidSubmission } from '../models/BidSubmission.js';
 import { Tender } from '../models/Tender.js';
@@ -7,20 +8,37 @@ import { AuditLedgerService } from '../services/auditLedger.js';
 import { aiClient } from '../services/aiClient.js';
 
 /**
+ * Helper to safely find tender by Mongo ObjectId or tenderNumber string
+ */
+const findTender = async (identifier) => {
+  if (!identifier) return null;
+  if (mongoose.Types.ObjectId.isValid(identifier)) {
+    const t = await Tender.findById(identifier);
+    if (t) return t;
+  }
+  return await Tender.findOne({
+    $or: [
+      { tenderNumber: identifier },
+      { tenderNumber: new RegExp(identifier.toString().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') }
+    ]
+  });
+};
+
+/**
  * @desc    Run full cartel & collusion graph analysis across all bidders on a tender
- * @route   POST /api/forensics/:tenderId/collusion
+ * @route   GET/POST /api/forensics/:tenderId/collusion
  * @access  Private (OFFICER, AUDITOR)
  */
 export const runCollusionAnalysis = async (req, res) => {
   try {
     const { tenderId } = req.params;
 
-    const tender = await Tender.findById(tenderId);
+    const tender = await findTender(tenderId);
     if (!tender) {
       return res.status(404).json({ success: false, message: 'Tender not found.' });
     }
 
-    const submissions = await BidSubmission.find({ tenderId }).populate('bidderId');
+    const submissions = await BidSubmission.find({ tenderId: tender._id }).populate('bidderId');
     const bidders = submissions
       .map(s => s.bidderId)
       .filter(Boolean)
@@ -188,12 +206,12 @@ export const getForensicDashboard = async (req, res) => {
   try {
     const { tenderId } = req.params;
 
-    const tender = await Tender.findById(tenderId);
+    const tender = await findTender(tenderId);
     if (!tender) {
       return res.status(404).json({ success: false, message: 'Tender not found.' });
     }
 
-    const submissions = await BidSubmission.find({ tenderId }).populate('bidderId');
+    const submissions = await BidSubmission.find({ tenderId: tender._id }).populate('bidderId');
     const bidders = submissions
       .map(s => s.bidderId)
       .filter(Boolean)

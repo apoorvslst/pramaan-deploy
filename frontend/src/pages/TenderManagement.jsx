@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   ShieldCheck, FileText, Plus, Search, Filter, Calendar,
   ArrowUpRight, CheckCircle, Clock, AlertCircle, Building, DollarSign,
-  Sparkles, RefreshCw, Layers
+  Sparkles, RefreshCw, Layers, Network
 } from 'lucide-react';
 import { MOCK_TENDERS_LIST } from '../data/mockData';
 import { api } from '../services/api';
@@ -341,13 +341,23 @@ export default function TenderManagement({ currentUser }) {
                           Apply & Bid <ArrowUpRight style={{ width: 12, height: 12 }} />
                         </button>
                       ) : (
-                        <button
-                          className="btn btn-secondary btn-sm"
-                          onClick={() => navigate('/evidence')}
-                          title="Inspect submitted bids and AI verification evidence"
-                        >
-                          Inspect <ArrowUpRight style={{ width: 12, height: 12 }} />
-                        </button>
+                        <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                          <button
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => navigate(`/collusion?tenderId=${t.id}`)}
+                            title="Inspect Tender-Wise Collusion & Cartel Relationship Graph"
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                          >
+                            <Network style={{ width: 12, height: 12, color: '#2563eb' }} /> Collusion Graph
+                          </button>
+                          <button
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => navigate('/evidence')}
+                            title="Inspect submitted bids and AI verification evidence"
+                          >
+                            Inspect <ArrowUpRight style={{ width: 12, height: 12 }} />
+                          </button>
+                        </div>
                       )}
                     </td>
 

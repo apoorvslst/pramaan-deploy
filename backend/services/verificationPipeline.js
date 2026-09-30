@@ -5,6 +5,7 @@ import { AuditLedgerService } from './auditLedger.js';
 import { ComplianceEngine } from './complianceEngine.js';
 import { queryAdapter } from './adapters/index.js';
 import { aiClient } from './aiClient.js';
+import { verifyAndResolvePAN } from './panResolver.js';
 
 export class VerificationPipeline {
   /**
@@ -147,6 +148,16 @@ export class VerificationPipeline {
         if (aiResult.detectedSignatures?.length > 0) {
           visualMarkers.signatures = aiResult.detectedSignatures;
         }
+      } else if (doc.docType === 'PAN_CARD') {
+        const signatory = bidder.directors?.[0]?.name || bidder.legalBusinessName || 'Authorized Signatory';
+        extractedFields = {
+          pan: bidder.pan || 'AAAAA0000A',
+          legalName: bidder.legalBusinessName,
+          entityType: bidder.entityType,
+          signatory,
+          status: 'ACTIVE_AND_OPERATIVE'
+        };
+        visualMarkers.boundingBox = { x: 75, y: 140, width: 280, height: 40 };
       } else if (doc.docType === 'GST_CERTIFICATE') {
         extractedFields = {
           gstin: bidder.gstin || '07AAAAA0000A1Z5',
@@ -201,8 +212,12 @@ export class VerificationPipeline {
         portalName = 'GEM_DEBAR';
         portalResponse = await queryAdapter('GEM_DEBAR', bidder.pan);
       } else if (doc.docType === 'PAN_CARD') {
-        portalName = 'MCA21';
-        portalResponse = await queryAdapter('MCA21', bidder.pan);
+        portalName = 'INCOME_TAX_NSDL';
+        portalResponse = await verifyAndResolvePAN(bidder.pan, bidder.legalBusinessName, {
+          city: bidder.registeredAddress?.city,
+          state: bidder.registeredAddress?.state,
+          udyam: bidder.udyamRegistrationNumber
+        });
       } else {
         portalName = 'GSTN';
         portalResponse = { status: 'Verified', queryTimestamp: new Date().toISOString(), portal: 'Statutory Registry' };

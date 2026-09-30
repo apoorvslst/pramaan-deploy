@@ -43,7 +43,8 @@ const BidderSchema = new mongoose.Schema({
   },
   entityType: {
     type: String,
-    enum: ['PROPRIETORSHIP', 'PARTNERSHIP', 'LLP', 'PVT_LTD', 'PUBLIC_LTD', 'TRUST'],
+    default: 'PVT_LTD',
+    trim: true,
   },
   gstin: {
     type: String,
@@ -84,10 +85,10 @@ const BidderSchema = new mongoose.Schema({
     trim: true,
   },
   registeredAddress: {
-    line1: { type: String, required: true },
-    city: { type: String, required: true },
-    state: { type: String, required: true },
-    pincode: { type: String, required: true, index: true },
+    line1: { type: String, default: 'Principal Place of Business' },
+    city: { type: String, default: 'Bahadurgarh' },
+    state: { type: String, default: 'Haryana' },
+    pincode: { type: String, default: '124507', index: true },
     geoCoordinates: {
       lat: Number,
       lng: Number,

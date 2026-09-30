@@ -84,7 +84,7 @@ const BidSubmissionSchema = new mongoose.Schema({
 
   status: {
     type: String,
-    enum: ['SUBMITTED', 'PROCESSING', 'VERIFIED', 'NEEDS_REVIEW', 'QUALIFIED', 'DISQUALIFIED'],
+    enum: ['SUBMITTED', 'PROCESSING', 'VERIFIED', 'NEEDS_REVIEW', 'QUALIFIED', 'DISQUALIFIED', 'AWARDED', 'ACCEPTED', 'NOT_SELECTED', 'REJECTED'],
     default: 'SUBMITTED',
     index: true,
   },
@@ -124,7 +124,7 @@ const BidSubmissionSchema = new mongoose.Schema({
     },
     decision: {
       type: String,
-      enum: ['QUALIFIED', 'DISQUALIFIED'],
+      enum: ['QUALIFIED', 'DISQUALIFIED', 'AWARDED', 'ACCEPTED', 'NOT_SELECTED'],
     },
     isOverridden: {
       type: Boolean,

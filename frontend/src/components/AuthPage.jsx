@@ -35,18 +35,28 @@ export function AuthPage({ onLoginSuccess }) {
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  // 1-Click Demo Profiles
-  const fillDemoAccount = (role) => {
-    setSelectedRole(role);
+  // 1-Click Demo Profiles (1 Officer + 3 Bidders)
+  const fillDemoAccount = (accountKey) => {
     setAuthMode('login');
     setErrorMessage('');
     setSuccessMessage('');
-    if (role === 'OFFICER') {
+    setPassword('password123');
+
+    if (accountKey === 'OFFICER') {
+      setSelectedRole('OFFICER');
       setEmail('officer@praman.test');
-      setPassword('password123');
+    } else if (accountKey === 'BIDDER1') {
+      setSelectedRole('BIDDER');
+      setEmail('bidder1@praman.test');
+    } else if (accountKey === 'BIDDER2') {
+      setSelectedRole('BIDDER');
+      setEmail('bidder2@praman.test');
+    } else if (accountKey === 'BIDDER3') {
+      setSelectedRole('BIDDER');
+      setEmail('bidder3@praman.test');
     } else {
-      setEmail('bidder@praman.test');
-      setPassword('password123');
+      setSelectedRole('BIDDER');
+      setEmail('bidder1@praman.test');
     }
   };
 
@@ -297,32 +307,65 @@ export function AuthPage({ onLoginSuccess }) {
           </button>
         </form>
 
-        {/* 1-Click Demo Profiles */}
+        {/* 1-Click Demo Profiles (1 Officer + 3 Bidders) */}
         <div className="auth-demo-section">
-          <span className="auth-demo-label">Instant 1-Click Demo Profiles</span>
-          <div className="auth-demo-grid">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <span className="auth-demo-label" style={{ margin: 0 }}>Instant 1-Click Demo Testing Profiles</span>
+            <span style={{ fontSize: '0.62rem', color: '#10b981', fontWeight: 700, background: '#ecfdf5', padding: '1px 6px', borderRadius: 4 }}>
+              Pass: password123
+            </span>
+          </div>
+          <div className="auth-demo-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
             <button
               type="button"
               onClick={() => fillDemoAccount('OFFICER')}
               className="auth-demo-btn"
+              style={{ borderLeft: '3px solid #0062FF', background: email === 'officer@praman.test' ? '#eff6ff' : '#f8fafc' }}
             >
               <div>
-                <div style={{ fontSize: '0.74rem', fontWeight: 700, color: '#0f172a' }}>Officer Demo</div>
-                <div style={{ fontSize: '0.64rem', color: '#64748b' }}>Dr. Rajesh Verma (Govt)</div>
+                <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#0f172a' }}>🏛️ Officer (Dr. Verma)</div>
+                <div style={{ fontSize: '0.62rem', color: '#64748b' }}>officer@praman.test</div>
               </div>
-              <ArrowRight style={{ width: 12, height: 12, color: '#94a3b8' }} />
+              <ArrowRight style={{ width: 12, height: 12, color: '#0062FF' }} />
             </button>
 
             <button
               type="button"
-              onClick={() => fillDemoAccount('BIDDER')}
+              onClick={() => fillDemoAccount('BIDDER1')}
               className="auth-demo-btn"
+              style={{ borderLeft: '3px solid #10b981', background: email === 'bidder1@praman.test' ? '#ecfdf5' : '#f8fafc' }}
             >
               <div>
-                <div style={{ fontSize: '0.74rem', fontWeight: 700, color: '#0f172a' }}>Bidder Demo</div>
-                <div style={{ fontSize: '0.64rem', color: '#64748b' }}>Vikram Solar Enterprises</div>
+                <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#0f172a' }}>🏨 Bidder 1: OM Hotels</div>
+                <div style={{ fontSize: '0.62rem', color: '#64748b' }}>bidder1@praman.test</div>
               </div>
-              <ArrowRight style={{ width: 12, height: 12, color: '#94a3b8' }} />
+              <ArrowRight style={{ width: 12, height: 12, color: '#10b981' }} />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => fillDemoAccount('BIDDER2')}
+              className="auth-demo-btn"
+              style={{ borderLeft: '3px solid #f59e0b', background: email === 'bidder2@praman.test' ? '#fffbeb' : '#f8fafc' }}
+            >
+              <div>
+                <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#0f172a' }}>☀️ Bidder 2: Vikram Solar</div>
+                <div style={{ fontSize: '0.62rem', color: '#64748b' }}>bidder2@praman.test</div>
+              </div>
+              <ArrowRight style={{ width: 12, height: 12, color: '#f59e0b' }} />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => fillDemoAccount('BIDDER3')}
+              className="auth-demo-btn"
+              style={{ borderLeft: '3px solid #8b5cf6', background: email === 'bidder3@praman.test' ? '#f5f3ff' : '#f8fafc' }}
+            >
+              <div>
+                <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#0f172a' }}>⚡ Bidder 3: Apex Infra</div>
+                <div style={{ fontSize: '0.62rem', color: '#64748b' }}>bidder3@praman.test</div>
+              </div>
+              <ArrowRight style={{ width: 12, height: 12, color: '#8b5cf6' }} />
             </button>
           </div>
         </div>

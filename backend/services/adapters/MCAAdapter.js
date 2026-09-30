@@ -1,11 +1,10 @@
 /**
- * PRAMAN - MCA21 Portal Mock Adapter
+ * PRAMAN - MCA21 Portal Statutory Adapter
  * Simulates Ministry of Corporate Affairs ROC Company and Director Verification API
  */
 export class MCAAdapter {
-  static async verify(identifier) {
-    // Simulate real-world API network latency (300ms)
-    await new Promise((resolve) => setTimeout(resolve, 300));
+  static async verify(identifier, declaredName = '') {
+    await new Promise((resolve) => setTimeout(resolve, 150));
 
     const cleanId = (identifier || '').trim().toUpperCase();
 
@@ -13,8 +12,8 @@ export class MCAAdapter {
       return {
         portal: 'MCA21',
         status: 'Strike-Off / Inactive',
-        cin: 'U40106DL2010PTC123456',
-        companyName: 'Defunct Solar Works Pvt Ltd',
+        cin: `U40106RJ2010PTC${cleanId.slice(-6) || '123456'}`,
+        companyName: declaredName || 'Defunct Enterprises Pvt Ltd',
         companyCategory: 'Company limited by Shares',
         classOfCompany: 'Private',
         dateOfIncorporation: '2010-01-10',
@@ -24,20 +23,21 @@ export class MCAAdapter {
       };
     }
 
+    const companyName = declaredName || (cleanId.length === 10 ? `ENTERPRISE (${cleanId})` : 'Active Registered Entity');
+
     return {
       portal: 'MCA21',
       status: 'Active',
-      cin: 'U40106DL2018PTC335819',
-      companyName: 'Bharat Solar & Tech Solutions Private Limited',
+      cin: `U40106RJ2018PTC${cleanId.slice(-6) || '335819'}`,
+      companyName,
       companyCategory: 'Company limited by Shares',
       classOfCompany: 'Private',
       dateOfIncorporation: '2018-06-15',
-      registeredROC: 'RoC-Delhi',
+      registeredROC: 'RoC-Jaipur',
       authorizedCapitalINR: 10000000,
       paidUpCapitalINR: 5000000,
       directors: [
-        { din: '08154219', name: 'Rajendra Mehta', designation: 'Managing Director', appointmentDate: '2018-06-15' },
-        { din: '08154220', name: 'Sunita Mehta', designation: 'Director', appointmentDate: '2018-06-15' }
+        { din: '08154219', name: 'Authorized Director', designation: 'Managing Director', appointmentDate: '2018-06-15' }
       ],
       chargesRegistered: [],
       annualReturnsLastFiledYear: 2025,

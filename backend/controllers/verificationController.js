@@ -77,10 +77,11 @@ export const submitOfficerDecision = async (req, res) => {
     const { bidId } = req.params;
     const { decision, officerJustification } = req.body;
 
-    if (!decision || !['QUALIFIED', 'DISQUALIFIED'].includes(decision.toUpperCase())) {
+    const validDecisions = ['QUALIFIED', 'DISQUALIFIED', 'AWARDED', 'ACCEPTED'];
+    if (!decision || !validDecisions.includes(decision.toUpperCase())) {
       return res.status(400).json({
         success: false,
-        message: 'Valid decision ("QUALIFIED" or "DISQUALIFIED") is required.',
+        message: 'Valid decision ("AWARDED", "ACCEPTED", "QUALIFIED", or "DISQUALIFIED") is required.',
       });
     }
 
@@ -95,10 +96,14 @@ export const submitOfficerDecision = async (req, res) => {
       });
     }
 
-    const normalizedDecision = decision.toUpperCase();
+    let normalizedDecision = decision.toUpperCase();
+    if (normalizedDecision === 'ACCEPTED') {
+      normalizedDecision = 'AWARDED';
+    }
+
     const aiRec = submission.evaluationResult?.aiRecommendation;
     const isOverridden = (aiRec === 'QUALIFY' && normalizedDecision === 'DISQUALIFIED') ||
-                         (aiRec === 'DISQUALIFY' && normalizedDecision === 'QUALIFIED');
+                         (aiRec === 'DISQUALIFY' && (normalizedDecision === 'QUALIFIED' || normalizedDecision === 'AWARDED'));
 
     if (isOverridden && !officerJustification) {
       return res.status(400).json({
@@ -112,14 +117,37 @@ export const submitOfficerDecision = async (req, res) => {
       decidedBy: req.user?._id,
       decision: normalizedDecision,
       isOverridden,
-      officerJustification: officerJustification || (isOverridden ? 'Officer administrative override' : 'Accepted AI recommendation'),
+      officerJustification: officerJustification || (normalizedDecision === 'AWARDED' ? 'Contract awarded to lowest evaluated responsive bidder (L1).' : (isOverridden ? 'Officer administrative override' : 'Accepted AI recommendation')),
       decidedAt: new Date()
     };
 
     await submission.save();
 
+    // If AWARDED, update Tender and competing bids
+    if (normalizedDecision === 'AWARDED' && submission.tenderId) {
+      try {
+        const { Tender } = await import('../models/Tender.js');
+        const tenderId = submission.tenderId._id || submission.tenderId;
+        await Tender.findByIdAndUpdate(tenderId, {
+          status: 'AWARDED',
+          awardedBidId: submission._id,
+          awardedBidderId: submission.bidderId?._id || submission.bidderId,
+          awardedAmount: submission.bidAmount || 0,
+          awardedAt: new Date()
+        });
+
+        // Other active bids for this tender are marked as NOT_SELECTED
+        await BidSubmission.updateMany(
+          { tenderId, _id: { $ne: submission._id }, status: { $nin: ['DISQUALIFIED', 'AWARDED'] } },
+          { $set: { status: 'NOT_SELECTED' } }
+        );
+      } catch (tenderErr) {
+        console.warn('[Tender Award Update Notice]', tenderErr.message);
+      }
+    }
+
     // Record Immutable Audit Block
-    const actionType = isOverridden ? 'OFFICER_OVERRIDE' : 'FINAL_AWARD_DECISION';
+    const actionType = normalizedDecision === 'AWARDED' ? 'FINAL_CONTRACT_AWARDED' : (isOverridden ? 'OFFICER_OVERRIDE' : 'FINAL_AWARD_DECISION');
     const auditBlock = await AuditLedgerService.recordEvent({
       actionType,
       actor: {
@@ -134,6 +162,8 @@ export const submitOfficerDecision = async (req, res) => {
         bidReferenceNumber: submission.bidReferenceNumber,
         tenderId: submission.tenderId?._id,
         decision: normalizedDecision,
+        bidAmount: submission.bidAmount,
+        bidderName: submission.bidderId?.legalBusinessName,
         aiRecommendation: aiRec,
         isOverridden,
         officerJustification: submission.officerDecision.officerJustification,
@@ -144,8 +174,12 @@ export const submitOfficerDecision = async (req, res) => {
     // Notify room via Socket.io
     const io = req.app.get('io');
     if (io) {
-      io.to(`tender_${submission.tenderId?._id}`).emit('OFFICER_DECISION_RECORDED', {
+      const payload = {
         submissionId: submission._id,
+        tenderId: submission.tenderId?._id,
+        bidderId: submission.bidderId?._id,
+        bidderName: submission.bidderId?.legalBusinessName,
+        bidAmount: submission.bidAmount,
         decision: normalizedDecision,
         isOverridden,
         officer: req.user?.name,
@@ -153,7 +187,11 @@ export const submitOfficerDecision = async (req, res) => {
           blockIndex: auditBlock.blockIndex,
           currentHash: auditBlock.currentHash
         }
-      });
+      };
+      io.to(`tender_${submission.tenderId?._id}`).emit('OFFICER_DECISION_RECORDED', payload);
+      if (normalizedDecision === 'AWARDED') {
+        io.emit('TENDER_AWARDED', payload);
+      }
     }
 
     return res.status(200).json({

@@ -56,5 +56,6 @@ build/
 .pytest_cache/
 .coverage
 htmlcov/
-data/
+/data/
+!frontend/src/data/
 

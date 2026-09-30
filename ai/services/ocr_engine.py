@@ -2,7 +2,8 @@
 PRAMAN AI Microservice — Phase 3: OCR Key-Value Extraction Engine
 
 Extracts structured key-value pairs from statutory documents with spatial bounding boxes.
-Uses PyMuPDF for text + position extraction, then Groq LLM for structured field parsing.
+Uses PaddleOCR (via RapidOCR ONNX Runtime) for scanned/image PDFs, PyMuPDF for
+text-native PDFs, then Groq LLM for structured field parsing with regex fallback.
 
 Supports extraction for:
   - GST Certificate: GSTIN, Legal Name, Trade Name, Registration Date, Status
@@ -208,7 +209,7 @@ def _extract_with_regex(text: str, doc_type: DocType) -> Dict[str, str]:
 
 
 # ──────────────────────────────────────────────
-#  Main OCR Extraction Pipeline
+#  Main OCR Extraction Pipeline (PaddleOCR-Integrated)
 # ──────────────────────────────────────────────
 
 async def extract_document_fields(
@@ -219,20 +220,37 @@ async def extract_document_fields(
     Main entry point: Extract key-value fields from a classified document.
 
     Strategy:
-    1. Extract text + positioned text blocks (for bounding boxes) via PyMuPDF
-    2. Try LLM-based structured extraction (Groq → Gemini fallback)
-    3. If LLM fails, fall back to regex patterns
-    4. For each extracted field, find its bounding box in the positioned text
-    5. Return DocumentExtractionResponse with fields + visual markers
+    1. Extract text via PaddleOCR (for scanned/image PDFs) or PyMuPDF (for text PDFs)
+    2. Get positioned text with bounding boxes from PaddleOCR or PyMuPDF
+    3. Try LLM-based structured extraction (Groq → Gemini fallback)
+    4. If LLM fails, fall back to regex patterns
+    5. For each extracted field, find its bounding box in the positioned text
+    6. Return DocumentExtractionResponse with fields + visual markers
     """
     import fitz
     doc = fitz.open(file_path)
     page_count = len(doc)
     doc.close()
 
-    # Step 1: Extract text
-    full_text = extract_full_text(file_path)
-    positioned_text = extract_text_with_positions(file_path, page_num=0)
+    # Step 1: Extract text — use PaddleOCR-aware extraction
+    from services.paddle_ocr_engine import (
+        extract_full_text_paddle,
+        extract_text_with_paddle_positions,
+    )
+
+    full_text = extract_full_text_paddle(file_path)
+    positioned_text = extract_text_with_paddle_positions(file_path, page_num=0)
+
+    # Determine if PaddleOCR was used (scanned PDF) or PyMuPDF (text PDF)
+    native_text_check = ""
+    try:
+        _doc = fitz.open(file_path)
+        if len(_doc) > 0:
+            native_text_check = _doc[0].get_text("text").strip()
+        _doc.close()
+    except Exception:
+        pass
+    used_paddle_ocr = len(native_text_check) <= 100
 
     if not full_text or len(full_text.strip()) < 20:
         return DocumentExtractionResponse(
@@ -265,9 +283,18 @@ async def extract_document_fields(
 
     for field_name, value in extracted_fields.items():
         bbox = find_text_bbox(positioned_text, value)
+
+        # If PaddleOCR was used, also compute confidence from OCR results
+        field_confidence = confidence
+        if used_paddle_ocr:
+            for pt in positioned_text:
+                if value.lower() in pt.get("text", "").lower():
+                    field_confidence = pt.get("confidence", confidence)
+                    break
+
         field_box = FieldWithBox(
             value=value,
-            confidence=confidence,
+            confidence=field_confidence,
             boundingBox=BoundingBox(**bbox) if bbox else None,
         )
         fields_with_boxes[field_name] = field_box
@@ -286,13 +313,29 @@ async def extract_document_fields(
         warnings.append(f"Low confidence ({confidence:.0%}). Manual review recommended.")
     if doc_type == DocType.UNKNOWN:
         warnings.append("Document type could not be determined.")
+    if used_paddle_ocr:
+        warnings.append("PaddleOCR was used (scanned/image PDF detected).")
+
+    # Determine extraction model label
+    if used_paddle_ocr:
+        extraction_model = "PaddleOCR-v4 (RapidOCR ONNX)"
+        if confidence > 0.8:
+            extraction_model += " + Groq LLM"
+        else:
+            extraction_model += " + Regex"
+    else:
+        extraction_model = "PyMuPDF"
+        if confidence > 0.8:
+            extraction_model += " + Groq LLM"
+        else:
+            extraction_model += " + Regex"
 
     return DocumentExtractionResponse(
         docType=doc_type,
         extractedFields=extracted_fields,
         fieldsWithBoxes=fields_with_boxes,
         confidence=confidence,
-        extractionModel="PyMuPDF + Groq LLM" if confidence > 0.8 else "PyMuPDF + Regex",
+        extractionModel=extraction_model,
         visualMarkers=visual_markers,
         pageCount=page_count,
         warnings=warnings,

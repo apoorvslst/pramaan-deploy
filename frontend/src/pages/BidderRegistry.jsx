@@ -5,7 +5,6 @@ import {
   Building, Phone, MapPin, FileCheck, ArrowUpRight, BarChart2,
   FileText, Sparkles, RefreshCw, X, ShieldCheck
 } from 'lucide-react';
-import { MOCK_BIDDERS } from '../data/mockData';
 import { api } from '../services/api';
 
 export default function BidderRegistry() {
@@ -16,6 +15,10 @@ export default function BidderRegistry() {
   
   const [liveBids, setLiveBids] = useState([]);
   const [isLoadingBids, setIsLoadingBids] = useState(false);
+
+  // Live bidder directory from database
+  const [directoryBidders, setDirectoryBidders] = useState([]);
+  const [isLoadingDirectory, setIsLoadingDirectory] = useState(false);
 
   // Tender Comparison View Modal
   const [comparisonModal, setComparisonModal] = useState(null);
@@ -36,8 +39,23 @@ export default function BidderRegistry() {
     }
   };
 
+  const fetchBidderDirectory = async () => {
+    setIsLoadingDirectory(true);
+    try {
+      const data = await api.getBidders();
+      if (data && data.length > 0) {
+        setDirectoryBidders(data);
+      }
+    } catch (err) {
+      console.warn('Could not load bidder directory:', err.message);
+    } finally {
+      setIsLoadingDirectory(false);
+    }
+  };
+
   useEffect(() => {
     fetchBids();
+    fetchBidderDirectory();
   }, []);
 
   const openComparison = async (tenderId, tenderTitle) => {
@@ -108,10 +126,10 @@ export default function BidderRegistry() {
     }
   };
 
-  const filteredBidders = MOCK_BIDDERS.filter(b => {
-    const matchesSearch = b.legalName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      b.gstin.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      b.id.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredBidders = directoryBidders.filter(b => {
+    const matchesSearch = (b.legalName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (b.gstin || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (b.id || '').toString().toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRisk = filterRisk === 'ALL' || b.riskLevel === filterRisk;
     return matchesSearch && matchesRisk;
   });
@@ -137,9 +155,9 @@ export default function BidderRegistry() {
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <button
-            onClick={fetchBids}
+            onClick={() => { fetchBids(); fetchBidderDirectory(); }}
             className="btn btn-secondary btn-sm"
-            title="Refresh Live Bids"
+            title="Refresh Live Bids & Bidder Directory"
           >
             <RefreshCw className={isLoadingBids ? 'animate-spin' : ''} style={{ width: 13, height: 13 }} /> Refresh Bids
           </button>
@@ -164,7 +182,7 @@ export default function BidderRegistry() {
             onClick={() => setActiveTab('directory')}
             style={{ display: 'flex', alignItems: 'center', gap: 6 }}
           >
-            <Users style={{ width: 14, height: 14 }} /> Statutory Directory ({MOCK_BIDDERS.length})
+            <Users style={{ width: 14, height: 14 }} /> Statutory Directory ({directoryBidders.length})
           </button>
         </div>
 
@@ -244,7 +262,7 @@ export default function BidderRegistry() {
                           <td style={{ padding: '12px 16px', fontWeight: 600 }}>
                             {b.bidderId?.legalBusinessName || b.legalBusinessName || 'Bidder Entity'}
                             <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
-                              GSTIN: {b.bidderId?.gstin || b.gstin || '07AAAAA0000A1Z5'}
+                              GSTIN: {b.bidderId?.gstin || b.gstin || '—'}
                             </div>
                           </td>
                           <td style={{ padding: '12px 16px', textAlign: 'right' }}>
@@ -329,7 +347,7 @@ export default function BidderRegistry() {
                       )}
                     </div>
                     <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: 2 }}>
-                      ID: {b.id} | Entity: {b.entityType.replace('_', ' ')}
+                      ID: {b.id ? String(b.id).substring(0,12) : '—'} | Entity: {(b.entityType || 'PVT_LTD').replace(/_/g, ' ')}
                     </div>
                   </div>
 
