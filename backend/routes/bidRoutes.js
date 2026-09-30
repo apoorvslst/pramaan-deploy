@@ -26,8 +26,8 @@ router.post(
 // Bidder view their own submissions
 router.get('/my-submissions', protect, getMySubmissions);
 
-// Officer & Auditor view all submissions for a tender
-router.get('/tender/:tenderId', protect, authorize('OFFICER', 'AUDITOR', 'CAG_AUDITOR'), getSubmissionsForTender);
+// View all open submissions for a tender (accessible by authenticated users: Bidders, Officers, Auditors)
+router.get('/tender/:tenderId', protect, getSubmissionsForTender);
 
 // View specific submission details
 router.get('/:id', protect, getSubmissionById);

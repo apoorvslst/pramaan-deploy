@@ -45,8 +45,19 @@ export default function BidderRegistry() {
     setComparisonLoading(true);
     try {
       const res = await api.getTenderEvaluations(tenderId);
-      if (res && res.rankedBidders) {
-        setRankedBidders(res.rankedBidders);
+      if (res && res.rankedBidders && res.rankedBidders.length > 0) {
+        const sorted = [...res.rankedBidders]
+          .map(r => ({
+            ...r,
+            bidId: r.submissionId || r.bidId,
+            bidRef: r.bidReferenceNumber || r.bidRef,
+            bidderName: r.bidder?.name || r.bidderName || 'Bidder Entity',
+            bidAmount: Number(r.bidAmount || 0),
+            score: r.score ?? (r.evaluationResult?.complianceScore || 88)
+          }))
+          .sort((a, b) => (b.bidAmount || 0) - (a.bidAmount || 0) || (b.score || 0) - (a.score || 0))
+          .map((r, i) => ({ ...r, rank: i + 1 }));
+        setRankedBidders(sorted);
       } else {
         // Build ranked list from loaded bids
         const tenderBids = liveBids.filter(b => (
@@ -61,12 +72,13 @@ export default function BidderRegistry() {
             bidId: b._id,
             bidRef: b.bidReferenceNumber,
             bidderName: b.bidderId?.legalBusinessName || b.legalBusinessName || 'Bidder Entity',
+            bidAmount: Number(b.bidAmount || 0),
             score: b.evaluationResult?.complianceScore || 88,
             riskLevel: b.evaluationResult?.riskLevel || 'LOW',
             aiRecommendation: b.evaluationResult?.aiRecommendation || 'QUALIFIED',
             status: b.status || 'SUBMITTED'
           }))
-          .sort((a, b) => b.score - a.score)
+          .sort((a, b) => (b.bidAmount || 0) - (a.bidAmount || 0) || (b.score || 0) - (a.score || 0))
           .map((r, i) => ({ ...r, rank: i + 1 }));
         setRankedBidders(ranked);
       }
@@ -83,11 +95,13 @@ export default function BidderRegistry() {
         bidId: b._id,
         bidRef: b.bidReferenceNumber,
         bidderName: b.bidderId?.legalBusinessName || b.legalBusinessName || 'Bidder Entity',
+        bidAmount: Number(b.bidAmount || 0),
         score: b.evaluationResult?.complianceScore || 88,
         riskLevel: b.evaluationResult?.riskLevel || 'LOW',
         aiRecommendation: b.evaluationResult?.aiRecommendation || 'QUALIFIED',
         status: b.status || 'SUBMITTED'
-      }));
+      })).sort((a, b) => (b.bidAmount || 0) - (a.bidAmount || 0) || (b.score || 0) - (a.score || 0))
+        .map((r, i) => ({ ...r, rank: i + 1 }));
       setRankedBidders(ranked);
     } finally {
       setComparisonLoading(false);
@@ -206,6 +220,7 @@ export default function BidderRegistry() {
                     <tr style={{ background: '#f8fafc', borderBottom: '1px solid var(--border-default)', color: 'var(--text-muted)' }}>
                       <th style={{ padding: '12px 16px', fontWeight: 600 }}>Bid Reference</th>
                       <th style={{ padding: '12px 16px', fontWeight: 600 }}>Bidder Legal Name</th>
+                      <th style={{ padding: '12px 16px', fontWeight: 600, textAlign: 'right' }}>Bid Price (₹)</th>
                       <th style={{ padding: '12px 16px', fontWeight: 600 }}>Tender / Department</th>
                       <th style={{ padding: '12px 16px', fontWeight: 600 }}>Submitted Date</th>
                       <th style={{ padding: '12px 16px', fontWeight: 600 }}>AI Score</th>
@@ -214,7 +229,9 @@ export default function BidderRegistry() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredSubmissions.map((b) => {
+                    {[...filteredSubmissions]
+                      .sort((a, b) => (Number(b.bidAmount || 0) - Number(a.bidAmount || 0)) || ((b.evaluationResult?.complianceScore || 0) - (a.evaluationResult?.complianceScore || 0)))
+                      .map((b) => {
                       const score = b.evaluationResult?.complianceScore || 88;
                       const tenderId = b.tenderId?._id || b.tenderId;
                       const tenderTitle = b.tenderId?.title || 'Supply of Statutory Equipment';
@@ -228,6 +245,14 @@ export default function BidderRegistry() {
                             {b.bidderId?.legalBusinessName || b.legalBusinessName || 'Bidder Entity'}
                             <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
                               GSTIN: {b.bidderId?.gstin || b.gstin || '07AAAAA0000A1Z5'}
+                            </div>
+                          </td>
+                          <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                            <div style={{ fontFamily: 'monospace', fontWeight: 800, color: '#0f172a', fontSize: '0.8rem' }}>
+                              {b.bidAmount ? `₹${Number(b.bidAmount).toLocaleString('en-IN')}` : '₹4,50,00,000'}
+                            </div>
+                            <div style={{ fontSize: '0.62rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                              {b.bidAmount ? `₹${(b.bidAmount / 10000000).toFixed(2)} Cr` : '₹4.50 Cr'}
                             </div>
                           </td>
                           <td style={{ padding: '12px 16px' }}>
@@ -260,7 +285,7 @@ export default function BidderRegistry() {
                               <button
                                 className="btn btn-secondary btn-sm"
                                 onClick={() => openComparison(tenderId, tenderTitle)}
-                                title="Compare all bids for this tender"
+                                title="Compare all bids for this tender (Sorted by highest bid)"
                               >
                                 <BarChart2 style={{ width: 12, height: 12 }} /> Compare Bids
                               </button>
@@ -411,8 +436,9 @@ export default function BidderRegistry() {
                     <thead>
                       <tr style={{ background: '#f8fafc', borderBottom: '1px solid var(--border-default)' }}>
                         <th style={{ padding: '10px 12px' }}>Rank</th>
-                        <th style={{ padding: '10px 12px' }}>Bidder</th>
-                        <th style={{ padding: '10px 12px' }}>Score</th>
+                        <th style={{ padding: '10px 12px' }}>Bidder Entity</th>
+                        <th style={{ padding: '10px 12px', textAlign: 'right' }}>Quoted Bid Price (₹)</th>
+                        <th style={{ padding: '10px 12px', textAlign: 'center' }}>Compliance Score</th>
                         <th style={{ padding: '10px 12px' }}>Risk</th>
                         <th style={{ padding: '10px 12px' }}>AI Rec</th>
                         <th style={{ padding: '10px 12px' }}>Status</th>
@@ -423,13 +449,21 @@ export default function BidderRegistry() {
                       {rankedBidders.map((r, i) => (
                         <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
                           <td style={{ padding: '10px 12px', fontWeight: 800, color: i === 0 ? '#10b981' : 'inherit' }}>
-                            #{r.rank || i + 1} {i === 0 && '🏆'}
+                            #{r.rank || i + 1} {i === 0 && <span title="Highest Bidder">🏆 HIGHEST</span>}
                           </td>
                           <td style={{ padding: '10px 12px', fontWeight: 600 }}>
                             {r.bidderName}
                             <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>{r.bidRef}</div>
                           </td>
-                          <td style={{ padding: '10px 12px', fontWeight: 700, fontFamily: 'monospace' }}>
+                          <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                            <div className="mono" style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.8rem' }}>
+                              {r.bidAmount ? `₹${Number(r.bidAmount).toLocaleString('en-IN')}` : '₹4,50,00,000'}
+                            </div>
+                            <div style={{ fontSize: '0.62rem', color: 'var(--text-muted)' }}>
+                              {r.bidAmount ? `₹${(r.bidAmount / 10000000).toFixed(2)} Cr` : '₹4.50 Cr'}
+                            </div>
+                          </td>
+                          <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 800, fontFamily: 'monospace', color: (r.score || 0) >= 80 ? '#10b981' : (r.score || 0) >= 60 ? '#f59e0b' : '#ef4444' }}>
                             {r.score}/100
                           </td>
                           <td style={{ padding: '10px 12px' }}>

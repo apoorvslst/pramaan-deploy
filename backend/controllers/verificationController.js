@@ -57,6 +57,7 @@ export const getEvidenceByBid = async (req, res) => {
       success: true,
       submissionId: bidId,
       bidReferenceNumber: submission?.bidReferenceNumber,
+      bidAmount: submission?.bidAmount || 0,
       bidder: submission?.bidderId?.legalBusinessName,
       evaluationResult: submission?.evaluationResult,
       officerDecision: submission?.officerDecision,
@@ -181,12 +182,13 @@ export const getTenderEvaluations = async (req, res) => {
     const submissions = await BidSubmission.find({ tenderId })
       .populate('bidderId')
       .populate('officerDecision.decidedBy', 'name email designation')
-      .sort({ 'evaluationResult.complianceScore': -1 });
+      .sort({ bidAmount: -1, 'evaluationResult.complianceScore': -1 });
 
     const rankedBidders = submissions.map((sub, index) => ({
       rank: index + 1,
       submissionId: sub._id,
       bidReferenceNumber: sub.bidReferenceNumber,
+      bidAmount: sub.bidAmount || 0,
       bidder: {
         id: sub.bidderId?._id,
         name: sub.bidderId?.legalBusinessName,

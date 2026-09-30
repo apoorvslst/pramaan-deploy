@@ -136,6 +136,7 @@ export default function EvidenceViewer() {
             legalName: b.bidderId?.legalBusinessName || b.bidderId?.name || b.legalBusinessName || 'Bidder Entity',
             gstin: b.bidderId?.gstin || b.gstin || '07AAAAA0000A1Z5',
             pan: b.bidderId?.pan || b.pan || 'AAAAA0000A',
+            bidAmount: Number(b.bidAmount || 0),
             score: b.evaluationResult?.complianceScore || 88,
             riskLevel: b.evaluationResult?.riskLevel || 'LOW',
             status: b.status || 'SUBMITTED',
@@ -234,6 +235,7 @@ export default function EvidenceViewer() {
             legalName: b.bidderId?.legalBusinessName || b.bidderId?.name || b.legalBusinessName || 'Bidder Entity',
             gstin: b.bidderId?.gstin || b.gstin || '07AAAAA0000A1Z5',
             pan: b.bidderId?.pan || b.pan || 'AAAAA0000A',
+            bidAmount: Number(b.bidAmount || 0),
             score: b.evaluationResult?.complianceScore || 88,
             riskLevel: b.evaluationResult?.riskLevel || 'LOW',
             status: b.status || 'SUBMITTED',
@@ -386,6 +388,8 @@ export default function EvidenceViewer() {
               {/* Extracted Fields */}
               <div className="field-extract-list">
                 {[
+                  { label: 'QUOTED BID PRICE', value: selectedBidder?.bidAmount ? `₹${Number(selectedBidder.bidAmount).toLocaleString('en-IN')}` : '₹4,50,00,000' },
+                  { label: 'COMPLIANCE SCORE', value: `${selectedBidder?.score || 88}/100 (AI Evaluated)` },
                   { label: 'GSTIN', value: selectedBidder?.gstin || '07AAFCA3456J1Z9' },
                   { label: 'LEGAL NAME', value: selectedBidder?.legalName || 'APEX INFOTECH SOLUTIONS PVT. LTD.' },
                   { label: 'PAN NUMBER', value: selectedBidder?.pan || 'AAFCA3456J' },

@@ -8,6 +8,9 @@ export const submitBid = async (req, res) => {
   try {
     const {
       tenderId,
+      bidAmount,
+      bidPrice,
+      priceOfBid,
       legalBusinessName,
       gstin,
       pan,
@@ -188,11 +191,13 @@ export const submitBid = async (req, res) => {
 
     // 3. Create BidSubmission record
     const bidReferenceNumber = `BID-${new Date().getFullYear()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    const parsedBidAmount = Number(bidAmount || bidPrice || priceOfBid || 0);
 
     const submission = new BidSubmission({
       tenderId: tender._id,
       bidderId: bidder._id,
       bidReferenceNumber,
+      bidAmount: parsedBidAmount,
       uploadedDocuments: uploadedDocs,
       status: 'SUBMITTED',
       evaluationResult: {
@@ -220,6 +225,7 @@ export const submitBid = async (req, res) => {
         tenderNumber: tender.tenderNumber,
         bidderId: bidder._id,
         bidReferenceNumber,
+        bidAmount: parsedBidAmount,
         submittedAt: submission.submissionDate,
         documentFingerprints: uploadedDocs.map(d => ({
           docType: d.docType,
@@ -234,6 +240,7 @@ export const submitBid = async (req, res) => {
       message: 'Bid submission successful. Documents verified with SHA-256 non-repudiation.',
       submissionId: submission._id,
       bidReferenceNumber,
+      bidAmount: parsedBidAmount,
       documentsCount: uploadedDocs.length,
       uploadedDocuments: uploadedDocs,
       auditBlock: {
@@ -312,7 +319,7 @@ export const getSubmissionsForTender = async (req, res) => {
     const submissions = await BidSubmission.find({ tenderId: req.params.tenderId })
       .populate('bidderId')
       .populate('officerDecision.decidedBy', 'name email designation')
-      .sort({ 'evaluationResult.complianceScore': -1, createdAt: -1 });
+      .sort({ bidAmount: -1, 'evaluationResult.complianceScore': -1, createdAt: -1 });
 
     return res.status(200).json({
       success: true,
@@ -340,7 +347,7 @@ export const getAllSubmissions = async (req, res) => {
       .populate('bidderId')
       .populate('tenderId')
       .populate('officerDecision.decidedBy', 'name email designation')
-      .sort({ 'evaluationResult.complianceScore': -1, createdAt: -1 });
+      .sort({ bidAmount: -1, 'evaluationResult.complianceScore': -1, createdAt: -1 });
 
     return res.status(200).json({
       success: true,

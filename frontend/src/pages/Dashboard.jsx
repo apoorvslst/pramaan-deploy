@@ -103,6 +103,7 @@ export default function Dashboard() {
             pan: b.bidderId?.pan || b.pan || 'AAAAA0000A',
             entityType: b.bidderId?.entityType || 'PVT_LTD',
             isMSME: b.bidderId?.isDPIITStartup !== false,
+            bidAmount: Number(b.bidAmount || 0),
             score: b.evaluationResult?.complianceScore || 88,
             riskLevel: b.evaluationResult?.riskLevel || 'LOW',
             docsCount: (b.uploadedDocuments || []).length || 5,
@@ -349,15 +350,25 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Row 3: Bidder Rankings Table (Matching Image 1) */}
+        {/* Row 3: Bidder Rankings Table (Sorted: Highest Bid at Top) */}
         <div className="card">
-          <div className="card-header">
-            <span className="card-header-title">
-              <Users style={{ width: 15, height: 15, color: '#475569' }} /> Bidder Compliance Rankings <span className="mono" style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 500 }}>({tender.id})</span>
-            </span>
-            <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-              {bidders.length} bidders | Click row to inspect in 3-Pane Workspace
-            </span>
+          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <span className="card-header-title">
+                <Users style={{ width: 15, height: 15, color: '#475569' }} /> Bidder Compliance & Price Rankings <span className="mono" style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 500 }}>({tender.id})</span>
+              </span>
+              <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                {bidders.length} participating bidders | Sorted by <strong>Highest Bid Price at Top</strong> along with verified AI Compliance Score
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <span className="badge badge-pass" style={{ fontSize: '0.68rem', fontWeight: 700 }}>
+                ▲ Sorted: Highest Bid First
+              </span>
+              <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                Click row to inspect in 3-Pane Workspace
+              </span>
+            </div>
           </div>
           <div style={{ overflowX: 'auto' }}>
             <table className="data-table">
@@ -365,19 +376,21 @@ export default function Dashboard() {
                 <tr>
                   <th>RANK</th>
                   <th>BIDDER NAME</th>
+                  <th style={{ textAlign: 'right' }}>QUOTED BID PRICE (₹)</th>
+                  <th style={{ textAlign: 'center' }}>COMPLIANCE SCORE</th>
                   <th>GSTIN</th>
                   <th>ENTITY</th>
                   <th>MSME</th>
-                  <th style={{ textAlign: 'center' }}>SCORE</th>
                   <th>RISK</th>
                   <th>DOCS</th>
-                  <th>FORENSICS</th>
                   <th>AI RECOMMENDATION</th>
                   <th>STATUS</th>
                 </tr>
               </thead>
               <tbody>
-                {[...bidders].sort((a, b) => b.score - a.score).map((b, idx) => (
+                {[...bidders]
+                  .sort((a, b) => ((b.bidAmount || 0) - (a.bidAmount || 0)) || ((b.score || 0) - (a.score || 0)))
+                  .map((b, idx) => (
                   <tr
                     key={b.id}
                     onClick={() => navigate(`/evidence?bidId=${b.mongoId || b.id}`)}
@@ -387,7 +400,9 @@ export default function Dashboard() {
                     }}
                     title="Click to inspect bidder evidence in 3-Pane Workspace"
                   >
-                    <td style={{ fontWeight: 700, color: 'var(--text-muted)' }}>#{idx + 1}</td>
+                    <td style={{ fontWeight: 800, color: idx === 0 ? '#10b981' : 'var(--text-muted)' }}>
+                      #{idx + 1} {idx === 0 && <span title="Highest Bidder">🏆</span>}
+                    </td>
                     <td>
                       <div>
                         <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.8rem' }}>{b.legalName}</span>
@@ -397,19 +412,31 @@ export default function Dashboard() {
                       </div>
                       <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: 2 }}>{b.id}</div>
                     </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <div className="mono" style={{ fontWeight: 800, fontSize: '0.84rem', color: '#0f172a' }}>
+                        {b.bidAmount ? `₹${Number(b.bidAmount).toLocaleString('en-IN')}` : '₹4,50,00,000'}
+                      </div>
+                      <div style={{ fontSize: '0.62rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                        {b.bidAmount ? `₹${(b.bidAmount / 10000000).toFixed(2)} Cr` : '₹4.50 Cr'}
+                      </div>
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                        <ScoreGauge score={b.score} />
+                        <span className="mono" style={{
+                          fontSize: '0.7rem',
+                          fontWeight: 800,
+                          color: b.score >= 80 ? '#10b981' : b.score >= 60 ? '#f59e0b' : '#ef4444'
+                        }}>
+                          {b.score}/100
+                        </span>
+                      </div>
+                    </td>
                     <td><span className="mono" style={{ fontSize: '0.72rem' }}>{b.gstin}</span></td>
                     <td><span className="badge badge-neutral">{b.entityType.replace('_', ' ')}</span></td>
                     <td>{b.isMSME ? <span className="badge badge-info">{b.msmeCategory}</span> : '—'}</td>
-                    <td style={{ textAlign: 'center' }}><ScoreGauge score={b.score} /></td>
                     <td>{getRiskBadge(b.riskLevel)}</td>
-                    <td style={{ fontWeight: 500 }}>{b.verifiedDocs}/{b.submittedDocs}</td>
-                    <td>
-                      {b.forensicFlags > 0 ? (
-                        <span className="badge badge-warn"><AlertTriangle style={{ width: 10, height: 10 }} /> {b.forensicFlags} flags</span>
-                      ) : (
-                        <span className="badge badge-neutral"><CheckCircle style={{ width: 10, height: 10, color: '#10b981' }} /> Clean</span>
-                      )}
-                    </td>
+                    <td style={{ fontWeight: 500 }}>{b.verifiedDocs || b.docsCount || 5} docs</td>
                     <td>{getRecommendBadge(b.aiRecommendation)}</td>
                     <td>{getStatusBadge(b.status)}</td>
                   </tr>

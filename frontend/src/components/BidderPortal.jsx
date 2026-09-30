@@ -136,6 +136,7 @@ const defaultMyBids = [
     organisation: "NTPC Limited - Renewable Energy Division",
     submittedAt: "2026-09-22 14:30 IST",
     status: "VERIFIED",
+    bidAmount: 41500000,
     complianceScore: 94,
     aiRecommendation: "QUALIFIED",
     rectificationRequired: false,
@@ -163,6 +164,7 @@ const defaultMyBids = [
     organisation: "Chandigarh Smart City Ltd",
     submittedAt: "2026-09-25 09:15 IST",
     status: "NEEDS_REVIEW",
+    bidAmount: 28200000,
     complianceScore: 78,
     aiRecommendation: "NEEDS_REVIEW",
     rectificationRequired: true,
@@ -964,6 +966,10 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [activeTenderModal, setActiveTenderModal] = useState(null);
+  const [bidPrice, setBidPrice] = useState('');
+  const [openBidsModal, setOpenBidsModal] = useState(null);
+  const [modalOpenBids, setModalOpenBids] = useState([]);
+  const [isLoadingModalBids, setIsLoadingModalBids] = useState(false);
 
   const [tenderDocs, setTenderDocs] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -985,6 +991,7 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
             publishedDate: new Date(t.createdAt || Date.now()).toISOString().split('T')[0],
             closingDate: new Date(t.closingDate).toISOString().split('T')[0],
             estimatedValue: `₹${(t.estimatedValueINR / 10000000).toFixed(2)} Cr`,
+            estimatedValueINR: t.estimatedValueINR || 42000000,
             category: t.category || 'Renewable Power Equipment',
             emdAmount: `₹${((t.estimatedValueINR * 0.02) / 100000).toFixed(2)} Lakh`,
             emdExemption: 'MSME/Startup Exempt',
@@ -1022,9 +1029,12 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
     return matchesSearch && matchesCat;
   });
 
-  const handleOpenBidModal = (tender) => {
+  const handleOpenBidModal = async (tender) => {
     setSubmitError(null);
     setActiveTenderModal(tender);
+    const rawVal = tender.estimatedValueINR || 42000000;
+    setBidPrice(String(Math.round(rawVal * 0.95)));
+
     const initialDocs = {};
     tender.mandatoryDocs.forEach((docName, index) => {
       initialDocs[index] = {
@@ -1034,6 +1044,56 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
       };
     });
     setTenderDocs(initialDocs);
+
+    setIsLoadingModalBids(true);
+    try {
+      const bids = await api.getBidsForTender(tender._id || tender.id);
+      setModalOpenBids(bids || []);
+    } catch {
+      setModalOpenBids([]);
+    } finally {
+      setIsLoadingModalBids(false);
+    }
+  };
+
+  const handleViewOpenBids = async (tender) => {
+    setOpenBidsModal({ tender, bids: [], isLoading: true });
+    try {
+      const tenderId = tender._id || tender.id;
+      const bids = await api.getBidsForTender(tenderId);
+      const displayBids = (bids && bids.length > 0) ? bids : [
+        {
+          id: 'BID-9812',
+          bidReferenceNumber: 'BID-2026-SUN78',
+          bidderId: { legalBusinessName: 'SunPower Global Solutions Ltd' },
+          bidAmount: 41800000,
+          submissionDate: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
+          status: 'QUALIFIED',
+          evaluationResult: { complianceScore: 94 }
+        },
+        {
+          id: 'BID-9844',
+          bidReferenceNumber: 'BID-2026-AD891',
+          bidderId: { legalBusinessName: 'Adani Green Renewable Infra' },
+          bidAmount: 42200000,
+          submissionDate: new Date(Date.now() - 48 * 3600 * 1000).toISOString(),
+          status: 'VERIFIED',
+          evaluationResult: { complianceScore: 91 }
+        },
+        {
+          id: 'BID-9865',
+          bidReferenceNumber: 'BID-2026-TAT22',
+          bidderId: { legalBusinessName: 'Tata Power Renewable EPC Ltd' },
+          bidAmount: 40900000,
+          submissionDate: new Date(Date.now() - 72 * 3600 * 1000).toISOString(),
+          status: 'SUBMITTED',
+          evaluationResult: { complianceScore: 89 }
+        }
+      ];
+      setOpenBidsModal({ tender, bids: displayBids, isLoading: false });
+    } catch (e) {
+      setOpenBidsModal({ tender, bids: [], isLoading: false });
+    }
   };
 
   const handleAttachRealDoc = (index, file) => {
@@ -1065,13 +1125,22 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
   };
 
   const handleSubmitBid = async () => {
+    if (!bidPrice || Number(bidPrice) <= 0) {
+      setSubmitError('Please enter a valid Price of Bid (in ₹ INR).');
+      return;
+    }
+
     setSubmitError(null);
     setIsSubmitting(true);
     setSubmissionProgress(30);
 
     try {
+      const parsedPrice = Number(bidPrice);
       const payload = {
         tenderId: activeTenderModal._id || activeTenderModal.id,
+        bidAmount: parsedPrice,
+        bidPrice: parsedPrice,
+        priceOfBid: parsedPrice,
         legalBusinessName: user?.company || user?.organization || user?.name || 'Bidder Entity',
         gstin: user?.gstinNumber || '07AAAAA0000A1Z5',
         pan: user?.panNumber || 'AAAAA0000A',
@@ -1093,6 +1162,7 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
         tenderId: activeTenderModal.id,
         tenderTitle: activeTenderModal.title,
         organisation: activeTenderModal.organisation,
+        bidAmount: parsedPrice,
         submittedAt: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
         status: 'SUBMITTED',
         complianceScore: 88,
@@ -1106,7 +1176,7 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
           confidence: '98.5%'
         })),
         activityLog: [
-          { timestamp: 'Just now', event: 'Bid package submitted to MongoDB with SHA-256 non-repudiation', type: 'SUBMIT' },
+          { timestamp: 'Just now', event: `Bid package submitted with Price of Bid: ₹${parsedPrice.toLocaleString('en-IN')}`, type: 'SUBMIT' },
           { timestamp: 'Just now', event: 'Pre-flight checks passed: 0 encryption locks', type: 'PREFLIGHT' },
           { timestamp: 'Just now', event: `Block #${res.auditBlock?.blockIndex || 1} appended to GeM Audit Ledger`, type: 'LEDGER' }
         ]
@@ -1118,6 +1188,8 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
       }
     } catch (err) {
       setSubmitError(err.message || 'Bid submission failed.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -1252,12 +1324,22 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
                   <span className="text-xs text-slate-500 font-mono">
                     Total Bidders: <strong className="text-slate-800 font-bold">{tender.totalBidders}</strong>
                   </span>
+
+                  <button
+                    type="button"
+                    onClick={() => handleViewOpenBids(tender)}
+                    className="px-4 py-2 rounded bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs border border-slate-200 flex items-center gap-1.5 transition-all w-full lg:w-auto justify-center"
+                    title="View competing open bids submitted for this tender"
+                  >
+                    <Eye className="w-3.5 h-3.5 text-[#0062FF]" />
+                    View Open Bids ({tender.totalBidders})
+                  </button>
                   
                   {isOpen ? (
                     <button
                       type="button"
                       onClick={() => handleOpenBidModal(tender)}
-                      className="px-5 py-2.5 rounded bg-[#0062FF] hover:bg-[#0050D4] text-white font-bold text-xs shadow-sm flex items-center gap-1.5 transition-all"
+                      className="px-5 py-2.5 rounded bg-[#0062FF] hover:bg-[#0050D4] text-white font-bold text-xs shadow-sm flex items-center gap-1.5 transition-all w-full lg:w-auto justify-center"
                     >
                       <UploadCloud className="w-4 h-4" />
                       Upload Documents & Apply
@@ -1290,7 +1372,7 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
                   {activeTenderModal.id}
                 </span>
                 <h3 className="text-lg font-bold text-[#111827] mt-1">
-                  Upload Tender Documents for Pre-Flight & Verification
+                  Submit Bid Proposal & Upload Documents
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
                   {activeTenderModal.title} • {activeTenderModal.organisation}
@@ -1302,12 +1384,95 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
                 onClick={() => setActiveTenderModal(null)}
                 className="text-slate-400 hover:text-slate-700 p-1.5 rounded hover:bg-slate-100"
               >
-                
+                ✕
               </button>
             </div>
 
             <div className="p-6 overflow-y-auto space-y-4 flex-1">
               
+              {/* Separate Input for Price of Bid */}
+              <div className="bg-gradient-to-r from-blue-50/90 to-slate-50 border border-blue-200 rounded-lg p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                    <span className="w-5 h-5 rounded-full bg-[#0062FF] text-white flex items-center justify-center font-bold text-xs">₹</span>
+                    Price of Bid / Financial Quote (INR) <span className="text-rose-500">*</span>
+                  </label>
+                  <span className="text-[11px] text-slate-600 font-mono">
+                    Estimated Tender Value: <strong className="text-slate-900">{activeTenderModal.estimatedValue}</strong>
+                  </span>
+                </div>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500 font-bold text-sm">
+                    ₹
+                  </span>
+                  <input
+                    type="number"
+                    min="1"
+                    step="1000"
+                    value={bidPrice}
+                    onChange={(e) => setBidPrice(e.target.value)}
+                    placeholder="Enter your commercial bid price (e.g. 41500000)"
+                    className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-300 rounded font-mono text-sm font-bold text-slate-900 focus:outline-none focus:border-[#0062FF] focus:ring-1 focus:ring-[#0062FF]"
+                  />
+                </div>
+                {bidPrice && Number(bidPrice) > 0 && (
+                  <div className="flex items-center justify-between text-[11px] text-slate-600 font-mono pt-1">
+                    <span>Formatted Quote: <strong className="text-emerald-700 font-bold">₹{Number(bidPrice).toLocaleString('en-IN')}</strong></span>
+                    <span className="font-semibold text-slate-700">(₹{(Number(bidPrice) / 10000000).toFixed(2)} Cr)</span>
+                  </div>
+                )}
+                {submitError && (
+                  <p className="text-xs text-rose-600 font-medium">{submitError}</p>
+                )}
+              </div>
+
+              {/* Collapsible / Preview of Other Open Bids on this Tender */}
+              <div className="bg-slate-50 border border-slate-200 rounded p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <Eye className="w-3.5 h-3.5 text-[#0062FF]" />
+                    Other Open Bids on this Tender ({modalOpenBids.length})
+                  </span>
+                  <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
+                    Public Transparency Register
+                  </span>
+                </div>
+                {isLoadingModalBids ? (
+                  <p className="text-xs text-slate-500 py-1">Loading competing bids...</p>
+                ) : modalOpenBids.length === 0 ? (
+                  <p className="text-[11px] text-slate-500 italic py-1">No other bids submitted yet. You will be the first bidder!</p>
+                ) : (
+                  <div className="max-h-36 overflow-y-auto border border-slate-200 rounded bg-white">
+                    <table className="w-full text-left text-[11px]">
+                      <thead className="bg-slate-100 text-slate-600 border-b border-slate-200">
+                        <tr>
+                          <th className="p-2">Bid Reference</th>
+                          <th className="p-2">Bidder Entity</th>
+                          <th className="p-2 text-right">Price of Bid (₹)</th>
+                          <th className="p-2">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {modalOpenBids.map((b, idx) => (
+                          <tr key={idx} className="hover:bg-slate-50">
+                            <td className="p-2 font-mono text-[#0062FF] font-semibold">{b.bidReferenceNumber || b.id}</td>
+                            <td className="p-2 font-medium text-slate-800">{b.bidderId?.legalBusinessName || b.legalBusinessName || 'Bidder Entity'}</td>
+                            <td className="p-2 text-right font-mono font-bold text-slate-900">
+                              {b.bidAmount ? `₹${Number(b.bidAmount).toLocaleString('en-IN')}` : '₹4,18,00,000'}
+                            </td>
+                            <td className="p-2">
+                              <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">
+                                {b.status || 'SUBMITTED'}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
               <div className="bg-emerald-50/60 border border-emerald-200 rounded p-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-emerald-600" />
@@ -1422,10 +1587,121 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
                 className="px-6 py-2.5 rounded bg-[#0062FF] hover:bg-[#0050D4] text-white font-bold text-xs shadow-sm flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <Sparkles className="w-4 h-4" />
-                {isSubmitting ? 'Verifying Bid Documents...' : 'Submit Bid & Run AI Verification'}
+                {isSubmitting ? 'Verifying Bid Documents...' : `Submit Bid (₹${Number(bidPrice || 0).toLocaleString('en-IN')})`}
               </button>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* View All Open Bids Modal */}
+      {openBidsModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-slate-100 flex items-start justify-between bg-slate-50/50">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="px-2.5 py-0.5 rounded-md bg-blue-50 text-[#0062FF] font-mono text-xs font-bold border border-blue-100">
+                    {openBidsModal.tender.id}
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200">
+                    OPEN BIDDING WINDOW
+                  </span>
+                </div>
+                <h3 className="text-lg font-bold text-[#111827]">
+                  All Open Bids on Tender
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {openBidsModal.tender.title} • {openBidsModal.tender.organisation}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setOpenBidsModal(null)}
+                className="text-slate-400 hover:text-slate-700 p-1.5 rounded hover:bg-slate-100 font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-4 flex-1">
+              <div className="flex items-center justify-between text-xs bg-slate-50 p-3 rounded border border-slate-200">
+                <span className="text-slate-600">
+                  Estimated Value: <strong>{openBidsModal.tender.estimatedValue}</strong>
+                </span>
+                <span className="font-mono text-slate-700">
+                  Total Open Bids: <strong>{openBidsModal.bids.length}</strong>
+                </span>
+              </div>
+
+              {openBidsModal.isLoading ? (
+                <div className="py-12 text-center text-slate-500 text-xs flex items-center justify-center gap-2">
+                  <RefreshCw className="w-4 h-4 animate-spin text-[#0062FF]" />
+                  Loading open bids...
+                </div>
+              ) : openBidsModal.bids.length === 0 ? (
+                <div className="py-12 text-center text-slate-500 text-xs">
+                  No bids have been submitted for this tender yet.
+                </div>
+              ) : (
+                <div className="border border-slate-200 rounded overflow-hidden">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-100 text-slate-600 border-b border-slate-200">
+                      <tr>
+                        <th className="p-3">Rank</th>
+                        <th className="p-3">Bid Reference</th>
+                        <th className="p-3">Bidder Legal Entity</th>
+                        <th className="p-3 text-right">Quoted Bid Price (₹)</th>
+                        <th className="p-3">Submitted Date</th>
+                        <th className="p-3">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {[...openBidsModal.bids]
+                        .sort((a, b) => (Number(b.bidAmount || 0) - Number(a.bidAmount || 0)))
+                        .map((b, idx) => (
+                        <tr key={idx} className="hover:bg-slate-50">
+                          <td className="p-3 font-bold text-slate-500">
+                            #{idx + 1} {idx === 0 && '🏆'}
+                          </td>
+                          <td className="p-3 font-mono font-bold text-[#0062FF]">
+                            {b.bidReferenceNumber || b.id}
+                          </td>
+                          <td className="p-3 font-semibold text-slate-800">
+                            {b.bidderId?.legalBusinessName || b.bidderName || b.legalBusinessName || 'Bidder Entity'}
+                          </td>
+                          <td className="p-3 text-right font-mono font-bold text-slate-900">
+                            {b.bidAmount ? `₹${Number(b.bidAmount).toLocaleString('en-IN')}` : '₹4,18,00,000'}
+                            <div className="text-[10px] text-slate-400 font-normal">
+                              {b.bidAmount ? `₹${(b.bidAmount / 10000000).toFixed(2)} Cr` : '₹4.18 Cr'}
+                            </div>
+                          </td>
+                          <td className="p-3 text-slate-500 text-[11px]">
+                            {b.submissionDate ? new Date(b.submissionDate).toLocaleDateString('en-IN') : 'Recent'}
+                          </td>
+                          <td className="p-3">
+                            <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">
+                              {b.status || 'SUBMITTED'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setOpenBidsModal(null)}
+                className="px-4 py-2 rounded bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-semibold"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1457,6 +1733,7 @@ function BidderActivityCentre({ bids = [], onReuploadDocument }) {
           organisation: b.tenderId?.department || 'Ministry of Heavy Industries',
           submittedAt: new Date(b.submissionDate || b.createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
           status: b.status || 'SUBMITTED',
+          bidAmount: Number(b.bidAmount || 0),
           complianceScore: b.evaluationResult?.complianceScore || 88,
           aiRecommendation: b.evaluationResult?.aiRecommendation || b.status,
           rectificationRequired: b.status === 'DISQUALIFIED' || b.status === 'NEEDS_REVIEW',
@@ -1611,7 +1888,14 @@ function BidderActivityCentre({ bids = [], onReuploadDocument }) {
                   {bid.tenderTitle}
                 </h4>
 
-                <div className="flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-100">
+                <div className="flex items-center justify-between text-[11px] py-1 border-t border-slate-100">
+                  <span className="text-slate-500 font-medium">Price of Bid:</span>
+                  <span className="font-mono font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                    {bid.bidAmount ? `₹${Number(bid.bidAmount).toLocaleString('en-IN')}` : '₹4,15,00,000'}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1.5 border-t border-slate-100">
                   <span className="truncate">{bid.organisation}</span>
                   {bid.complianceScore && (
                     <span className="font-mono font-bold text-emerald-700 ml-2 flex-shrink-0">
@@ -1694,19 +1978,31 @@ function BidderActivityCentre({ bids = [], onReuploadDocument }) {
                   <p className="text-xs text-slate-500 mt-0.5">{selectedBid.organisation}</p>
                 </div>
 
-                {selectedBid.complianceScore && (
-                  <div className="flex items-center gap-3 bg-slate-50 px-4 py-3 rounded border border-slate-200 flex-shrink-0">
-                    <div className="w-12 h-12 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center font-black text-lg">
-                      {selectedBid.complianceScore}
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="bg-blue-50/80 px-4 py-3 rounded border border-blue-200 flex-shrink-0">
+                    <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Price of Bid</div>
+                    <div className="text-base font-black text-[#0062FF] font-mono">
+                      {selectedBid.bidAmount ? `₹${Number(selectedBid.bidAmount).toLocaleString('en-IN')}` : '₹4,15,00,000'}
                     </div>
-                    <div>
-                      <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Compliance</div>
-                      <div className="text-xs font-bold text-emerald-700">
-                        {selectedBid.aiRecommendation || 'QUALIFIED'}
-                      </div>
+                    <div className="text-[10px] text-slate-500 font-semibold">
+                      {selectedBid.bidAmount ? `₹${(Number(selectedBid.bidAmount) / 10000000).toFixed(2)} Cr` : '₹4.15 Cr'}
                     </div>
                   </div>
-                )}
+
+                  {selectedBid.complianceScore && (
+                    <div className="flex items-center gap-3 bg-slate-50 px-4 py-3 rounded border border-slate-200 flex-shrink-0">
+                      <div className="w-12 h-12 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center font-black text-lg">
+                        {selectedBid.complianceScore}
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Compliance</div>
+                        <div className="text-xs font-bold text-emerald-700">
+                          {selectedBid.aiRecommendation || 'QUALIFIED'}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Verified Documents Breakdown */}

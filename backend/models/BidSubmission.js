@@ -72,6 +72,13 @@ const BidSubmissionSchema = new mongoose.Schema({
     unique: true,
     index: true,
   },
+  bidAmount: {
+    type: Number,
+    required: true,
+    default: 0,
+    min: 0,
+    index: true,
+  },
 
   uploadedDocuments: [UploadedDocumentSchema],
 

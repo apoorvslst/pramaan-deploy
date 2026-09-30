@@ -181,6 +181,14 @@ export const api = {
     return data.submissions || [];
   },
 
+  async getBidsForTender(tenderId) {
+    const res = await fetch(`${API_BASE}/bids/tender/${tenderId}`, {
+      headers: getAuthHeaders()
+    });
+    const data = await parseResponse(res);
+    return data.submissions || data.bids || [];
+  },
+
   async submitBid(formDataOrJson) {
     const isFormData = formDataOrJson instanceof FormData;
     const res = await fetch(`${API_BASE}/bids/submit`, {

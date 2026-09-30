@@ -100,6 +100,7 @@ const seedDatabase = async () => {
       tenderId: tender._id,
       bidderId: bidder._id,
       bidReferenceNumber: 'BID-REF-2026-0001',
+      bidAmount: 24200000,
       uploadedDocuments: [
         {
           docType: 'GST_CERTIFICATE',
