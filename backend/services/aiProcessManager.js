@@ -41,13 +41,13 @@ export async function startAIService() {
     return;
   }
 
-  // Locate AI directory (either backend/ai or ../ai)
+  // Locate AI microservice directory (backend/ai)
   let aiDir = path.resolve(__dirname, '../ai');
   if (!fs.existsSync(aiDir)) {
-    aiDir = path.resolve(process.cwd(), 'ai');
+    aiDir = path.resolve(process.cwd(), 'backend/ai');
   }
   if (!fs.existsSync(aiDir)) {
-    aiDir = path.resolve(process.cwd(), '../ai');
+    aiDir = path.resolve(process.cwd(), 'ai');
   }
 
   if (!fs.existsSync(aiDir)) {
