@@ -38,13 +38,27 @@ dotenv.config();
 const app = express();
 const httpServer = http.createServer(app);
 
+// Setup Dynamic CORS origin validator
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true; // Allow curl, mobile apps, server-to-server
+  if (origin.includes('localhost') || origin.includes('127.0.0.1')) return true;
+  if (origin.endsWith('.vercel.app') || origin.includes('vercel.app')) return true;
+  if (process.env.FRONTEND_URL && (origin === process.env.FRONTEND_URL || process.env.FRONTEND_URL === '*')) return true;
+  return true; // Cloud deployments permissive mode
+};
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    callback(null, isAllowedOrigin(origin) ? (origin || true) : true);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'X-Correlation-Id', 'x-request-id'],
+};
+
 // Setup Socket.io
 const io = new SocketIOServer(httpServer, {
-  cors: {
-    origin: process.env.FRONTEND_URL || '*',
-    methods: ['GET', 'POST', 'PATCH', 'DELETE'],
-    credentials: true,
-  },
+  cors: corsOptions,
 });
 
 // Attach io instance to express app so routes/controllers can access it via req.app.get('io')
@@ -59,10 +73,7 @@ app.use(securityHeaders);
 app.use(helmet({ crossOriginResourcePolicy: false }));
 
 // Layer 2: CORS
-app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
-  credentials: true,
-}));
+app.use(cors(corsOptions));
 
 // Layer 3: Request Correlation ID (X-Request-ID propagation for distributed tracing)
 app.use(correlationId);
