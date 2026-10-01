@@ -23,7 +23,7 @@ WORKDIR /app
 
 # Install Node dependencies first for Docker layer caching
 COPY package*.json ./
-RUN npm install --omit=dev
+RUN npm install
 
 # Install Python AI microservice dependencies
 COPY ai/requirements.txt ./ai/
