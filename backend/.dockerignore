@@ -1,0 +1,10 @@
+node_modules
+npm-debug.log
+.git
+.env
+data/temp/*
+data/uploads/*
+data/chromadb/*
+__pycache__
+*.pyc
+*.pyo

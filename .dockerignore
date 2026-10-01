@@ -1,0 +1,13 @@
+node_modules
+npm-debug.log
+.git
+.env
+frontend
+backend/node_modules
+backend/data/temp/*
+backend/data/uploads/*
+backend/data/chromadb/*
+__pycache__
+*.pyc
+*.pyo
+dist
