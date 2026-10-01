@@ -20,6 +20,7 @@ import aiRoutes from './routes/aiRoutes.js';
 import bidderRoutes from './routes/bidderRoutes.js';
 import cracRoutes from './routes/cracRoutes.js';
 import path from 'path';
+import { startAIService, stopAIService } from './services/aiProcessManager.js';
 
 // ─── Chaos Engineering & Resilience Middleware ───
 import {
@@ -273,6 +274,9 @@ const gracefulShutdown = async (signal) => {
     console.error('\x1b[31m[Shutdown Error]\x1b[0m MongoDB close error:', err.message);
   }
 
+  // 4. Stop embedded AI microservice
+  stopAIService();
+
   console.log('\x1b[32m[Shutdown]\x1b[0m Graceful shutdown complete. Goodbye! 👋');
   process.exit(0);
 };
@@ -299,7 +303,7 @@ process.on('uncaughtException', (error) => {
 // ═══════════════════════════════════════════════════════════════
 const PORT = process.env.PORT || 5000;
 
-httpServer.listen(PORT, () => {
+httpServer.listen(PORT, async () => {
   console.log(`
 \x1b[32m════════════════════════════════════════════════════════\x1b[0m
 \x1b[1m🚀 PRAMAN Backend Engine v2.0.0 (Chaos-Hardened)\x1b[0m
@@ -314,6 +318,8 @@ httpServer.listen(PORT, () => {
 `);
   // Connect to DB asynchronously
   connectDB();
+  // Start embedded AI microservice process
+  await startAIService();
 });
 
 export { app, io, httpServer };

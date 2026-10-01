@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
+    "build": "npm install && (pip install -r ai/requirements.txt || pip3 install -r ai/requirements.txt || true)",
     "dev": "node --watch server.js",
     "seed": "node scripts/seed.js",
     "seed:chaos": "node scripts/seed-chaos.js",
