@@ -36,9 +36,9 @@ def _get_ocr_engine():
             from rapidocr_onnxruntime import RapidOCR
             _ocr_engine = RapidOCR()
             logger.info("[PaddleOCR] RapidOCR (PaddleOCR PP-OCRv4 ONNX) engine initialized.")
-        except ImportError:
-            logger.error("[PaddleOCR] rapidocr-onnxruntime not installed. Run: pip install rapidocr-onnxruntime")
-            raise
+        except Exception as e:
+            logger.warning(f"[PaddleOCR] RapidOCR engine not available: {e}. Using fallback extractors.")
+            return None
     return _ocr_engine
 
 
@@ -89,7 +89,14 @@ def run_paddle_ocr_on_image(img_array: np.ndarray) -> List[Dict]:
     ]
     """
     engine = _get_ocr_engine()
-    result, elapse = engine(img_array)
+    if engine is None:
+        return []
+
+    try:
+        result, elapse = engine(img_array)
+    except Exception as e:
+        logger.warning(f"[PaddleOCR] Engine execution failed: {e}")
+        return []
 
     ocr_results = []
     if result is None:
@@ -130,10 +137,14 @@ def run_paddle_ocr_on_pdf(
     Returns:
         (ocr_results, page_width_px, page_height_px)
     """
-    img = _pdf_page_to_image(file_path, page_num=page_num, dpi=dpi)
-    h, w = img.shape[:2]
-    results = run_paddle_ocr_on_image(img)
-    return results, w, h
+    try:
+        img = _pdf_page_to_image(file_path, page_num=page_num, dpi=dpi)
+        h, w = img.shape[:2]
+        results = run_paddle_ocr_on_image(img)
+        return results, w, h
+    except Exception as e:
+        logger.warning(f"[PaddleOCR] PDF rendering failed: {e}")
+        return [], 800, 1100
 
 
 # ──────────────────────────────────────────────
@@ -147,12 +158,16 @@ def extract_full_text_paddle(file_path: str) -> str:
     scanned (very little native text), falls back to PaddleOCR on rendered pages.
     """
     # Try native text first
-    doc = fitz.open(file_path)
-    page_count = len(doc)
     native_text = ""
-    for page in doc:
-        native_text += page.get_text("text") + "\n"
-    doc.close()
+    page_count = 1
+    try:
+        doc = fitz.open(file_path)
+        page_count = len(doc)
+        for page in doc:
+            native_text += page.get_text("text") + "\n"
+        doc.close()
+    except Exception as e:
+        logger.warning(f"[PaddleOCR] Native text extraction failed: {e}")
 
     native_text = native_text.strip()
 
@@ -167,7 +182,8 @@ def extract_full_text_paddle(file_path: str) -> str:
         try:
             results, _, _ = run_paddle_ocr_on_pdf(file_path, page_num=page_idx)
             page_text = " ".join([r["text"] for r in results])
-            all_text_parts.append(page_text)
+            if page_text.strip():
+                all_text_parts.append(page_text)
         except Exception as e:
             logger.warning(f"[PaddleOCR] Page {page_idx} OCR failed: {e}")
 

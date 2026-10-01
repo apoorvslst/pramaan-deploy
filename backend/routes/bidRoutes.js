@@ -7,6 +7,7 @@ import {
   getAllSubmissions,
   resolveGstinEndpoint,
   verifyPanEndpoint,
+  uploadBidDocument,
 } from '../controllers/bidController.js';
 import { protect, authorize } from '../middlewares/auth.js';
 import { upload, computeFileHashes } from '../middlewares/upload.js';
@@ -21,6 +22,14 @@ router.get('/verify-pan/:pan', verifyPanEndpoint);
 
 // List all submissions (accessible by authenticated users, or for dashboard)
 router.get('/', getAllSubmissions);
+
+// Upload / Replace a document for a specific bid submission
+router.post(
+  '/:id/upload-doc',
+  upload.single('file'),
+  computeFileHashes,
+  uploadBidDocument
+);
 
 // Bidder submission route with multipart file upload and SHA-256 fingerprinting
 router.post(

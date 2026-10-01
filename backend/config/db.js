@@ -236,13 +236,18 @@ async function autoSeedDefaults() {
           }
         },
         uploadedDocuments: [
-          { docType: 'GST_CERTIFICATE', originalFileName: 'GST_Registration_Certificate_OM.pdf', storagePath: 'uploads/gst_om.pdf', mimeType: 'application/pdf', fileSizeBytes: 254000, sha256Hash: 'bc4ebb4278b4a25b00152d8ec5b1cd834ee9ceb23475e08a59b8829c247beb1f' },
-          { docType: 'PAN_CARD', originalFileName: 'Permanent_Account_Number_OM.pdf', storagePath: 'uploads/pan_om.pdf', mimeType: 'application/pdf', fileSizeBytes: 182000, sha256Hash: 'fce920eeb3efb47669ccc21b23b5eb9721c165baed1bec96cf16d17800998b84' },
-          { docType: 'UDYAM_CERTIFICATE', originalFileName: 'Udyam_MSME_OM.pdf', storagePath: 'uploads/udyam_om.pdf', mimeType: 'application/pdf', fileSizeBytes: 310000, sha256Hash: '984bfa4278b4a25b00152d8ec5b1cd834ee9ceb23475e08a59b8829c247be99a' }
+          { docType: 'GST_CERTIFICATE', originalFileName: 'Official_GST_REG06.pdf', storagePath: '/uploads/sample_gst_clean.pdf', mimeType: 'application/pdf', fileSizeBytes: 23818, sha256Hash: '8192b71d6e3db91a3b5e71f4e9e4049d97357feda9f113f76ed30338d04de9f3' },
+          { docType: 'PAN_CARD', originalFileName: 'PAN_Card_Verification.pdf', storagePath: '/uploads/sample_udyam_clean.pdf', mimeType: 'application/pdf', fileSizeBytes: 23511, sha256Hash: '48c7f4391bde36ab540d10c7b6b0dc2ed89d54248f7b58617c19441b9c7f6ff3' },
+          { docType: 'UDYAM_CERTIFICATE', originalFileName: 'Udyam_MSME_Registration.pdf', storagePath: '/uploads/sample_udyam_clean.pdf', mimeType: 'application/pdf', fileSizeBytes: 23511, sha256Hash: '48c7f4391bde36ab540d10c7b6b0dc2ed89d54248f7b58617c19441b9c7f6ff3' }
         ]
       });
     } else {
       subOm.evaluationResult.complianceScore = 95.4;
+      subOm.uploadedDocuments = [
+        { docType: 'GST_CERTIFICATE', originalFileName: 'Official_GST_REG06.pdf', storagePath: '/uploads/sample_gst_clean.pdf', mimeType: 'application/pdf', fileSizeBytes: 23818, sha256Hash: '8192b71d6e3db91a3b5e71f4e9e4049d97357feda9f113f76ed30338d04de9f3' },
+        { docType: 'PAN_CARD', originalFileName: 'PAN_Card_Verification.pdf', storagePath: '/uploads/sample_udyam_clean.pdf', mimeType: 'application/pdf', fileSizeBytes: 23511, sha256Hash: '48c7f4391bde36ab540d10c7b6b0dc2ed89d54248f7b58617c19441b9c7f6ff3' },
+        { docType: 'UDYAM_CERTIFICATE', originalFileName: 'Udyam_MSME_Registration.pdf', storagePath: '/uploads/sample_udyam_clean.pdf', mimeType: 'application/pdf', fileSizeBytes: 23511, sha256Hash: '48c7f4391bde36ab540d10c7b6b0dc2ed89d54248f7b58617c19441b9c7f6ff3' }
+      ];
       await subOm.save();
     }
 
@@ -269,13 +274,18 @@ async function autoSeedDefaults() {
           }
         },
         uploadedDocuments: [
-          { docType: 'GST_CERTIFICATE', originalFileName: 'gst_vikram.pdf', storagePath: 'uploads/gst_vikram.pdf', mimeType: 'application/pdf', fileSizeBytes: 1048576, sha256Hash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855' },
-          { docType: 'PAN_CARD', originalFileName: 'pan_vikram.pdf', storagePath: 'uploads/pan_vikram.pdf', mimeType: 'application/pdf', fileSizeBytes: 524288, sha256Hash: 'ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb' },
-          { docType: 'UDYAM_CERTIFICATE', originalFileName: 'udyam_vikram.pdf', storagePath: 'uploads/udyam_vikram.pdf', mimeType: 'application/pdf', fileSizeBytes: 819200, sha256Hash: '88d4066917f16e7638c0e6107b30d33d5088f6b09783f50b81a28e3bd3fe8634' }
+          { docType: 'GST_CERTIFICATE', originalFileName: 'GST_REG06_VikramSolar.pdf', storagePath: '/uploads/sample_gst_clean.pdf', mimeType: 'application/pdf', fileSizeBytes: 23818, sha256Hash: '8192b71d6e3db91a3b5e71f4e9e4049d97357feda9f113f76ed30338d04de9f3' },
+          { docType: 'PAN_CARD', originalFileName: 'PAN_Card_VikramSolar.pdf', storagePath: '/uploads/sample_udyam_clean.pdf', mimeType: 'application/pdf', fileSizeBytes: 23511, sha256Hash: '48c7f4391bde36ab540d10c7b6b0dc2ed89d54248f7b58617c19441b9c7f6ff3' },
+          { docType: 'UDYAM_CERTIFICATE', originalFileName: 'Udyam_MSME_VikramSolar.pdf', storagePath: '/uploads/sample_udyam_clean.pdf', mimeType: 'application/pdf', fileSizeBytes: 23511, sha256Hash: '48c7f4391bde36ab540d10c7b6b0dc2ed89d54248f7b58617c19441b9c7f6ff3' }
         ]
       });
     } else {
       subVikram.evaluationResult.complianceScore = 96.8;
+      subVikram.uploadedDocuments = [
+        { docType: 'GST_CERTIFICATE', originalFileName: 'GST_REG06_VikramSolar.pdf', storagePath: '/uploads/sample_gst_clean.pdf', mimeType: 'application/pdf', fileSizeBytes: 23818, sha256Hash: '8192b71d6e3db91a3b5e71f4e9e4049d97357feda9f113f76ed30338d04de9f3' },
+        { docType: 'PAN_CARD', originalFileName: 'PAN_Card_VikramSolar.pdf', storagePath: '/uploads/sample_udyam_clean.pdf', mimeType: 'application/pdf', fileSizeBytes: 23511, sha256Hash: '48c7f4391bde36ab540d10c7b6b0dc2ed89d54248f7b58617c19441b9c7f6ff3' },
+        { docType: 'UDYAM_CERTIFICATE', originalFileName: 'Udyam_MSME_VikramSolar.pdf', storagePath: '/uploads/sample_udyam_clean.pdf', mimeType: 'application/pdf', fileSizeBytes: 23511, sha256Hash: '48c7f4391bde36ab540d10c7b6b0dc2ed89d54248f7b58617c19441b9c7f6ff3' }
+      ];
       await subVikram.save();
     }
 
@@ -302,12 +312,18 @@ async function autoSeedDefaults() {
           }
         },
         uploadedDocuments: [
-          { docType: 'GST_CERTIFICATE', originalFileName: 'gst_apex.pdf', storagePath: 'uploads/gst_apex.pdf', mimeType: 'application/pdf', fileSizeBytes: 1048576, sha256Hash: '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8' },
-          { docType: 'PAN_CARD', originalFileName: 'pan_apex.pdf', storagePath: 'uploads/pan_apex.pdf', mimeType: 'application/pdf', fileSizeBytes: 524288, sha256Hash: '4b227777d4dd1fc61c6f884f48641d02b4d121d3fd328cb08b5531fcacdabf8a' }
+          { docType: 'GST_CERTIFICATE', originalFileName: 'GST_REG06_ApexInfra.pdf', storagePath: '/uploads/sample_gst_clean.pdf', mimeType: 'application/pdf', fileSizeBytes: 23818, sha256Hash: '8192b71d6e3db91a3b5e71f4e9e4049d97357feda9f113f76ed30338d04de9f3' },
+          { docType: 'PAN_CARD', originalFileName: 'PAN_Card_ApexInfra.pdf', storagePath: '/uploads/sample_udyam_clean.pdf', mimeType: 'application/pdf', fileSizeBytes: 23511, sha256Hash: '48c7f4391bde36ab540d10c7b6b0dc2ed89d54248f7b58617c19441b9c7f6ff3' },
+          { docType: 'UDYAM_CERTIFICATE', originalFileName: 'Udyam_MSME_ApexInfra.pdf', storagePath: '/uploads/sample_udyam_clean.pdf', mimeType: 'application/pdf', fileSizeBytes: 23511, sha256Hash: '48c7f4391bde36ab540d10c7b6b0dc2ed89d54248f7b58617c19441b9c7f6ff3' }
         ]
       });
     } else {
       subApex.evaluationResult.complianceScore = 93.6;
+      subApex.uploadedDocuments = [
+        { docType: 'GST_CERTIFICATE', originalFileName: 'GST_REG06_ApexInfra.pdf', storagePath: '/uploads/sample_gst_clean.pdf', mimeType: 'application/pdf', fileSizeBytes: 23818, sha256Hash: '8192b71d6e3db91a3b5e71f4e9e4049d97357feda9f113f76ed30338d04de9f3' },
+        { docType: 'PAN_CARD', originalFileName: 'PAN_Card_ApexInfra.pdf', storagePath: '/uploads/sample_udyam_clean.pdf', mimeType: 'application/pdf', fileSizeBytes: 23511, sha256Hash: '48c7f4391bde36ab540d10c7b6b0dc2ed89d54248f7b58617c19441b9c7f6ff3' },
+        { docType: 'UDYAM_CERTIFICATE', originalFileName: 'Udyam_MSME_ApexInfra.pdf', storagePath: '/uploads/sample_udyam_clean.pdf', mimeType: 'application/pdf', fileSizeBytes: 23511, sha256Hash: '48c7f4391bde36ab540d10c7b6b0dc2ed89d54248f7b58617c19441b9c7f6ff3' }
+      ];
       await subApex.save();
     }
 

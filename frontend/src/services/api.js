@@ -213,6 +213,19 @@ export const api = {
     return await parseResponse(res);
   },
 
+  async uploadBidDocument(bidId, file, docType = '') {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (docType) formData.append('docType', docType);
+
+    const res = await fetch(`${API_BASE}/bids/${encodeURIComponent(bidId)}/upload-doc`, {
+      method: 'POST',
+      headers: getAuthHeaders(false),
+      body: formData
+    });
+    return await parseResponse(res);
+  },
+
   async resolveGstin(gstin) {
     if (!gstin) return null;
     const res = await fetch(`${API_BASE}/bids/resolve-gstin/${encodeURIComponent(gstin.trim())}`);
@@ -383,6 +396,25 @@ export const api = {
   async getCracForBid(bidId) {
     const res = await fetch(`${API_BASE}/crac/bid/${bidId}`, {
       headers: getAuthHeaders()
+    });
+    return await parseResponse(res);
+  },
+
+  // ─── AI DOCUMENT OCR & FORENSICS ───
+  async scanDocument(file, claimedType = 'GST_CERTIFICATE', claimedId = '') {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (claimedType) formData.append('claimedType', claimedType);
+    if (claimedId) formData.append('claimedId', claimedId);
+
+    const token = localStorage.getItem('praman_token');
+    const headers = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch(`${API_BASE}/ai/verify-document`, {
+      method: 'POST',
+      headers,
+      body: formData,
     });
     return await parseResponse(res);
   }

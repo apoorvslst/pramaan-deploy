@@ -44,14 +44,14 @@ class AIClient {
    * Run full verification pipeline on a document PDF
    * (Forensics + QR + OCR + Signature Detection)
    */
-  async verifyDocument(filePath, claimedType = null, claimedId = '') {
+  async verifyDocument(filePath, claimedType = null, claimedId = '', originalName = null) {
     if (!fs.existsSync(filePath)) {
       throw new Error(`File not found for verification: ${filePath}`);
     }
 
     const formData = new FormData();
     const fileBlob = await fs.openAsBlob(filePath);
-    const fileName = path.basename(filePath).toLowerCase().endsWith('.pdf') ? path.basename(filePath) : `${path.basename(filePath)}.pdf`;
+    const fileName = originalName || path.basename(filePath);
     formData.append('file', fileBlob, fileName);
 
     if (claimedType) {

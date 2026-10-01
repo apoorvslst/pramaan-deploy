@@ -37,13 +37,17 @@ export const createTender = async (req, res) => {
         allowMSMEExemption: rules?.allowMSMEExemption ?? true,
         emdRequired: rules?.emdRequired ?? true,
         emdAmountINR: rules?.emdAmountINR ?? Math.round(estimatedValueINR * 0.02),
-        requiredCertificates: rules?.requiredCertificates || [
-          { type: 'GST_CERTIFICATE', isMandatory: true, weightage: 20 },
-          { type: 'UDYAM_CERTIFICATE', isMandatory: true, weightage: 20 },
-          { type: 'PAN_CARD', isMandatory: true, weightage: 15 },
-          { type: 'CA_TURNOVER_CERTIFICATE', isMandatory: true, weightage: 25 },
-          { type: 'DEBARMENT_AFFIDAVIT', isMandatory: true, weightage: 20 },
-        ]
+        requiredCertificates: (Array.isArray(rules?.requiredCertificates) && rules.requiredCertificates.length > 0)
+          ? rules.requiredCertificates.map(c => typeof c === 'string' ? { type: c, isMandatory: true, weightage: 20 } : c)
+          : (Array.isArray(req.body.requiredDocuments) && req.body.requiredDocuments.length > 0)
+            ? req.body.requiredDocuments.map(c => typeof c === 'string' ? { type: c, isMandatory: true, weightage: 20 } : c)
+            : [
+                { type: 'GST_CERTIFICATE', isMandatory: true, weightage: 20 },
+                { type: 'UDYAM_CERTIFICATE', isMandatory: true, weightage: 20 },
+                { type: 'PAN_CARD', isMandatory: true, weightage: 15 },
+                { type: 'CA_TURNOVER_CERTIFICATE', isMandatory: true, weightage: 25 },
+                { type: 'DEBARMENT_AFFIDAVIT', isMandatory: true, weightage: 20 },
+              ]
       }
     });
 

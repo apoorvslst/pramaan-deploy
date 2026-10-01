@@ -34,6 +34,17 @@ import { Award, Star } from 'lucide-react';
 // 1. BIDDER MOCK DATA & CONSTANTS
 // ==========================================
 
+const STATUTORY_DOC_OPTIONS = [
+  { id: 'GST_CERTIFICATE', name: 'GST Registration Certificate (Form GST REG-06)', sample: '/uploads/sample_gst_clean.pdf', fileName: 'Official_GST_REG06.pdf' },
+  { id: 'PAN_CARD', name: 'Permanent Account Number (PAN Card)', sample: '/uploads/sample_udyam_clean.pdf', fileName: 'PAN_Card_Verification.pdf' },
+  { id: 'UDYAM_CERTIFICATE', name: 'Udyam MSME Registration Certificate', sample: '/uploads/sample_udyam_clean.pdf', fileName: 'Official_Udyam_Certificate.pdf' },
+  { id: 'CA_TURNOVER_CERTIFICATE', name: 'CA Certified Turnover Certificate & UDIN', sample: '/uploads/sample_udyam_clean.pdf', fileName: 'CA_Turnover_Certificate.pdf' },
+  { id: 'DEBARMENT_AFFIDAVIT', name: 'Non-Debarment & Anti-Blacklisting Affidavit', sample: '/uploads/sample_udyam_clean.pdf', fileName: 'Debarment_Affidavit.pdf' },
+  { id: 'OEM_AUTHORIZATION', name: 'OEM / Manufacturer Authorization (MAF)', sample: '/uploads/sample_udyam_clean.pdf', fileName: 'OEM_Authorization.pdf' },
+  { id: 'LOCAL_CONTENT_DECLARATION', name: 'Class-I Local Supplier (MII >= 50%) Declaration', sample: '/uploads/sample_udyam_clean.pdf', fileName: 'MII_Declaration.pdf' },
+  { id: 'ITR_ACKNOWLEDGEMENT', name: 'ITR-V / Income Tax Return Acknowledgement', sample: '/uploads/sample_udyam_clean.pdf', fileName: 'ITR_Acknowledgement.pdf' },
+];
+
 const defaultBidderProfile = {
   name: "Rajendra Mehta",
   email: "rajendra.mehta@solarixgreen.com",
@@ -1162,15 +1173,41 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
       handleGstinChange(initGst);
     }
 
-    const docList = Array.isArray(tender.statutoryDocs) && tender.statutoryDocs.length > 0
-      ? tender.statutoryDocs
-      : [
-          { id: 'GST_CERTIFICATE', name: 'GST Registration Certificate (Form GST REG-06)', required: true },
-          { id: 'PAN_CARD', name: 'Permanent Account Number (PAN Card)', required: true },
-          { id: 'CA_TURNOVER_CERTIFICATE', name: 'CA Certified Turnover Certificate', required: false },
-          { id: 'DEBARMENT_AFFIDAVIT', name: 'Non-Debarment / Anti-Blacklisting Affidavit', required: false },
-          { id: 'UDYAM_CERTIFICATE', name: 'Udyam MSME Registration Certificate', required: false },
-        ];
+    let docList = [];
+    if (Array.isArray(tender.rules?.requiredCertificates) && tender.rules.requiredCertificates.length > 0) {
+      docList = tender.rules.requiredCertificates.map(c => {
+        const type = typeof c === 'string' ? c : c.type;
+        const opt = STATUTORY_DOC_OPTIONS.find(o => o.id === type) || {};
+        return {
+          id: type,
+          name: opt.name || type.replace(/_/g, ' '),
+          required: c.isMandatory !== false,
+          sample: opt.sample || '/uploads/sample_udyam_clean.pdf',
+          sampleFileName: opt.fileName || `${type.toLowerCase()}.pdf`
+        };
+      });
+    } else if (Array.isArray(tender.requiredDocuments) && tender.requiredDocuments.length > 0) {
+      docList = tender.requiredDocuments.map(type => {
+        const opt = STATUTORY_DOC_OPTIONS.find(o => o.id === type) || {};
+        return {
+          id: type,
+          name: opt.name || type.replace(/_/g, ' '),
+          required: true,
+          sample: opt.sample || '/uploads/sample_udyam_clean.pdf',
+          sampleFileName: opt.fileName || `${type.toLowerCase()}.pdf`
+        };
+      });
+    } else if (Array.isArray(tender.statutoryDocs) && tender.statutoryDocs.length > 0) {
+      docList = tender.statutoryDocs;
+    } else {
+      docList = [
+        { id: 'GST_CERTIFICATE', name: 'GST Registration Certificate (Form GST REG-06)', required: true, sample: '/uploads/sample_gst_clean.pdf', sampleFileName: 'Official_GST_REG06.pdf' },
+        { id: 'PAN_CARD', name: 'Permanent Account Number (PAN Card)', required: true, sample: '/uploads/sample_udyam_clean.pdf', sampleFileName: 'PAN_Card_Verification.pdf' },
+        { id: 'UDYAM_CERTIFICATE', name: 'Udyam MSME Registration Certificate', required: true, sample: '/uploads/sample_udyam_clean.pdf', sampleFileName: 'Official_Udyam_Certificate.pdf' },
+        { id: 'CA_TURNOVER_CERTIFICATE', name: 'CA Certified Turnover Certificate & UDIN', required: false, sample: '/uploads/sample_udyam_clean.pdf', sampleFileName: 'CA_Turnover_Certificate.pdf' },
+        { id: 'DEBARMENT_AFFIDAVIT', name: 'Non-Debarment / Anti-Blacklisting Affidavit', required: false, sample: '/uploads/sample_udyam_clean.pdf', sampleFileName: 'Debarment_Affidavit.pdf' },
+      ];
+    }
 
     const initialDocs = {};
     docList.forEach((docItem, index) => {
@@ -1178,6 +1215,8 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
         id: docItem.id,
         name: docItem.name,
         required: Boolean(docItem.required),
+        sample: docItem.sample || '/uploads/sample_udyam_clean.pdf',
+        sampleFileName: docItem.sampleFileName || `${docItem.id.toLowerCase()}.pdf`,
         fileName: null,
         fileObj: null,
         status: 'EMPTY',
@@ -1220,6 +1259,23 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
     }));
   };
 
+  const handleAttachSampleDoc = (index) => {
+    setSubmitError(null);
+    setTenderDocs(prev => {
+      const doc = prev[index];
+      if (!doc) return prev;
+      return {
+        ...prev,
+        [index]: {
+          ...doc,
+          fileName: doc.sampleFileName || `${doc.id}__Certified.pdf`,
+          fileObj: null,
+          status: 'READY'
+        }
+      };
+    });
+  };
+
   const handleRemoveDoc = (index) => {
     setSubmitError(null);
     setTenderDocs(prev => ({
@@ -1239,10 +1295,11 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
       const updated = { ...prev };
       Object.keys(updated).forEach(k => {
         if (updated[k].required) {
-          const cleanName = updated[k].name.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 26);
+          const cleanName = updated[k].sampleFileName || `${updated[k].name.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 26)}__Certified.pdf`;
           updated[k] = {
             ...updated[k],
-            fileName: `${cleanName}__Certified.pdf`,
+            fileName: cleanName,
+            fileObj: null,
             status: 'READY',
           };
         }
@@ -1256,10 +1313,11 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
     setTenderDocs(prev => {
       const updated = { ...prev };
       Object.keys(updated).forEach(k => {
-        const cleanName = updated[k].name.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 26);
+        const cleanName = updated[k].sampleFileName || `${updated[k].name.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 26)}__Certified.pdf`;
         updated[k] = {
           ...updated[k],
-          fileName: `${cleanName}__Certified.pdf`,
+          fileName: cleanName,
+          fileObj: null,
           status: 'READY',
         };
       });
@@ -1274,7 +1332,7 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
     }
 
     if (!isAllMandatoryUploaded) {
-      setSubmitError(`Please attach all ${totalMandatoryCount} mandatory documents (GST REG-06 & PAN Card) before submitting.`);
+      setSubmitError(`Please attach all ${totalMandatoryCount} mandatory documents before submitting.`);
       return;
     }
 
@@ -1314,30 +1372,42 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
       const finalPincode = declaredPincode || gstinDetectionInfo?.pincode || '124507';
       const finalAddress = declaredAddress || `Plot 42, HSIIDC Industrial Area, ${finalCity}`;
 
-      const payload = {
-        tenderId: activeTenderModal._id || activeTenderModal.id,
-        bidAmount: parsedPrice,
-        bidPrice: parsedPrice,
-        priceOfBid: parsedPrice,
-        legalBusinessName: finalCompanyName,
-        gstin: finalGstin,
-        pan: finalPan,
-        udyamRegistrationNumber: finalUdyam,
-        entityType: normalizedEntityType,
-        addressLine1: finalAddress,
-        city: finalCity,
-        state: finalState,
-        pincode: finalPincode,
-        directors: [{ name: declaredDirector || user?.name || 'Managing Director', pan: finalPan }],
-        annualTurnoverINR: 15000000,
-        documents: attachedDocs.map(d => ({
-          docType: d.id || (d.name?.toLowerCase().includes('pan') ? 'PAN_CARD' : 'GST_CERTIFICATE'),
-          originalFileName: d.fileName
-        }))
-      };
+      const formData = new FormData();
+      formData.append('tenderId', activeTenderModal._id || activeTenderModal.id);
+      formData.append('bidAmount', parsedPrice);
+      formData.append('bidPrice', parsedPrice);
+      formData.append('priceOfBid', parsedPrice);
+      formData.append('legalBusinessName', finalCompanyName);
+      formData.append('gstin', finalGstin);
+      formData.append('pan', finalPan);
+      formData.append('udyamRegistrationNumber', finalUdyam);
+      formData.append('entityType', normalizedEntityType);
+      formData.append('addressLine1', finalAddress);
+      formData.append('city', finalCity);
+      formData.append('state', finalState);
+      formData.append('pincode', finalPincode);
+      formData.append('directors', JSON.stringify([{ name: declaredDirector || user?.name || 'Managing Director', pan: finalPan }]));
+      formData.append('annualTurnoverINR', 15000000);
+
+      const sampleDocs = [];
+      attachedDocs.forEach(d => {
+        const docTypeId = d.id || (d.name?.toLowerCase().includes('pan') ? 'PAN_CARD' : 'GST_CERTIFICATE');
+        if (d.fileObj) {
+          formData.append(`doc_${docTypeId}`, d.fileObj, d.fileName);
+        } else {
+          sampleDocs.push({
+            docType: docTypeId,
+            originalFileName: d.fileName,
+            storagePath: d.sample || (docTypeId === 'GST_CERTIFICATE' ? '/uploads/sample_gst_clean.pdf' : '/uploads/sample_udyam_clean.pdf')
+          });
+        }
+      });
+      if (sampleDocs.length > 0) {
+        formData.append('documents', JSON.stringify(sampleDocs));
+      }
 
       setSubmissionProgress(65);
-      const res = await api.submitBid(payload);
+      const res = await api.submitBid(formData);
       setSubmissionProgress(100);
 
       const newBid = {
@@ -1962,28 +2032,39 @@ function BidderTenderBrowser({ user, onBidSubmitted }) {
                               </button>
                             </div>
                           ) : (
-                            <label
-                              htmlFor={`tender-doc-${idx}`}
-                              className={`px-3 py-1.5 rounded-lg text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-1 transition-all ${
-                                isMandatory
-                                  ? 'bg-[#0062FF] hover:bg-[#0050D4] text-white'
-                                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200'
-                              }`}
-                            >
-                              <UploadCloud className="w-3 h-3" />
-                              Upload
-                              <input
-                                type="file"
-                                accept=".pdf,.png,.jpg,.jpeg"
-                                id={`tender-doc-${idx}`}
-                                className="hidden"
-                                onChange={(e) => {
-                                  const f = e.target.files[0];
-                                  if (f) handleAttachRealDoc(idx, f);
-                                  e.target.value = '';
-                                }}
-                              />
-                            </label>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => handleAttachSampleDoc(idx)}
+                                title="Attach genuine sample certificate for demo"
+                                className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-[#0062FF] border border-blue-200 transition-all flex items-center gap-1"
+                              >
+                                <Sparkles className="w-3 h-3 text-[#0062FF]" />
+                                Sample
+                              </button>
+                              <label
+                                htmlFor={`tender-doc-${idx}`}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold shadow-xs cursor-pointer inline-flex items-center gap-1 transition-all ${
+                                  isMandatory
+                                    ? 'bg-[#0062FF] hover:bg-[#0050D4] text-white'
+                                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200'
+                                }`}
+                              >
+                                <UploadCloud className="w-3 h-3" />
+                                Upload
+                                <input
+                                  type="file"
+                                  accept=".pdf,.png,.jpg,.jpeg"
+                                  id={`tender-doc-${idx}`}
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const f = e.target.files[0];
+                                    if (f) handleAttachRealDoc(idx, f);
+                                    e.target.value = '';
+                                  }}
+                                />
+                              </label>
+                            </div>
                           )}
                         </div>
                       </div>

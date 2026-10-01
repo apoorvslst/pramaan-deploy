@@ -48,11 +48,13 @@ REGEX_EXTRACTORS = {
         "constitutionOfBusiness": r"(?:Constitution\s+of\s+Business)[:\s\-]*([A-Za-z\s]+?)(?:\n|$)",
     },
     DocType.UDYAM_CERTIFICATE: {
-        "udyamNumber": r"(?:Udyam\s+Registration\s+(?:No|Number)|UDYAM)[:\s\-]*([A-Z]{2}[\-\s]?\d{2}[\-\s]?\d{7})",
-        "enterpriseType": r"(?:Type\s+of\s+Enterprise|Enterprise\s+Type|Category)[:\s\-]*(Micro|Small|Medium)",
-        "majorActivity": r"(?:Major\s+Activity)[:\s\-]*(Manufacturing|Services?|Trading)",
-        "nicCode": r"(?:NIC\s+(?:Code|2\s+Digit))[:\s\-]*(\d{2,5})",
-        "organizationType": r"(?:Organization\s+Type|Type\s+of\s+Organisation)[:\s\-]*([A-Za-z\s]+?)(?:\n|$)",
+        "udyamNumber": r"(?:Udyam\s+Registration\s+(?:No|Number)|UDYAM)[:\s\-]*\n?\s*([A-Z]{2}[\-\s]?\d{2}[\-\s]?\d{7})",
+        "enterpriseName": r"(?:Name\s+of\s+Enterprise|Enterprise\s+Name)[:\s\-]*\n?\s*([A-Za-z0-9\s&.,()]+?)(?:\n|$)",
+        "legalName": r"(?:Name\s+of\s+Enterprise|Enterprise\s+Name)[:\s\-]*\n?\s*([A-Za-z0-9\s&.,()]+?)(?:\n|$)",
+        "enterpriseType": r"(?:Type\s+of\s+Enterprise|Enterprise\s+Type|Category)[:\s\-]*\n?\s*(Micro|Small|Medium)",
+        "majorActivity": r"(?:Major\s+Activity)[:\s\-]*\n?\s*([A-Za-z\s/&]+?)(?:\n|$)",
+        "nicCode": r"(?:NIC\s+(?:Code|2\s+Digit))[:\s\-]*\n?\s*(\d{2,5})",
+        "organizationType": r"(?:Organization\s+Type|Type\s+of\s+Organisation)[:\s\-]*\n?\s*([A-Za-z\s]+?)(?:\n|$)",
     },
     DocType.PAN_CARD: {
         "pan": r"(?:Permanent\s+Account\s+Number|PAN)[:\s\-]*([A-Z]{5}\d{4}[A-Z])",
@@ -204,7 +206,41 @@ def _extract_with_regex(text: str, doc_type: DocType) -> Dict[str, str]:
     for field_name, pattern in patterns.items():
         match = re.search(pattern, text, re.IGNORECASE)
         if match:
-            extracted[field_name] = match.group(1).strip()
+            extracted[field_name] = (match.group(1) if match.groups() else match.group(0)).strip()
+
+    # Direct fallback searches for critical statutory identifiers
+    if doc_type == DocType.UDYAM_CERTIFICATE:
+        if "udyamNumber" not in extracted:
+            u_match = re.search(r"\b(UDYAM[\-\s]?[A-Z]{2}[\-\s]?\d{2}[\-\s]?\d{7})\b", text, re.IGNORECASE)
+            if u_match:
+                extracted["udyamNumber"] = u_match.group(1).strip().replace(" ", "")
+        if "enterpriseName" not in extracted:
+            ent_match = re.search(r"NAME\s+OF\s+ENTERPRISE[\s:\*]*([A-Za-z0-9\s&.,()]+)", text, re.IGNORECASE)
+            if ent_match:
+                val = ent_match.group(1).strip().split("\n")[0]
+                extracted["enterpriseName"] = val
+                extracted["legalName"] = val
+        if "enterpriseType" not in extracted:
+            type_match = re.search(r"\b(Micro|Small|Medium)\b", text, re.IGNORECASE)
+            if type_match:
+                extracted["enterpriseType"] = type_match.group(1).capitalize()
+        if "majorActivity" not in extracted:
+            act_match = re.search(r"\b(SERVICES|MANUFACTURING)\b", text, re.IGNORECASE)
+            if act_match:
+                extracted["majorActivity"] = act_match.group(1).upper()
+
+    elif doc_type == DocType.GST_CERTIFICATE:
+        if "gstin" not in extracted:
+            g_match = re.search(r"\b(\d{2}[A-Z]{5}\d{4}[A-Z]\d[A-Z\d][A-Z]\d)\b", text)
+            if g_match:
+                extracted["gstin"] = g_match.group(1).strip()
+
+    elif doc_type == DocType.PAN_CARD:
+        if "pan" not in extracted:
+            p_match = re.search(r"\b([A-Z]{5}\d{4}[A-Z])\b", text)
+            if p_match:
+                extracted["pan"] = p_match.group(1).strip()
+
     return extracted
 
 

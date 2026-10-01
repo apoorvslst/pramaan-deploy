@@ -3,10 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import {
   ShieldCheck, FileText, Plus, Search, Filter, Calendar,
   ArrowUpRight, CheckCircle, Clock, AlertCircle, Building, DollarSign,
-  Sparkles, RefreshCw, Layers, Network
+  Sparkles, RefreshCw, Layers, Network, FileCheck, Check
 } from 'lucide-react';
 import { MOCK_TENDERS_LIST } from '../data/mockData';
 import { api } from '../services/api';
+
+const STATUTORY_DOC_OPTIONS = [
+  { id: 'GST_CERTIFICATE', name: 'GST Registration Certificate (Form GST REG-06)', desc: 'Validates active GSTIN & Central/State taxpayer jurisdiction' },
+  { id: 'PAN_CARD', name: 'Permanent Account Number (PAN Card)', desc: 'Validates entity category, CBDT status & director linkage' },
+  { id: 'UDYAM_CERTIFICATE', name: 'Udyam MSME Registration Certificate', desc: 'Validates MSME classification & PPP 2012 EMD exemptions' },
+  { id: 'CA_TURNOVER_CERTIFICATE', name: 'CA Certified Turnover Certificate & UDIN', desc: 'Validates 3-year financial solvency and average turnover' },
+  { id: 'DEBARMENT_AFFIDAVIT', name: 'Non-Debarment & Anti-Blacklisting Affidavit', desc: 'Deponent sworn affidavit of non-debarment on stamp paper' },
+  { id: 'OEM_AUTHORIZATION', name: 'OEM / Manufacturer Authorization (MAF)', desc: 'Direct authorization letter from original equipment manufacturer' },
+  { id: 'LOCAL_CONTENT_DECLARATION', name: 'Class-I Local Supplier (MII >= 50%) Declaration', desc: 'Public Procurement Make in India local content self-certification' },
+  { id: 'ITR_ACKNOWLEDGEMENT', name: 'ITR-V / Income Tax Return Acknowledgement', desc: 'Last 3 Assessment Years filed return verification' },
+];
 
 export default function TenderManagement({ currentUser }) {
   const navigate = useNavigate();
@@ -28,6 +39,11 @@ export default function TenderManagement({ currentUser }) {
   const [isAiDrafting, setIsAiDrafting] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [createError, setCreateError] = useState(null);
+  const [selectedRequiredDocs, setSelectedRequiredDocs] = useState([
+    'GST_CERTIFICATE',
+    'PAN_CARD',
+    'UDYAM_CERTIFICATE',
+  ]);
 
   // Load live tenders from MongoDB
   const loadTenders = async () => {
@@ -119,8 +135,14 @@ export default function TenderManagement({ currentUser }) {
           makeInIndiaPercentage: Number(makeInIndia),
           emdAmountINR: Number(emdAmountINR),
           allowMSMEExemption: true,
-          allowStartupExemption: true
-        }
+          allowStartupExemption: true,
+          requiredCertificates: selectedRequiredDocs.map(docId => ({
+            type: docId,
+            isMandatory: true,
+            weightage: 20
+          }))
+        },
+        requiredDocuments: selectedRequiredDocs
       };
 
       const res = await api.createTender(payload);
@@ -556,6 +578,90 @@ export default function TenderManagement({ currentUser }) {
                         <strong>AI Summary:</strong> {parsedSummary}
                       </div>
                     )}
+
+                    {/* Mandatory Documents Required from Bidders */}
+                    <div style={{ marginTop: 12, borderTop: '1px solid #e2e8f0', paddingTop: 12 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, flexWrap: 'wrap', gap: 6 }}>
+                        <div>
+                          <label style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.76rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <FileCheck style={{ width: 14, height: 14, color: '#0284c7' }} />
+                            <span>Mandatory Documents Required from Bidders (Checklist)</span>
+                          </label>
+                          <div style={{ fontSize: '0.64rem', color: '#64748b' }}>
+                            Choose which statutory certificates bidders must attach to submit their bid
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedRequiredDocs(['GST_CERTIFICATE', 'PAN_CARD', 'UDYAM_CERTIFICATE'])}
+                            style={{
+                              border: '1px solid #cbd5e1', background: '#f8fafc', padding: '2px 8px',
+                              borderRadius: 4, fontSize: '0.62rem', fontWeight: 700, cursor: 'pointer', color: '#0369a1'
+                            }}
+                          >
+                            ⚡ Standard MSME
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedRequiredDocs(STATUTORY_DOC_OPTIONS.map(d => d.id))}
+                            style={{
+                              border: '1px solid #cbd5e1', background: '#f8fafc', padding: '2px 8px',
+                              borderRadius: 4, fontSize: '0.62rem', fontWeight: 700, cursor: 'pointer', color: '#166534'
+                            }}
+                          >
+                            Select All
+                          </button>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                        {STATUTORY_DOC_OPTIONS.map(doc => {
+                          const isChecked = selectedRequiredDocs.includes(doc.id);
+                          return (
+                            <div
+                              key={doc.id}
+                              onClick={() => {
+                                setSelectedRequiredDocs(prev => 
+                                  prev.includes(doc.id)
+                                    ? prev.filter(x => x !== doc.id)
+                                    : [...prev, doc.id]
+                                );
+                              }}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                gap: 8,
+                                padding: '8px 10px',
+                                borderRadius: 6,
+                                border: isChecked ? '1.5px solid #0284c7' : '1px solid #e2e8f0',
+                                background: isChecked ? '#f0f9ff' : '#ffffff',
+                                cursor: 'pointer',
+                                transition: 'all 0.15s ease'
+                              }}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => {}} // handled by parent onClick
+                                style={{ marginTop: 2, cursor: 'pointer' }}
+                              />
+                              <div style={{ flex: 1 }}>
+                                <div style={{ fontSize: '0.72rem', fontWeight: isChecked ? 800 : 600, color: isChecked ? '#0369a1' : '#1e293b' }}>
+                                  {doc.name}
+                                </div>
+                                <div style={{ fontSize: '0.6rem', color: '#64748b', marginTop: 2 }}>
+                                  {doc.desc}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div style={{ marginTop: 6, fontSize: '0.64rem', color: '#0369a1', fontWeight: 700 }}>
+                        ✓ {selectedRequiredDocs.length} Mandatory Document{selectedRequiredDocs.length === 1 ? '' : 's'} configured for bidder evaluation
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
